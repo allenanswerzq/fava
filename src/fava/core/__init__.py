@@ -413,7 +413,10 @@ class FavaLedger:
         return interval_balances, interval_tuples
 
     def account_journal(
-        self, account_name: str, with_journal_children: bool = False
+        self,
+        account_name: str,
+        with_journal_children: bool = False,
+        increment_sum: bool = False,
     ) -> List[Tuple[Directive, List[Posting], Inventory, Inventory]]:
         """Journal for an account.
 
@@ -442,7 +445,9 @@ class FavaLedger:
                 postings_,
                 change,
                 balance,
-            ) in realization.iterate_with_balance(postings)
+            ) in realization.iterate_with_balance(
+                postings, increment_sum=increment_sum
+            )
         ]
 
     @property

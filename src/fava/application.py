@@ -286,7 +286,7 @@ def index() -> werkzeug.wrappers.response.Response:
 @app.route("/<bfile>/account/<name>/<subreport>/")
 def account(name: str, subreport: str = "journal") -> str:
     """The account report."""
-    if subreport in ["journal", "balances", "changes"]:
+    if subreport in ["journal", "balances", "changes", "increment_sum"]:
         return render_template(
             "account.html", account_name=name, subreport=subreport
         )

@@ -35,11 +35,20 @@
 }) %}
 {% endmacro %}
 
-{% macro account_balance(account_name) %}
+
+{% macro incremental_net_worth(interval) %}
+{% do chart_data.append({
+'type': 'balances',
+'label': _('Incremental Net Worth'),
+'data': ledger.charts.incremental_net_worth(interval, g.conversion),
+}) %}
+{% endmacro %}
+
+{% macro account_balance(account_name, increment_sum=False) %}
 {% do chart_data.append({
 'type': 'balances',
 'label': _('Account Balance'),
-'data': ledger.charts.linechart(account_name, g.conversion),
+'data': ledger.charts.linechart(account_name, g.conversion, increment_sum=increment_sum),
 }) %}
 {% endmacro %}
 

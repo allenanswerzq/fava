@@ -4,6 +4,7 @@
 {{ charts.hierarchy(ledger.options['name_assets']) }}
 {{ charts.hierarchy(ledger.options['name_liabilities']) }}
 {{ charts.hierarchy(ledger.options['name_equity']) }}
+{{ charts.incremental_net_worth(g.interval) }}
 
 {% set root_tree_closed = ledger.root_tree_closed %}
 {% set invert = ledger.fava_options['invert-income-liabilities-equity'] %}

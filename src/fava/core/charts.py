@@ -13,6 +13,7 @@ from typing import Union
 from beancount.core import realization
 from beancount.core.amount import Amount
 from beancount.core.data import iter_entry_dates
+from beancount.core.data import Posting
 from beancount.core.data import Transaction
 from beancount.core.inventory import Inventory
 from beancount.core.number import Decimal
@@ -171,7 +172,7 @@ class ChartModule(FavaModule):
 
     @listify
     def linechart(
-        self, account_name: str, conversion: str
+        self, account_name: str, conversion: str, increment_sum: bool = False
     ) -> Generator[DateAndBalance, None, None]:
         """The balance of an account.
 
@@ -194,6 +195,7 @@ class ChartModule(FavaModule):
         # missing from the 'balance' so keep track of currencies that last had
         # a balance.
         last_currencies = None
+        start_balance = None
 
         price_map = self.ledger.price_map
         for entry, _, change, balance_inventory in journal:
@@ -206,11 +208,21 @@ class ChartModule(FavaModule):
                 )
             )
 
+            if increment_sum and start_balance is None:
+                # TODO(allenanswerzq): handle all currencies
+                start_balance = balance["CNY"]
+
             currencies = set(balance.keys())
             if last_currencies:
                 for currency in last_currencies - currencies:
                     balance[currency] = 0
             last_currencies = currencies
+
+            if increment_sum:
+                new_balance = {}
+                for k, v in balance.items():
+                    new_balance[k] = v - start_balance
+                balance = new_balance
 
             yield {"date": entry.date, "balance": balance}
 
@@ -245,7 +257,6 @@ class ChartModule(FavaModule):
 
         txn = next(transactions, None)
         inventory = Inventory()
-
         price_map = self.ledger.price_map
         for end_date in self.ledger.interval_ends(interval):
             while txn and txn.date < end_date:
@@ -253,6 +264,66 @@ class ChartModule(FavaModule):
                     if posting.account.startswith(types):
                         inventory.add_position(posting)
                 txn = next(transactions, None)
+            yield {
+                "date": end_date,
+                "balance": cost_or_value(
+                    inventory, conversion, price_map, end_date - ONE_DAY
+                ),
+            }
+
+    @listify
+    def incremental_net_worth(
+        self, interval: Interval, conversion: str
+    ) -> Generator[DateAndBalance, None, None]:
+        """Compute net worth.
+
+        Args:
+            interval: A string for the interval.
+            conversion: The conversion to use.
+
+        Returns:
+            A list of dicts for all ends of the given interval containing the
+            net worth (Assets + Liabilities) separately converted to all
+            operating currencies.
+        """
+        transactions = (
+            entry
+            for entry in self.ledger.entries
+            if (
+                isinstance(entry, Transaction)
+                and entry.flag != FLAG_UNREALIZED
+            )
+        )
+
+        types = (
+            self.ledger.options["name_assets"],
+            self.ledger.options["name_liabilities"],
+        )
+
+        txn = next(transactions, None)
+        inventory = Inventory()
+        first = True
+        base_number = 0
+        price_map = self.ledger.price_map
+        for end_date in self.ledger.interval_ends(interval):
+            while txn and txn.date < end_date:
+                for posting in txn.postings:
+                    if posting.account.startswith(types):
+                        if first is True:
+                            base_number += posting.units.number
+                        inventory.add_position(posting)
+                txn = next(transactions, None)
+            if first:
+                first = False
+                posting = Posting(
+                    posting.account,
+                    Amount(Decimal(-base_number), posting.units.currency),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                inventory.add_position(posting)
             yield {
                 "date": end_date,
                 "balance": cost_or_value(

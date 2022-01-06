@@ -25,7 +25,10 @@
 </script>
 
 {#if extension === "pdf"}
-  <object title={filename} data={url} />
+  <!-- <object title={filename} data={url} /> -->
+  <a id="open-pdf-url" class="filename" data-remote target="_blank" href={url}
+    >{filename}</a
+  >
 {:else if plainTextExtensions.includes(extension)}
   {#await fetch(url).then(handleText)}
     Loading...
@@ -41,7 +44,7 @@
 {/if}
 
 <style>
-  object,
+  /* object, */
   img,
   iframe {
     width: 100%;

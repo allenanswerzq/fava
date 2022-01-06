@@ -8,10 +8,11 @@
 {% set short_title = account_name %}
 
 {% set journal = subreport == 'journal' %}
+{% set increment_sum = subreport == 'increment_sum' %}
 
 {% block content %}
 <div class="droptarget" data-account-name="{{ account_name }}">
-  {{ charts.account_balance(account_name) }}
+  {{ charts.account_balance(account_name, increment_sum=increment_sum) }}
   {{ charts.interval_totals(g.interval, account_name, label=_('Changes')) }}
 
   {% if not journal %}
@@ -22,10 +23,14 @@
     <h3>{% if not journal %}<a href="{{ url_for('account', name=account_name) }}" title="{{ _('Journal of all entries for this Account and Sub-Accounts') }}">{{ _('Account Journal') }}</a>{% else %}{{ _('Account Journal') }}{% endif %}</h3>
     <h3>{% if subreport != 'changes' %}<a href="{{ url_for('account', name=account_name, subreport='changes') }}">{{ _('Changes') }} ({{ g.interval.label|lower }})</a>{% else %}{{ _('Changes') }} ({{ g.interval.label|lower }}){% endif %}</h3>
     <h3>{% if subreport != 'balances' %}<a href="{{ url_for('account', name=account_name, subreport='balances') }}">{{ _('Balances') }} ({{ g.interval.label|lower }})</a>{% else %}{{ _('Balances') }} ({{ g.interval.label|lower }}){% endif %}</h3>
+    <h3>{% if subreport != 'increment_sum' %}<a href="{{ url_for('account', name=account_name, subreport='increment_sum') }}">{{ _('increment_sum') }} ({{ g.interval.label|lower }})</a>{% else %}{{ _('increment_sum') }} ({{ g.interval.label|lower }}){% endif %}</h3>
   </div>
 
   {% if journal %}
   {% set entries = ledger.account_journal(account_name, with_journal_children=ledger.fava_options['account-journal-include-children']) %}
+  {{ journal_table.journal_table(entries, show_change_and_balance=True) }}
+  {% elif increment_sum %}
+  {% set entries = ledger.account_journal(account_name, with_journal_children=ledger.fava_options['account-journal-include-children'], increment_sum=increment_sum) %}
   {{ journal_table.journal_table(entries, show_change_and_balance=True) }}
   {% else %}
   {% set accumulate = subreport == 'balances' %}
