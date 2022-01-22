@@ -18,6 +18,7 @@
   import HierarchyContainer from "./HierarchyContainer.svelte";
   import LineChart from "./LineChart.svelte";
   import ModeSwitch from "./ModeSwitch.svelte";
+  import SankeyPlot from "./SankeyPlot.svelte";
   import ScatterPlot from "./ScatterPlot.svelte";
 
   import type { NamedChartTypes } from ".";
@@ -48,6 +49,7 @@
     hierarchy: HierarchyContainer,
     linechart: LineChart,
     scatterplot: ScatterPlot,
+    sankeyplot: SankeyPlot,
   };
 </script>
 
@@ -99,6 +101,7 @@
     class="toggle-chart"
   />
 </div>
+
 <div hidden={!$showCharts} bind:clientWidth={width}>
   {#if width}
     {#if components[chart.type]}

@@ -223,6 +223,47 @@ class ChartModule(FavaModule):
             )
 
     @listify
+    def linechanges(
+        self, filtered: FilteredLedger, account_name: str, conversion: str
+    ) -> Generator[DateAndBalance, None, None]:
+        """The balance of an account.
+
+        Args:
+            account_name: A string.
+            conversion: The conversion to use.
+
+        Returns:
+            A list of dicts for all dates on which the balance of the given
+            account has changed containing the balance (in units) of the
+            account at that date.
+        """
+        real_account = realization.get_or_create(
+            filtered.root_account, account_name
+        )
+        postings = realization.get_postings(real_account)
+        journal = realization.iterate_with_balance(postings)
+
+        # When the balance for a commodity just went to zero, it will be
+        # missing from the 'balance' so keep track of currencies that last had
+        # a balance.
+        last_currencies = None
+
+        price_map = self.ledger.price_map
+        for entry, _, change, balance_inventory in journal:
+            if change.is_empty():
+                continue
+
+            balance = inv_to_dict(
+                cost_or_value(
+                    balance_inventory, conversion, price_map, entry.date
+                )
+            )
+            c = change.to_string().split(' ')[0].split('(')[1]
+            assert len(c)
+            yield DateAndBalance(entry.date, {"CNY" : Decimal(c)})
+
+
+    @listify
     def linechart(
         self, filtered: FilteredLedger, account_name: str, conversion: str
     ) -> Generator[DateAndBalance, None, None]:
@@ -312,6 +353,141 @@ class ChartModule(FavaModule):
                     inventory, conversion, price_map, end_date - ONE_DAY
                 ),
             )
+
+    @listify
+    def sankey_diagram(
+        self, filtered: FilteredLedger, interval: Interval, conversion: str
+    ) -> Generator[DateAndBalance, None, None]:
+        """Compute the money flow.
+
+        Args:
+            interval: A string for the interval.
+            conversion: The conversion to use.
+
+        Returns:
+            A list of dicts for all ends of the given interval containing the
+            net worth (Assets + Liabilities) separately converted to all
+            operating currencies.
+        """
+        transactions = (
+            entry
+            for entry in filtered.entries
+            if (
+                isinstance(entry, Transaction)
+                and entry.flag != FLAG_UNREALIZED
+            )
+        )
+        txn = next(transactions, None)
+        txn_entries = []
+        for end_date in filtered.interval_ends(interval):
+            while txn and txn.date < end_date:
+                txn_entries.append(txn)
+                txn = next(transactions, None)
+
+        root = realization.realize(txn_entries)
+        realization.move_node_up(root, "Expenses:SocialSecurity")
+        balance_map = {}
+        balance_map["SocialSecurity"] = 0
+        balance_map["Income"] = 0
+        balance_map["Expenses"] = 0
+        children = realization.iter_children(root)
+        for child in children:
+            t = realization.compute_balance(child)
+            balance_map[child.account] = abs(t.get_currency_units("CNY").number)
+
+        realization.add_account_node(root, "Connector", "Expenses", balance_map["Expenses"])
+        if balance_map["SocialSecurity"] > 0:
+            realization.add_account_node(root, "Connector", "SocialSecurity", balance_map["SocialSecurity"])
+        savings = (balance_map["Income"] - balance_map["Expenses"] - balance_map["SocialSecurity"])
+        if savings > 0:
+            balance_map["Savings"] = savings
+            realization.add_account_node(root, "", "Savings", 0)
+            # realization.add_account_node(root, "Savings", "BIG", savings)
+            realization.add_account_node(root, "Connector", "Savings", savings)
+
+        children = realization.iter_children(root)
+        for child in children:
+            t = realization.compute_balance(child)
+            balance_map[child.account] = abs(t.get_currency_units("CNY").number)
+
+        # print(balance_map)
+
+        def check_account(u, v):
+            # Whether include this account in the sankey graph.
+            types = (
+                self.ledger.options["name_income"],
+                self.ledger.options["name_expenses"],
+                "SocialSecurity",
+                "Connector",
+                "Savings"
+            )
+            if len(u) == 0: return (v in types)
+            return (
+                   ("-Balance" not in v) and
+                   ("Company" not in v) and
+                   (
+                    # ("Expenses" in v and len(v.split(":")) <= 3) or
+                    (len(v.split(":")) <= 2)
+                   )
+            )
+
+        id_map = {}
+        nodes = set()
+        links = []
+        def dfs(real_account, id=100, pre=None):
+            # print("DFS", real_account.account, pre)
+            nonlocal id_map
+            id_map[real_account.account] = id
+            cur = []
+            for _, real_child in sorted(real_account.items()):
+                v = real_child.account
+                if check_account(real_account.account, v):
+                    if v in balance_map:
+                        w = balance_map[v]
+                    else:
+                        w = balance_map[v.split(':')[1]]
+
+                    cur.append([v, w, real_child])
+
+            cur.sort(key=lambda x: (x[1], x[0]), reverse=True)
+            for i, x in enumerate(cur):
+                u = str(id) + "_" + real_account.account
+                v = str(id * 100 + i) + "_" + x[0]
+                w = str(x[1])
+                id_map[x[0]] = id * 100 + i
+                if real_account.account.startswith("Income"):
+                    u, v = (v, u)  # swap accounts
+
+                if x[1] / cur[0][1] < 0.005:
+                     continue
+
+                # u --> v
+                if pre is not None and x[1] > 0:
+                    if "Connector" not in u:
+                        nodes.add(u)
+                        nodes.add(v)
+
+                    links.append([u, v, str(w)])
+
+            # print(real_account.account, id_map)
+
+            for x in cur:
+                dfs(x[2], id=id_map[x[0]], pre=real_account.account)
+
+        dfs(root)
+
+        for x in links:
+            if "Connector" in x[0]:
+                x[0] = str(id_map["Income"]) + "_" + "Income"
+                r = ''.join(s for s in x[1].split(':')[1])
+                x[1] = str(id_map[r]) + "_" + r
+                nodes.add(x[1])
+
+        import json
+
+        json_node = json.dumps(list(nodes))
+        json_link = json.dumps(links)
+        yield {"nodes_ss": json_node, "links_ss": json_link}
 
     @staticmethod
     def can_plot_query(types: list[tuple[str, Any]]) -> bool:

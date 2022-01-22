@@ -35,13 +35,29 @@
 }) %}
 {% endmacro %}
 
-{% macro account_balance(account_name) %}
+{% macro sankey_diagram(interval) %}
+{% do chart_data.append({
+'type': 'sankeyplot',
+'label': _('Sankey'),
+'data': ledger.charts.sankey_diagram(g.filtered, interval, g.conversion),
+}) %}
+{% endmacro %}
+
+{% macro account_balance(account_name, increment_sum=False) %}
 {% do chart_data.append({
 'type': 'balances',
 'label': _('Account Balance'),
 'data': ledger.charts.linechart(g.filtered, account_name, g.conversion),
 }) %}
 {% endmacro %}
+
+<!-- {% macro line_changes(account_name, increment_sum=False) %}
+{% do chart_data.append({
+'type': 'balances',
+'label': _('Line Changes'),
+'data': ledger.charts.linechanges(g.filtered, account_name, g.conversion),
+}) %}
+{% endmacro %} -->
 
 {% macro commodities() %}
 {% for base, quote, prices in ledger.charts.prices(g.filtered) %}

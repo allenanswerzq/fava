@@ -266,6 +266,11 @@ class FilterSyntaxParser:
                 value = getattr(entry, name, "")
                 if value and match(value):
                     return True
+
+            for _, v in entry.meta.items():
+                if match(str(v)):
+                    return True
+
             return False
 
         p[0] = _string

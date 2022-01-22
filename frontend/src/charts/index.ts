@@ -18,6 +18,8 @@ import { balances, commodities } from "./line";
 import type { LineChart } from "./line";
 import { scatterplot } from "./scatterplot";
 import type { ScatterPlot } from "./scatterplot";
+import { sankeyplot } from "./sankeyplot";
+import type { SankeyPlot } from "./sankeyplot";
 
 const parsers: Partial<
   Record<
@@ -34,9 +36,15 @@ const parsers: Partial<
   bar,
   hierarchy,
   scatterplot,
+  sankeyplot,
 };
 
-export type ChartTypes = HierarchyChart | BarChart | ScatterPlot | LineChart;
+export type ChartTypes =
+  | HierarchyChart
+  | BarChart
+  | ScatterPlot
+  | LineChart
+  | SankeyPlot;
 export type NamedChartTypes = ChartTypes & { name?: string };
 
 const chart_data_validator = array(
@@ -55,6 +63,8 @@ export function parseChartData(
   chartData.forEach((chart) => {
     const parser = parsers[chart.type];
     if (parser) {
+      console.log("Parsing chart data....", chart.type);
+      console.log(chart.data);
       const r = parser(chart.data, ctx, chart.label);
       if (r.success) {
         result.push({ name: chart.label, ...r.value });
