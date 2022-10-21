@@ -1,0 +1,8 @@
+{% set events = g.filtered.events(insurance=True) %}
+{% if events %}
+{{ charts.events(insurance=True) }}
+{% else %}
+<p>
+{{ _('No events.') }}
+</p>
+{% endif %}

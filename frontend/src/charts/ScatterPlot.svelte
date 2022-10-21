@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { extent } from "d3-array";
+  import { Line } from "@codemirror/state";
+import { extent } from "d3-array";
   import { axisBottom, axisLeft } from "d3-axis";
   import { quadtree } from "d3-quadtree";
   import { scalePoint, scaleUtc } from "d3-scale";
+  import { } from "os";
 
   import { day } from "../format";
 
@@ -58,6 +60,22 @@
     const d = quad.find(xPos, yPos);
     return d && [x(d.date), y(d.type) ?? 0, tooltipText(d)];
   };
+
+  let groups:any[] = [];
+  let id_map = new Map();
+  let id = 0;
+  for (const d of data) {
+    if (!d.type.includes("Insurance_")) continue;
+    if (id_map.has(d.type)) {
+      let p = id_map.get(d.type);
+      groups[p].push(d);
+    }
+    else {
+      id_map.set(d.type, id);
+      groups[id++] = [d];
+    }
+  }
+  // console.log(groups);
 </script>
 
 <svg {width} {height}>
@@ -70,13 +88,34 @@
     <g>
       {#each data as dot}
         <circle
-          r="5"
-          fill={scatterplotScale(dot.type)}
+          r="4"
+          fill={scatterplotScale(dot.description)}
           cx={x(dot.date)}
           cy={y(dot.type)}
           class:desaturate={dot.date > today}
         />
       {/each}
+
+      {#if groups.length > 0}
+        {#each groups as g}
+          <line
+            x1={x(g[0].date)}
+            y1={y(g[0].type)}
+            x2={x(g[g.length - 1].date)}
+            y2={y(g[g.length - 1].type)}
+            style="stroke:rgb(125,0,0);stroke-width:1"
+          />
+        {/each}
+
+        <line
+          x1={x(today)}
+          y1=0
+          x2={x(today)}
+          y2={height}
+          style="stroke:rgb(125,0,0);stroke-width:1"
+        />
+      {/if}
+
     </g>
   </g>
 </svg>

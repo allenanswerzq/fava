@@ -69,6 +69,7 @@ from fava.util import pairwise
 from fava.util.date import Interval
 from fava.util.date import interval_ends
 from fava.util.typing import BeancountOptions
+from numpy import not_equal
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -191,13 +192,22 @@ class FilteredLedger:
         """All currently filtered documents."""
         return [e for e in self.entries if isinstance(e, Document)]
 
-    def events(self, event_type: str | None = None) -> list[Event]:
+    def events(self, event_type: str | None = None, insurance: bool = False) -> list[Event]:
         """List events (possibly filtered by type)."""
         events = [e for e in self.entries if isinstance(e, Event)]
-        if event_type:
+        is_insurance = []
+        not_insurance = []
+        for e in events:
+            if "Insurance_" in e.type:
+                is_insurance.append(e)
+            else:
+                not_insurance.append(e)
+        if insurance:
+            return is_insurance
+        elif event_type:
             return [event for event in events if event.type == event_type]
-
-        return events
+        else:
+            return not_insurance
 
     def prices(self, base: str, quote: str) -> list[tuple[date, Decimal]]:
         """List all prices."""

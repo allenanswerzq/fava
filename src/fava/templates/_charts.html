@@ -19,11 +19,11 @@
 }) %}
 {% endmacro %}
 
-{% macro events(event_type=None) %}
+{% macro events(event_type=None, insurance=False) %}
 {% do chart_data.append({
 'type': 'scatterplot',
 'label': _('Events') if not event_type else _('Event: %(type)s', type=event_type),
-'data': g.filtered.events(event_type),
+'data': g.filtered.events(event_type, insurance=insurance),
 }) %}
 {% endmacro %}
 

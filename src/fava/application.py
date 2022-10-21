@@ -95,6 +95,7 @@ REPORTS = [
     "holdings",
     "import",
     "income_statement",
+    "insurance",
     "journal",
     "options",
     "query",

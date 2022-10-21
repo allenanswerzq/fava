@@ -458,7 +458,7 @@ class ChartModule(FavaModule):
                 if real_account.account.startswith("Income"):
                     u, v = (v, u)  # swap accounts
 
-                if x[1] / cur[0][1] < 0.005:
+                if cur[0][1] > 0 and x[1] / cur[0][1] < 0.005:
                      continue
 
                 # u --> v
