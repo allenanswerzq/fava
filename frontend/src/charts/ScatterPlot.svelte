@@ -35,7 +35,8 @@ import { extent } from "d3-array";
     .range([0, innerWidth]);
   $: y = scalePoint()
     .padding(1)
-    .domain(data.map((d) => d.type))
+    // control how lable on y axis displayed
+    .domain(data.map((d) => d.type.split('_')[1]))
     .range([innerHeight, 0]);
 
   // Axes
@@ -83,6 +84,7 @@ import { extent } from "d3-array";
     use:positionedTooltip={tooltipFindNode}
     transform={`translate(${margin.left},${margin.top})`}
   >
+
     <Axis x axis={xAxis} {innerHeight} />
     <Axis y axis={yAxis} />
     <g>
@@ -91,7 +93,7 @@ import { extent } from "d3-array";
           r="4"
           fill={scatterplotScale(dot.description)}
           cx={x(dot.date)}
-          cy={y(dot.type)}
+          cy={y(dot.type.split('_')[1])}
           class:desaturate={dot.date > today}
         />
       {/each}
@@ -99,10 +101,10 @@ import { extent } from "d3-array";
       {#if groups.length > 0}
         {#each groups as g}
           <line
-            x1={x(g[0].date)}
-            y1={y(g[0].type)}
+            x1={x(g[1].date)}
+            y1={y(g[1].type.split('_')[1])}
             x2={x(g[g.length - 1].date)}
-            y2={y(g[g.length - 1].type)}
+            y2={y(g[g.length - 1].type.split('_')[1])}
             style="stroke:rgb(125,0,0);stroke-width:1"
           />
         {/each}
