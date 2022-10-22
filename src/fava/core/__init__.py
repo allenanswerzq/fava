@@ -219,13 +219,14 @@ class FilteredLedger:
                 cur = {}
                 cur['购买时间'] = str(meta["issue_date"])
                 cur['生效时间'] = str(meta["effective_date"])
-                cur['退保时间'] = str(meta["stop_date"])
+                cur['缴费时间'] = str(meta['renew_date'])
+                cur['到期时间'] = str(meta["stop_date"])
                 cur['被保险人'] = meta["policy_person"]
                 cur['免赔额'] = meta["policy_deductible"]
                 cur['年保费'] = meta["policy_premimum"]
                 cur['保障额度'] = meta["policy_limits"]
-                cur['缴费年限'] = meta["policy_period"]
-                cur['除责'] = meta["policy_exclusions"]
+                cur['缴费周期'] = meta["policy_cycle"]
+                cur['保障年限'] = meta["policy_period"]
                 cur['保险公司'] = meta["policy_issuer"]
                 cur['保障类型'] = meta["policy_type"]
                 # cur['保障年限'] = meta["policy_type"] todo
@@ -237,13 +238,23 @@ class FilteredLedger:
         ret.sort(key=lambda x : [x.get('被保险人'), x.get('保障类型')])
         final_ret = []
         start = ret[0]['被保险人']
-        for _, d in enumerate(ret):
+        person_cost = 0
+        total_cost = 0
+        for i, d in enumerate(ret):
+            total_cost += int(d['年保费'])
+            # print(d)
+            # print(person_cost, total_cost)
             if d['被保险人'] == start:
+                person_cost += int(d['年保费'])
                 final_ret.append(d)
             else:
                 start = d['被保险人']
-                final_ret.append({'被保险人' : "---"})
+                final_ret.append({'被保险人' : "---", '备注' : str(person_cost)})
+                person_cost = int(d['年保费'])
                 final_ret.append(d)
+
+        final_ret.append({'被保险人' : "---", '备注' : str(person_cost)})
+        final_ret.append({'被保险人' : "---", '备注' : str(total_cost)})
         # for x in final_ret:
         #     print(x)
         return final_ret

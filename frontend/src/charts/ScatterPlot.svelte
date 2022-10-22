@@ -36,7 +36,7 @@ import { extent } from "d3-array";
   $: y = scalePoint()
     .padding(1)
     // control how lable on y axis displayed
-    .domain(data.map((d) => d.type.split('_')[1]))
+    .domain(data.map((d) => d.type))
     .range([innerHeight, 0]);
 
   // Axes
@@ -44,7 +44,7 @@ import { extent } from "d3-array";
   $: yAxis = axisLeft(y)
     .tickPadding(6)
     .tickSize(-innerWidth)
-    .tickFormat((d) => d);
+    .tickFormat((d) => d.split('#')[0].split('_')[1]);
 
   /** Quadtree for hover. */
   $: quad = quadtree(
@@ -65,8 +65,10 @@ import { extent } from "d3-array";
   let groups:any[] = [];
   let id_map = new Map();
   let id = 0;
+  let plot_insurance = false;
   for (const d of data) {
     if (!d.type.includes("Insurance_")) continue;
+    plot_insurance = true;
     if (id_map.has(d.type)) {
       let p = id_map.get(d.type);
       groups[p].push(d);
@@ -76,26 +78,64 @@ import { extent } from "d3-array";
       groups[id++] = [d];
     }
   }
+  let group_start = new Map();
   let group_wait = new Array();
   let group_buy = new Array();
+  let group_stop = new Array();
+  let group_colors = new Array();
   for (const group of groups) {
+    let buy_pos = -1;
     let wait_pos = -1;
-    let start_pos = -1;
+    let stop_pos = -1;
+    let end_pos = -1;
     for (let i = 0; i < group.length; i++) {
-      if (group[i].description.includes("buy")) {
-        start_pos = i;
+      if (group[i].description.includes("start")) {
+        group_start.set(i, 1); // Find all start position, used for SPLIT
+      }
+      else if (group[i].description.includes("buy")) {
+        // assert(buy_pos == -1);
+        buy_pos = i;
       }
       else if (group[i].description.includes("wait")) {
+        // assert(wait_pos == -1);
         wait_pos = i;
       }
-      else if (group[i].type.includes("SPLIT")) {
-        wait_pos = -2; // Do not draw any lines
-        break;
+      else if (group[i].description.includes("stop")) {
+        stop_pos = i; // Find the last stop pos
+      }
+      else if (group[i].description.includes("end")) {
+        end_pos = i;
       }
     }
+    if (end_pos != -1) {
+      stop_pos = end_pos;
+    }
     group_wait.push(wait_pos);
-    group_buy.push(start_pos);
+    group_buy.push(buy_pos);
+    group_stop.push(stop_pos);
+
+    let type = group[0].type.split('#')[1];
+    if (type == "团险") {
+      group_colors.push("rgb(0, 0, 0)");
+    }
+    else if (type == "防癌") {
+      group_colors.push("rgb(0, 0, 255)");
+      group_colors.push(scatterplotScale(type));
+    }
+    else if (type == "意外") {
+      group_colors.push("rgb(0, 255, 100)");
+    }
+    else if (type == "医疗") {
+      group_colors.push("rgb(205, 0, 0)");
+    }
+    else if (type == "寿险") {
+      group_colors.push("rgb(0, 255, 0)");
+    }
+    else {
+      group_colors.push("rgb(255, 255, 255)");
+    }
   }
+
   console.log(groups);
   console.log(group_wait);
   console.log(group_buy)
@@ -110,48 +150,93 @@ import { extent } from "d3-array";
     <Axis x axis={xAxis} {innerHeight} />
     <Axis y axis={yAxis} />
     <g>
-      {#each groups as g}
-        {#each g as dot, i}
-          {#if i > 0}
+      {#if plot_insurance}
+        {#each groups as g}
+          {#each g as dot, i}
+            {#if !group_start.get(i) }
+              <circle
+                r="4"
+                fill={scatterplotScale(dot.description)}
+                cx={x(dot.date)}
+                cy={y(dot.type)}
+                class:desaturate={dot.date > today}
+              />
+            {/if}
+          {/each}
+        {/each}
+      {:else}
+        {#each data as dot, i}
             <circle
               r="4"
               fill={scatterplotScale(dot.type + dot.description)}
               cx={x(dot.date)}
-              cy={y(dot.type.split('_')[1])}
+              cy={y(dot.type)}
               class:desaturate={dot.date > today}
             />
-          {/if}
         {/each}
-      {/each}
+      {/if}
 
       {#each groups as g, i}
-        {#if group_buy[i] != -1 && group_wait[i] != -1}
+        {#if group_buy[i] == -1 && group_wait[i] != -1}
+          <line
+            x1=0
+            y1={y(g[group_wait[i]].type)}
+            x2={x(g[group_wait[i]].date)}
+            y2={y(g[group_wait[i]].type)}
+            style="stroke-width:1"
+            stroke-dasharray="5,5,5"
+            stroke="rgb(125,0,0)"
+          />
+        {:else if group_buy[i] != -1 && group_wait[i] != -1}
           <line
             x1={x(g[group_buy[i]].date)}
-            y1={y(g[group_buy[i]].type.split('_')[1])}
+            y1={y(g[group_buy[i]].type)}
             x2={x(g[group_wait[i]].date)}
-            y2={y(g[group_wait[i]].type.split('_')[1])}
-            style="stroke:rgb(255,0,0);stroke-width:1"
+            y2={y(g[group_wait[i]].type)}
+            style="stroke-width:1"
             stroke-dasharray="5,5,5"
+            stroke="rgb(125,0,0)"
           />
         {/if}
 
-        {#if group_wait[i] == -1}
+        {#if group_wait[i] == -1 && group_stop[i] != -1}
           <line
             x1=0
-            y1={y(g[0].type.split('_')[1])}
-            x2={x(g[g.length - 1].date)}
-            y2={y(g[g.length - 1].type.split('_')[1])}
-            style="stroke:rgb(125,0,0);stroke-width:1"
+            y1={y(g[group_stop[i]].type)}
+            x2={x(g[group_stop[i]].date)}
+            y2={y(g[group_stop[i]].type)}
+            style="stroke-width:1"
+            stroke={group_colors[i]}
           />
-        {:else if group_wait[i] != -2}
+        {:else if group_wait[i] != -1 && group_stop[i] != -1}
           <line
             x1={x(g[group_wait[i]].date)}
-            y1={y(g[group_wait[i]].type.split('_')[1])}
-            x2={x(g[g.length - 1].date)}
-            y2={y(g[g.length - 1].type.split('_')[1])}
-            style="stroke:rgb(125,0,0);stroke-width:1"
+            y1={y(g[group_wait[i]].type)}
+            x2={x(g[group_stop[i]].date)}
+            y2={y(g[group_stop[i]].type)}
+            style="stroke-width:1"
+            stroke={group_colors[i]}
           />
+        {:else if group_wait[i] != -1 && group_stop[i] == -1}
+          <line
+            x1={x(g[group_wait[i]].date)}
+            y1={y(g[group_wait[i]].type)}
+            x2={width}
+            y2={y(g[group_wait[i]].type)}
+            style="stroke:rgb(125,0,0);stroke-width:1"
+            stroke={group_colors[i]}
+          />
+        {:else if group_wait[i] == -1 && group_stop[i] == -1}
+          {#if group_buy[i] != -1}
+            <line
+              x1={x(g[group_buy[i]].date)}
+              y1={y(g[group_buy[i]].type)}
+              x2={width}
+              y2={y(g[group_buy[i]].type)}
+              style="stroke-width:1"
+              stroke={group_colors[i]}
+            />
+          {/if}
         {/if}
       {/each}
 
