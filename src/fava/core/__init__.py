@@ -10,6 +10,7 @@ from os.path import basename
 from os.path import dirname
 from os.path import join
 from os.path import normpath
+from re import I
 from typing import Iterable
 from typing import TYPE_CHECKING
 
@@ -208,6 +209,44 @@ class FilteredLedger:
             return [event for event in events if event.type == event_type]
         else:
             return not_insurance
+
+    def insurances(self):
+        txns = [e for e in self.entries if isinstance(e, Transaction)]
+        ret = []
+        for txn in txns:
+            meta = txn.meta
+            if "issue_date" in meta:
+                cur = {}
+                cur['购买时间'] = str(meta["issue_date"])
+                cur['生效时间'] = str(meta["effective_date"])
+                cur['退保时间'] = str(meta["stop_date"])
+                cur['被保险人'] = meta["policy_person"]
+                cur['免赔额'] = meta["policy_deductible"]
+                cur['年保费'] = meta["policy_premimum"]
+                cur['保障额度'] = meta["policy_limits"]
+                cur['缴费年限'] = meta["policy_period"]
+                cur['除责'] = meta["policy_exclusions"]
+                cur['保险公司'] = meta["policy_issuer"]
+                cur['保障类型'] = meta["policy_type"]
+                # cur['保障年限'] = meta["policy_type"] todo
+                cur['细分类型'] = meta["policy_subtype"]
+                cur['产品'] = meta["policy_product"]
+                cur['备注'] = meta["memo"]
+                # print(meta)
+                ret.append(cur)
+        ret.sort(key=lambda x : [x.get('被保险人'), x.get('保障类型')])
+        final_ret = []
+        start = ret[0]['被保险人']
+        for _, d in enumerate(ret):
+            if d['被保险人'] == start:
+                final_ret.append(d)
+            else:
+                start = d['被保险人']
+                final_ret.append({'被保险人' : "---"})
+                final_ret.append(d)
+        # for x in final_ret:
+        #     print(x)
+        return final_ret
 
     def prices(self, base: str, quote: str) -> list[tuple[date, Decimal]]:
         """List all prices."""

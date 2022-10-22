@@ -24,7 +24,7 @@ import { extent } from "d3-array";
     bottom: 30,
     left: 70,
   };
-  const height = 250;
+  const height = 350;
   $: innerWidth = width - margin.left - margin.right;
   $: innerHeight = height - margin.top - margin.bottom;
 
@@ -76,7 +76,29 @@ import { extent } from "d3-array";
       groups[id++] = [d];
     }
   }
-  // console.log(groups);
+  let group_wait = new Array();
+  let group_buy = new Array();
+  for (const group of groups) {
+    let wait_pos = -1;
+    let start_pos = -1;
+    for (let i = 0; i < group.length; i++) {
+      if (group[i].description.includes("buy")) {
+        start_pos = i;
+      }
+      else if (group[i].description.includes("wait")) {
+        wait_pos = i;
+      }
+      else if (group[i].type.includes("SPLIT")) {
+        wait_pos = -2; // Do not draw any lines
+        break;
+      }
+    }
+    group_wait.push(wait_pos);
+    group_buy.push(start_pos);
+  }
+  console.log(groups);
+  console.log(group_wait);
+  console.log(group_buy)
 </script>
 
 <svg {width} {height}>
@@ -88,35 +110,58 @@ import { extent } from "d3-array";
     <Axis x axis={xAxis} {innerHeight} />
     <Axis y axis={yAxis} />
     <g>
-      {#each data as dot}
-        <circle
-          r="4"
-          fill={scatterplotScale(dot.description)}
-          cx={x(dot.date)}
-          cy={y(dot.type.split('_')[1])}
-          class:desaturate={dot.date > today}
-        />
+      {#each groups as g}
+        {#each g as dot, i}
+          {#if i > 0}
+            <circle
+              r="4"
+              fill={scatterplotScale(dot.type + dot.description)}
+              cx={x(dot.date)}
+              cy={y(dot.type.split('_')[1])}
+              class:desaturate={dot.date > today}
+            />
+          {/if}
+        {/each}
       {/each}
 
-      {#if groups.length > 0}
-        {#each groups as g}
+      {#each groups as g, i}
+        {#if group_buy[i] != -1 && group_wait[i] != -1}
           <line
-            x1={x(g[1].date)}
-            y1={y(g[1].type.split('_')[1])}
+            x1={x(g[group_buy[i]].date)}
+            y1={y(g[group_buy[i]].type.split('_')[1])}
+            x2={x(g[group_wait[i]].date)}
+            y2={y(g[group_wait[i]].type.split('_')[1])}
+            style="stroke:rgb(255,0,0);stroke-width:1"
+            stroke-dasharray="5,5,5"
+          />
+        {/if}
+
+        {#if group_wait[i] == -1}
+          <line
+            x1=0
+            y1={y(g[0].type.split('_')[1])}
             x2={x(g[g.length - 1].date)}
             y2={y(g[g.length - 1].type.split('_')[1])}
             style="stroke:rgb(125,0,0);stroke-width:1"
           />
-        {/each}
+        {:else if group_wait[i] != -2}
+          <line
+            x1={x(g[group_wait[i]].date)}
+            y1={y(g[group_wait[i]].type.split('_')[1])}
+            x2={x(g[g.length - 1].date)}
+            y2={y(g[g.length - 1].type.split('_')[1])}
+            style="stroke:rgb(125,0,0);stroke-width:1"
+          />
+        {/if}
+      {/each}
 
-        <line
-          x1={x(today)}
-          y1=0
-          x2={x(today)}
-          y2={height}
-          style="stroke:rgb(125,0,0);stroke-width:1"
-        />
-      {/if}
+      <line
+        x1={x(today)}
+        y1=0
+        x2={x(today)}
+        y2={height}
+        style="stroke:rgb(125,0,0);stroke-width:1"
+      />
 
     </g>
   </g>

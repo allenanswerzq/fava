@@ -1,8 +1,101 @@
 {% set events = g.filtered.events(insurance=True) %}
+{% set insurances = g.filtered.insurances() %}
 {% if events %}
 {{ charts.events(insurance=True) }}
+
+<div class="left">
+  <table is="sortable-table">
+    <thead>
+      <tr>
+        <th data-sort="string" data-order="asc">{{ _('被保险人') }}</th>
+        <th data-sort="string">{{ _('保障类型') }}</th>
+        <th data-sort="string">{{ _('细分类型') }}</th>
+        <th data-sort="string">{{ _('产品') }}</th>
+        <th data-sort="string">{{ _('保险公司') }}</th>
+        <th data-sort="string">{{ _('购买时间') }}</th>
+        <th data-sort="string">{{ _('生效时间') }}</th>
+        <th data-sort="string">{{ _('缴费年限(/年)') }}</th>
+        <th data-sort="string">{{ _('缴费时间') }}</th>
+        <th data-sort="string">{{ _('退保时间') }}</th>
+        <th data-sort="string">{{ _('保障年限(/年)') }}</th>
+        <th data-sort="string">{{ _('保障额度') }}</th>
+        <th data-sort="string">{{ _('免赔额') }}</th>
+        <th data-sort="string">{{ _('年保费') }}</th>
+        <th data-sort="string">{{ _('除责') }}</th>
+        <th data-sort="string">{{ _('备注') }}</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for insurance in insurances %}
+        {% if insurance['退保时间']|length > 0 %}
+            <tr class="strikethrough">
+                <td>{{ insurance['被保险人'] }}</a></td>
+                <td>{{ insurance['保障类型'] }}</a></td>
+                <td>{{ insurance['细分类型'] }}</a></td>
+                <td>{{ insurance['产品'] }}</a></td>
+                <td>{{ insurance['保险公司'] }}</a></td>
+                <td>{{ insurance['购买时间'] }}</a></td>
+                <td>{{ insurance['生效时间'] }}</a></td>
+                <td>{{ insurance['缴费年限'] }}</td>
+                <td>{{ insurance['缴费时间'] }}</td>
+                <td>{{ insurance['退保时间'] }}</a></td>
+                <td>{{ insurance['保障年限'] }}</a></td>
+                <td>{{ insurance['保障额度'] }}</a></td>
+                <td>{{ insurance['免赔额'] }}</a></td>
+                <td>{{ insurance['年保费'] }}</a></td>
+                <td>{{ insurance['除责'] }}</a></td>
+                <td>{{ insurance['备注'] }}</a></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td>{{ insurance['被保险人'] }}</a></td>
+                <td>{{ insurance['保障类型'] }}</a></td>
+                <td>{{ insurance['细分类型'] }}</a></td>
+                <td>{{ insurance['产品'] }}</a></td>
+                <td>{{ insurance['保险公司'] }}</a></td>
+                <td>{{ insurance['购买时间'] }}</a></td>
+                <td>{{ insurance['生效时间'] }}</a></td>
+                <td>{{ insurance['缴费年限'] }}</td>
+                <td>{{ insurance['缴费时间'] }}</td>
+                <td>{{ insurance['退保时间'] }}</a></td>
+                <td>{{ insurance['保障年限'] }}</a></td>
+                <td>{{ insurance['保障额度'] }}</a></td>
+                <td>{{ insurance['免赔额'] }}</a></td>
+                <td>{{ insurance['年保费'] }}</a></td>
+                <td>{{ insurance['除责'] }}</a></td>
+                <td>{{ insurance['备注'] }}</a></td>
+            </tr>
+            {% endif %}
+      {% endfor %}
+    </tbody>
+
+  </table>
+</div>
+
 {% else %}
 <p>
 {{ _('No events.') }}
 </p>
 {% endif %}
+
+<style>
+table {
+    border-collapse: collapse;
+  }
+
+td {
+width: 100px
+}
+
+.strikethrough {
+background: repeating-linear-gradient(
+    100deg,
+    black 0%,
+    black 100%
+);
+background-size: 100% 1px;
+background-position: center;
+background-repeat: no-repeat;
+}
+</style>
