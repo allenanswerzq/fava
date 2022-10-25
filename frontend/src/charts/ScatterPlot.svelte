@@ -35,16 +35,20 @@ import { extent } from "d3-array";
     .range([0, innerWidth]);
   $: y = scalePoint()
     .padding(1)
-    // control how lable on y axis displayed
     .domain(data.map((d) => d.type))
     .range([innerHeight, 0]);
+
+  function tick_format(d : string) {
+    if (d.includes("SPLIT")) return "";
+    else return d.split('#')[0].split('_')[1];
+  }
 
   // Axes
   $: xAxis = axisBottom(x).tickSizeOuter(0);
   $: yAxis = axisLeft(y)
     .tickPadding(6)
-    .tickSize(-innerWidth)
-    .tickFormat((d) => d.split('#')[0].split('_')[1]);
+    // .tickSize(-innerWidth)
+    .tickFormat(tick_format);
 
   /** Quadtree for hover. */
   $: quad = quadtree(
@@ -63,21 +67,34 @@ import { extent } from "d3-array";
   };
 
   let groups:any[] = [];
+  let event_groups:any[] = [];
   let id_map = new Map();
   let id = 0;
   let plot_insurance = false;
   for (const d of data) {
-    if (!d.type.includes("Insurance_")) continue;
-    plot_insurance = true;
-    if (id_map.has(d.type)) {
-      let p = id_map.get(d.type);
-      groups[p].push(d);
+    if (!d.type.includes("Insurance_")) {
+      if (id_map.has(d.type)) {
+        let p = id_map.get(d.type);
+        event_groups[p].push(d);
+      }
+      else {
+        id_map.set(d.type, id);
+        event_groups[id++] = [d];
+      }
     }
     else {
-      id_map.set(d.type, id);
-      groups[id++] = [d];
+      plot_insurance = true;
+      if (id_map.has(d.type)) {
+        let p = id_map.get(d.type);
+        groups[p].push(d);
+      }
+      else {
+        id_map.set(d.type, id);
+        groups[id++] = [d];
+      }
     }
   }
+
   let group_start = new Map();
   let group_wait = new Array();
   let group_buy = new Array();
@@ -168,13 +185,24 @@ import { extent } from "d3-array";
         {#each data as dot, i}
             <circle
               r="4"
-              fill={scatterplotScale(dot.type + dot.description)}
+              fill={scatterplotScale(dot.type)}
               cx={x(dot.date)}
               cy={y(dot.type)}
               class:desaturate={dot.date > today}
             />
         {/each}
       {/if}
+
+      {#each event_groups as g, i}
+        <line
+          x1={x(g[0].date)}
+          y1={y(g[0].type)}
+          x2={x(g[g.length - 1].date)}
+          y2={y(g[g.length - 1].type)}
+          style="stroke-width:1"
+          stroke="rgb(125,0,0)"
+        />
+      {/each}
 
       {#each groups as g, i}
         {#if group_buy[i] == -1 && group_wait[i] != -1}
