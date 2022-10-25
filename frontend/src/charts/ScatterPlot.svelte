@@ -40,7 +40,7 @@ import { extent } from "d3-array";
 
   function tick_format(d : string) {
     if (d.includes("SPLIT")) return "";
-    else return d.split('#')[0].split('_')[1];
+    else return d.split('#')[0].split('_')[1].substring(0, 6);
   }
 
   // Axes
