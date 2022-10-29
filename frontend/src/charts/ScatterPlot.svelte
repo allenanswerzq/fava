@@ -192,13 +192,10 @@ import { extent } from "d3-array";
       // .tickSize(-innerWidth)
       .tickFormat(tick_format);
 
-    if (count + 1 < person_groups.size)
-    {
+    if (count + 1 < person_groups.size) {
       let xAxis = axisBottom(x).tickSizeOuter(0).tickFormat(d => "");
       group_xAxis.set(person, xAxis);
-    }
-    else
-    {
+    } else {
       let xAxis = axisBottom(x).tickSizeOuter(0);
       group_xAxis.set(person, xAxis);
     }

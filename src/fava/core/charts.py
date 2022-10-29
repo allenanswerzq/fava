@@ -355,6 +355,45 @@ class ChartModule(FavaModule):
             )
 
     @listify
+    def sankey_account(
+        self, filtered: FilteredLedger, interval: Interval, conversion: str
+    ) -> Generator[DateAndBalance, None, None]:
+        import csv
+        file = "/Users/zqjxw73/guava/temp/budget.csv" # todo
+        mp = {}
+        with open(file) as f:
+            for index, row in enumerate(csv.DictReader(f)):
+                if row["First"] != '':
+                    cur = ""
+                    for i, k in enumerate(row.values()):
+                        if len(k) == 0: break
+                        if i > 0: cur += ":"
+                        cur += k
+                        if cur not in mp: mp[cur] = 0
+                        mp[cur] += 1
+
+        root = "Account"
+        nodes = set()
+        links = []
+        nodes.add(root)
+        for k, v in mp.items():
+            t = k.split(":")
+            if len(t) == 1:
+                nodes.add(t[0])
+                links.append([root, k, str(v)])
+                # print(f"Account [{v}] {t[0]}")
+            else:
+                # print(f"{t[-2]} [{v}] {t[-1]}")
+                nodes.add(k)
+                links.append([":".join(x for x in t[:-1]), k, str(v)])
+
+        import json
+
+        json_node = json.dumps(list(nodes))
+        json_link = json.dumps(links)
+        yield {"nodes_ss": json_node, "links_ss": json_link}
+
+    @listify
     def sankey_diagram(
         self, filtered: FilteredLedger, interval: Interval, conversion: str
     ) -> Generator[DateAndBalance, None, None]:
@@ -385,9 +424,10 @@ class ChartModule(FavaModule):
                 txn = next(transactions, None)
 
         root = realization.realize(txn_entries)
-        realization.move_node_up(root, "Expenses:SocialSecurity")
+        # realization.move_node_up(root, "Expenses:SocialSecurity")
+        # realization.move_node_up(root, "Expenses:Housing")
         balance_map = {}
-        balance_map["SocialSecurity"] = 0
+        # balance_map["SocialSecurity"] = 0
         balance_map["Income"] = 0
         balance_map["Expenses"] = 0
         children = realization.iter_children(root)
@@ -396,9 +436,9 @@ class ChartModule(FavaModule):
             balance_map[child.account] = abs(t.get_currency_units("CNY").number)
 
         realization.add_account_node(root, "Connector", "Expenses", balance_map["Expenses"])
-        if balance_map["SocialSecurity"] > 0:
-            realization.add_account_node(root, "Connector", "SocialSecurity", balance_map["SocialSecurity"])
-        savings = (balance_map["Income"] - balance_map["Expenses"] - balance_map["SocialSecurity"])
+        # if balance_map["SocialSecurity"] > 0:
+        #     realization.add_account_node(root, "Connector", "SocialSecurity", balance_map["SocialSecurity"])
+        savings = (balance_map["Income"] - balance_map["Expenses"])
         if savings > 0:
             balance_map["Savings"] = savings
             realization.add_account_node(root, "", "Savings", 0)
@@ -417,7 +457,7 @@ class ChartModule(FavaModule):
             types = (
                 self.ledger.options["name_income"],
                 self.ledger.options["name_expenses"],
-                "SocialSecurity",
+                # "SocialSecurity",
                 "Connector",
                 "Savings"
             )
@@ -425,8 +465,9 @@ class ChartModule(FavaModule):
             return (
                    ("-Balance" not in v) and
                    ("Company" not in v) and
+                   ("Hospital:" not in v) and
                    (
-                    # ("Expenses" in v and len(v.split(":")) <= 3) or
+                    ("Expenses" in v and len(v.split(":")) <= 3) or
                     (len(v.split(":")) <= 2)
                    )
             )
@@ -434,9 +475,11 @@ class ChartModule(FavaModule):
         id_map = {}
         nodes = set()
         links = []
+        mx = 0
         def dfs(real_account, id=100, pre=None):
             # print("DFS", real_account.account, pre)
             nonlocal id_map
+            nonlocal mx
             id_map[real_account.account] = id
             cur = []
             for _, real_child in sorted(real_account.items()):
@@ -446,7 +489,7 @@ class ChartModule(FavaModule):
                         w = balance_map[v]
                     else:
                         w = balance_map[v.split(':')[1]]
-
+                    mx = max(mx, w)
                     cur.append([v, w, real_child])
 
             cur.sort(key=lambda x: (x[1], x[0]), reverse=True)
@@ -458,7 +501,7 @@ class ChartModule(FavaModule):
                 if real_account.account.startswith("Income"):
                     u, v = (v, u)  # swap accounts
 
-                if cur[0][1] > 0 and x[1] / cur[0][1] < 0.005:
+                if mx > 0 and x[1] / mx < 0.00008:
                      continue
 
                 # u --> v
@@ -477,7 +520,7 @@ class ChartModule(FavaModule):
         dfs(root)
 
         for x in links:
-            if "Connector" in x[0]:
+            if "Connector" in x[0] and "Income" in id_map:
                 x[0] = str(id_map["Income"]) + "_" + "Income"
                 r = ''.join(s for s in x[1].split(':')[1])
                 x[1] = str(id_map[r]) + "_" + r

@@ -3,6 +3,9 @@
   import * as Sankey from "d3-sankey";
   import { number } from "../lib/validation";
 
+  import { domHelpers, positionedTooltip } from "./tooltip";
+  import { showPanel } from "@codemirror/view";
+
   const { data, width, height } = getContext("LayerCake");
 
   const stringToColour = (str: string) => {
@@ -20,8 +23,16 @@
 
   /** @type {Function} A function to return a color for the links. */
   export let colorLinks = (d) => {
-    const str = d.source.id + d.target.id;
-    return stringToColour(str);
+    // const str = d.source.id + d.target.id;
+    if (d.source.id.includes("Income")) {
+      const str = d.target.id;
+      return stringToColour(str);
+    }
+    else {
+      // console.log("AAAAAAAAA", d.source.id, d.target.id);
+      const str = d.source.id;
+      return stringToColour(str);
+    }
   };
 
   /** @type {Function} A function to return a color for the node. */
@@ -36,6 +47,20 @@
 
   /** @type {Number} The padding between nodes, passed to [`sankey.nodePadding`](https://github.com/d3/d3-sankey#sankey_nodePadding). */
   export let nodePadding = 10;
+  let rent_max = 0;
+  let exclude_percent = 0.02;
+  $: fontSize = $width <= 320 ? 8 : 12;
+  for (const edge of $data.links) {
+      const value = edge.value;
+      if (edge.target.includes("Rent")) {
+        rent_max = Math.max(rent_max, value);
+      }
+  }
+  if (rent_max < 10000) {
+    nodePadding = 10;
+    fontSize = 18;
+    exclude_percent = 0;
+  }
 
   /** @type {Function} How to sort the links, passed to [`sankey.linkSort`](https://github.com/d3/d3-sankey#sankey_linkSort). */
   //   export let linkSort = null;
@@ -61,8 +86,7 @@
 
   $: link = Sankey.sankeyLinkHorizontal();
 
-  $: fontSize = $width <= 320 ? 8 : 12;
-
+  let node_max = 0;
   const compute_total = (g: typeof $data) => {
     const ans = new Array(g.nodes.length).fill(0);
     const in_degree = new Array(g.nodes.length).fill(0);
@@ -86,6 +110,7 @@
 
       value = ans[target] + edge.value;
       ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
+      node_max = Math.max(node_max, ans[target]);
       //   console.log(edge.source.id, edge.target.id, value, ans[source], ans[target]);
     }
 
@@ -93,6 +118,28 @@
     return ans;
   };
   $: nodes_total = compute_total($data);
+
+  const compute_percent = (g: typeof $data) => {
+    const ans = new Array(g.nodes.length).fill(0);
+    for (const edge of g.links) {
+      let source = edge.source.index;
+      let target = edge.target.index;
+      if (edge.target.id.includes("Income")) {
+        let tmp = target;
+        target = source;
+        source = tmp;
+      }
+      else if (edge.source.id.includes("Income")) {
+        ans[source] = 1;
+      }
+      if (nodes_total[source] > 0) {
+        let value = nodes_total[target] / nodes_total[source];
+        ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
+      }
+    }
+    return ans;
+  };
+  $: nodes_percent = compute_percent($data);
 
   const compute_name = (g: typeof $data) => {
     const ans = new Array(g.nodes.length).fill("");
@@ -105,7 +152,11 @@
         const sp = ss.split("_");
         ss = sp[sp.length - 1];
       }
-      ans[index] = ss;
+      if (n > 2 && nodes_percent[index] < exclude_percent) {
+        ans[index] = "";
+      } else {
+        ans[index] = ss + ": " + nodes_total[index].toFixed(2) + " (" + (nodes_percent[index] * 100).toFixed(0) + "%)";
+      }
     }
     // console.log(ans);
     return ans;
@@ -144,7 +195,7 @@
           ? 'start'
           : 'end'};fill: {colortext(d)};"
       >
-        {nodes_name[d.index] + ": " + nodes_total[d.index]}
+        {nodes_name[d.index]}
       </text>
     {/each}
   </g>

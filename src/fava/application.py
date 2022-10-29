@@ -101,6 +101,7 @@ REPORTS = [
     "query",
     "statistics",
     "trial_balance",
+    "accounts",
 ]
 
 

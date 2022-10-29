@@ -104,8 +104,8 @@ def test_urls(test_client: FlaskClient, url: str, return_code: int) -> None:
         ),
         (
             "/",
-            "trial_balance/?time=2014&account=Expenses:Rent",
-            "/long-example/trial_balance/?time=2014&account=Expenses:Rent",
+            "trial_balance/?time=2014&account=Expenses:Housing:Rent",
+            "/long-example/trial_balance/?time=2014&account=Expenses:Housing:Rent",
         ),
     ],
 )

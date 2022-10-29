@@ -43,6 +43,15 @@
 }) %}
 {% endmacro %}
 
+
+{% macro sankey_account(interval) %}
+{% do chart_data.append({
+'type': 'sankeyplot',
+'label': _('Accounts'),
+'data': ledger.charts.sankey_account(g.filtered, interval, g.conversion),
+}) %}
+{% endmacro %}
+
 {% macro account_balance(account_name, increment_sum=False) %}
 {% do chart_data.append({
 'type': 'balances',
