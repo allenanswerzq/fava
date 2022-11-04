@@ -297,7 +297,7 @@ import { extent } from "d3-array";
           y1={group_y.get(person)(g[group_wait.get(person)[i]].type)}
           x2={width}
           y2={group_y.get(person)(g[group_wait.get(person)[i]].type)}
-          style="stroke:rgb(125,0,0);stroke-width:1"
+          style="stroke-width:1"
           stroke={group_colors.get(person)[i]}
         />
       {:else if group_wait.get(person)[i] == -1 && group_stop.get(person)[i] == -1}

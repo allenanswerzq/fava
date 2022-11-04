@@ -47,19 +47,21 @@
 
   /** @type {Number} The padding between nodes, passed to [`sankey.nodePadding`](https://github.com/d3/d3-sankey#sankey_nodePadding). */
   export let nodePadding = 10;
-  let rent_max = 0;
-  let exclude_percent = 0.02;
+  let expense_count = 0;
+  let exclude_percent = 0.005;
+  let name_map = new Map();
   $: fontSize = $width <= 320 ? 8 : 12;
-  for (const edge of $data.links) {
-      const value = edge.value;
-      if (edge.target.includes("Rent")) {
-        rent_max = Math.max(rent_max, value);
+  for (const node of $data.nodes) {
+      const id = node.id.split(":");
+      if (node.id.includes("Expenses") && id.length > 2) {
+        if (!name_map.has(node.id)) {
+          name_map.set(node.id, 1);
+          expense_count += 1;
+        }
       }
   }
-  if (rent_max < 10000) {
-    nodePadding = 10;
-    fontSize = 18;
-    exclude_percent = 0;
+  if (expense_count < 20) {
+    nodePadding = 20;
   }
 
   /** @type {Function} How to sort the links, passed to [`sankey.linkSort`](https://github.com/d3/d3-sankey#sankey_linkSort). */
@@ -134,7 +136,12 @@
       }
       if (nodes_total[source] > 0) {
         let value = nodes_total[target] / nodes_total[source];
-        ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
+        if (edge.target.id.includes("Expenses") && edge.target.id.split(":").length > 2) {
+          ans[target] = Math.round((value + Number.EPSILON) * 100) / 100 * ans[source];
+        }
+        else {
+          ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
+        }
       }
     }
     return ans;

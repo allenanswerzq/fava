@@ -503,6 +503,8 @@ class ChartModule(FavaModule):
 
                 if mx > 0 and x[1] / mx < 0.00008:
                      continue
+                if "Transport" in v and len(v.split(":")) > 2:
+                    continue
 
                 # u --> v
                 if pre is not None and x[1] > 0:
