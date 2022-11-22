@@ -28,31 +28,16 @@ import { extent } from "d3-array";
   };
 
   let groups:any[] = [];
-  let event_groups:any[] = [];
   let id_map = new Map();
   let id = 0;
-  let plot_insurance = false;
   for (const d of data) {
-    if (!d.type.includes("Insurance_")) {
-      if (id_map.has(d.type)) {
-        let p = id_map.get(d.type);
-        event_groups[p].push(d);
-      }
-      else {
-        id_map.set(d.type, id);
-        event_groups[id++] = [d];
-      }
+    if (id_map.has(d.type)) {
+      let p = id_map.get(d.type);
+      groups[p].push(d);
     }
     else {
-      plot_insurance = true;
-      if (id_map.has(d.type)) {
-        let p = id_map.get(d.type);
-        groups[p].push(d);
-      }
-      else {
-        id_map.set(d.type, id);
-        groups[id++] = [d];
-      }
+      id_map.set(d.type, id);
+      groups[id++] = [d];
     }
   }
 
@@ -63,7 +48,12 @@ import { extent } from "d3-array";
   let person_groups = new Map();
   for (const group of groups) {
     let person = group[0].type.split("-")[0]
-    if (person.includes("Insurance_SPLIT")) continue;
+
+    if (group[0].type[0] == "_") {
+      // NOTE: hack for Event
+      person = "_NormalEvents"
+    }
+
     if (person_groups.has(person)) {
       person_groups.get(person).push(group);
     }
@@ -118,7 +108,7 @@ import { extent } from "d3-array";
         group_stop.set(person, [stop_pos]);
 
       let type = group[0].type.split('#')[1];
-      console.log("AAA", type);
+      // console.log("AAA", type);
       if (type == "团险") {
         if (group_colors.has(person))
           group_colors.get(person).push("rgb(0, 0, 0)");
@@ -183,8 +173,7 @@ import { extent } from "d3-array";
         .range([innerHeight, 0]);
 
     function tick_format(d : string) {
-      if (d.includes("SPLIT")) return "";
-      else return d.split('#')[0].split('_')[1];
+      return d.split('#')[0].split('_')[1];
     }
 
     let yAxis = axisLeft(y)
@@ -222,7 +211,7 @@ import { extent } from "d3-array";
     group_tiptext.set(person, tooltipFindNode);
   }
 
-  console.log(person_groups);
+  console.log("Person", person_groups);
   console.log(group_colors);
 </script>
 
@@ -251,6 +240,18 @@ import { extent } from "d3-array";
     {/each}
 
     {#each groups as g, i}
+      {#if person == "_NormalEvents" }
+        <line
+          x1={x(g[0].date)}
+          y1={group_y.get(person)(g[0].type)}
+          x2={x(g[g.length - 1].date)}
+          y2={group_y.get(person)(g[g.length - 1].type)}
+          style="stroke-width:1"
+          stroke-dasharray="5,5,5"
+          stroke="rgb(125,0,0)"
+        />
+      {/if}
+
       {#if group_buy.get(person)[i] == -1 && group_wait.get(person)[i] != -1}
         <line
           x1=0
