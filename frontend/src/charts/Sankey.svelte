@@ -46,7 +46,7 @@
   export let nodeWidth = 5;
 
   /** @type {Number} The padding between nodes, passed to [`sankey.nodePadding`](https://github.com/d3/d3-sankey#sankey_nodePadding). */
-  export let nodePadding = 10;
+  export let nodePadding = 20;
   let expense_count = 0;
   let exclude_percent = 0.005;
   let name_map = new Map();
@@ -59,9 +59,6 @@
           expense_count += 1;
         }
       }
-  }
-  if (expense_count < 20) {
-    nodePadding = 20;
   }
 
   /** @type {Function} How to sort the links, passed to [`sankey.linkSort`](https://github.com/d3/d3-sankey#sankey_linkSort). */
