@@ -50,7 +50,7 @@
   let expense_count = 0;
   let exclude_percent = 0.005;
   let name_map = new Map();
-  $: fontSize = $width <= 320 ? 8 : 12;
+  $: fontSize = $width <= 320 ? 8 : 11.5;
   for (const node of $data.nodes) {
       const id = node.id.split(":");
       if (node.id.includes("Expenses") && id.length > 2) {
@@ -191,7 +191,7 @@
       />
       <text
         x={d.x0 < $width / 4 ? d.x1 + 6 : d.x0 - 6}
-        y={(d.y1 + d.y0) / 2}
+        y={(d.y1 + d.y0) / 2 - 6}
         dy={fontSize / 2 - 2}
         style="
                             font-size: {fontSize}px;

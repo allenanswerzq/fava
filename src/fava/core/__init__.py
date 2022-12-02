@@ -241,16 +241,21 @@ class FilteredLedger:
         person_cost = 0
         total_cost = 0
         for i, d in enumerate(ret):
-            total_cost += int(d['年保费'])
+            if "退保" not in d['备注']:
+                total_cost += int(d['年保费'])
             # print(d)
             # print(person_cost, total_cost)
             if d['被保险人'] == start:
-                person_cost += int(d['年保费'])
+                if "退保" not in d['备注']:
+                    person_cost += int(d['年保费'])
                 final_ret.append(d)
             else:
                 start = d['被保险人']
                 final_ret.append({'被保险人' : "---", '备注' : str(person_cost)})
-                person_cost = int(d['年保费'])
+                if "退保" not in d['备注']:
+                    person_cost = int(d['年保费'])
+                else:
+                    person_cost = 0
                 final_ret.append(d)
 
         final_ret.append({'被保险人' : "---", '备注' : str(person_cost)})
