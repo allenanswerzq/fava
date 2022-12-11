@@ -509,7 +509,7 @@ class ChartModule(FavaModule):
                     if "Expenses" in v and level > 2 and ratio < 0.004:
                         continue
 
-                    if "Income" in v and ratio < 0.004:
+                    if "Income" in v and ratio < 0.0004:
                         continue
 
                 if "Transport" in v and len(v.split(":")) > 2:

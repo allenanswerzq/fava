@@ -6,6 +6,12 @@
   import { domHelpers, positionedTooltip } from "./tooltip";
   import { showPanel } from "@codemirror/view";
 
+  import { scaleOrdinal } from "d3-scale";
+  import { hclColorRange, } from "./helpers";
+
+  const colors10 = hclColorRange(10);
+  const scatterplotScale = scaleOrdinal(colors10);
+
   const { data, width, height } = getContext("LayerCake");
 
   const stringToColour = (str: string) => {
@@ -23,15 +29,27 @@
 
   /** @type {Function} A function to return a color for the links. */
   export let colorLinks = (d) => {
-    // const str = d.source.id + d.target.id;
-    if (d.source.id.includes("Income")) {
-      const str = d.target.id;
-      return stringToColour(str);
+    let src = d.source.id.includes("Income");
+    let tar = d.target.id.includes("Income");
+    console.log("AAAA", d.source.id, d.target.id);
+    if (src && tar) {
+      // income to income
+      return scatterplotScale(d.source.id);
+    }
+    else if (src) {
+      // income to expense
+      return scatterplotScale(d.target.id);
     }
     else {
-      // console.log("AAAAAAAAA", d.source.id, d.target.id);
-      const str = d.source.id;
-      return stringToColour(str);
+      let tmp = d.source.id.split(":");
+      if (tmp.length == 1) {
+        // expnese to first level expense
+        return scatterplotScale(d.target.id);
+      }
+      else {
+        // first level expense to second level expenses
+        return scatterplotScale(d.source.id);
+      }
     }
   };
 
@@ -175,7 +193,7 @@
         d={link(d)}
         fill="none"
         stroke={colorLinks(d)}
-        stroke-opacity="0.5"
+        stroke-opacity="0.8"
         stroke-width={d.width}
       />
     {/each}
