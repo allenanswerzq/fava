@@ -394,6 +394,52 @@ class ChartModule(FavaModule):
         yield {"nodes_ss": json_node, "links_ss": json_link}
 
     @listify
+    def two_sides(self, filtered: FilteredLedger, interval: Interval, conversion: str) -> Generator[DateAndBalance, None, None]:
+        transactions = (
+            entry
+            for entry in filtered.entries
+            if (
+                isinstance(entry, Transaction)
+                and entry.flag != FLAG_UNREALIZED
+            )
+        )
+
+        root = realization.realize(transactions)
+        children = realization.iter_children(root)
+        balance_map = {}
+        for child in children:
+            t = realization.compute_balance(child)
+            balance_map[child.account] = abs(t.get_currency_units("CNY").number)
+
+        assets = []
+        others = []
+        for k, v in balance_map.items():
+            if v <= 0: continue
+            if "Income" in k: continue
+            if "Expenses" in k: continue
+            if "-Balance" in k: continue
+
+            if "Assets" in k:
+                if len(k.split(":")) == 2:
+                    assets.append({"account":k, "value" : str(v)})
+            else:
+                print(k)
+                assert "Income" not in k, "{}".format(k)
+                if len(k.split(":")) == 2:
+                    others.append({"account":k, "value" : str(v)})
+
+        print(assets)
+
+        print("\n\n\n")
+        print(others)
+
+        import json
+        assets_ss = json.dumps(assets)
+        others_ss = json.dumps(others)
+        yield {"assets_ss": assets_ss, "others_ss": others_ss}
+
+
+    @listify
     def sankey_diagram(
         self, filtered: FilteredLedger, interval: Interval, conversion: str
     ) -> Generator[DateAndBalance, None, None]:
@@ -424,10 +470,7 @@ class ChartModule(FavaModule):
                 txn = next(transactions, None)
 
         root = realization.realize(txn_entries)
-        # realization.move_node_up(root, "Expenses:SocialSecurity")
-        # realization.move_node_up(root, "Expenses:Housing")
         balance_map = {}
-        # balance_map["SocialSecurity"] = 0
         balance_map["Income"] = 0
         balance_map["Expenses"] = 0
         children = realization.iter_children(root)
@@ -436,8 +479,6 @@ class ChartModule(FavaModule):
             balance_map[child.account] = abs(t.get_currency_units("CNY").number)
 
         realization.add_account_node(root, "Connector", "Expenses", balance_map["Expenses"])
-        # if balance_map["SocialSecurity"] > 0:
-        #     realization.add_account_node(root, "Connector", "SocialSecurity", balance_map["SocialSecurity"])
         savings = (balance_map["Income"] - balance_map["Expenses"])
         if savings > 0:
             balance_map["Savings"] = savings

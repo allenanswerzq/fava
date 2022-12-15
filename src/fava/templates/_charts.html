@@ -43,6 +43,13 @@
 }) %}
 {% endmacro %}
 
+{% macro two_sides(innteval) %}
+{% do chart_data.append({
+'type': 'twosidesplot',
+'label': _('TwoSides'),
+'data': ledger.charts.two_sides(g.filtered, interval, g.conversion),
+}) %}
+{% endmacro %}
 
 {% macro sankey_account(interval) %}
 {% do chart_data.append({

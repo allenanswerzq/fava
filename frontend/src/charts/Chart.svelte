@@ -20,6 +20,7 @@
   import ModeSwitch from "./ModeSwitch.svelte";
   import SankeyPlot from "./SankeyPlot.svelte";
   import ScatterPlot from "./ScatterPlot.svelte";
+  import TwoSidesPlot from "./TwoSidesPlot.svelte";
 
   import type { NamedChartTypes } from ".";
 
@@ -50,6 +51,7 @@
     linechart: LineChart,
     scatterplot: ScatterPlot,
     sankeyplot: SankeyPlot,
+    twosidesplot: TwoSidesPlot,
   };
 </script>
 

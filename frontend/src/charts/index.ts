@@ -20,6 +20,8 @@ import { scatterplot } from "./scatterplot";
 import type { ScatterPlot } from "./scatterplot";
 import { sankeyplot } from "./sankeyplot";
 import type { SankeyPlot } from "./sankeyplot";
+import { twosidesplot } from "./twosidesplot";
+import type { TwoSidesPlot } from "./twosidesplot";
 
 const parsers: Partial<
   Record<
@@ -37,6 +39,7 @@ const parsers: Partial<
   hierarchy,
   scatterplot,
   sankeyplot,
+  twosidesplot,
 };
 
 export type ChartTypes =
@@ -44,7 +47,8 @@ export type ChartTypes =
   | BarChart
   | ScatterPlot
   | LineChart
-  | SankeyPlot;
+  | SankeyPlot
+  | TwoSidesPlot;
 export type NamedChartTypes = ChartTypes & { name?: string };
 
 const chart_data_validator = array(
