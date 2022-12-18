@@ -429,7 +429,6 @@ class ChartModule(FavaModule):
                     others.append({"account":k, "value" : str(v)})
 
         print(assets)
-
         print("\n\n\n")
         print(others)
 
@@ -473,6 +472,7 @@ class ChartModule(FavaModule):
         balance_map = {}
         balance_map["Income"] = 0
         balance_map["Expenses"] = 0
+        balance_map["Savings"] = 0
         children = realization.iter_children(root)
         for child in children:
             t = realization.compute_balance(child)
@@ -483,8 +483,10 @@ class ChartModule(FavaModule):
         if savings > 0:
             balance_map["Savings"] = savings
             realization.add_account_node(root, "", "Savings", 0)
-            # realization.add_account_node(root, "Savings", "BIG", savings)
             realization.add_account_node(root, "Connector", "Savings", savings)
+        elif balance_map["Income"] == 0:
+            # Fake income to make rendering sankey graph work correct
+            realization.add_account_node(root, "Income", "Fake", 1)
 
         children = realization.iter_children(root)
         for child in children:
@@ -570,6 +572,8 @@ class ChartModule(FavaModule):
                 dfs(x[2], id=id_map[x[0]], pre=real_account.account)
 
         dfs(root)
+        print(nodes)
+        print(links)
 
         for x in links:
             if "Connector" in x[0] and "Income" in id_map:
