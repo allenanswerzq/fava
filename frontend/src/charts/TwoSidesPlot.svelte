@@ -6,11 +6,11 @@
 
   export let data: TwoSidesPlot["data"];
   export let width: number;
-  export let tooltipText: TwoSidesPlot["tooltipText"];
+  // export let tooltipText: TwoSidesPlot["tooltipText"];
 
   const height = 250;
   const fontSize = 10;
-  export let colortext = (d) => "#263238";
+  // export let colortext = (d) => "#263238";
 
   $: assets = data.others;
   $: others = data.assets;

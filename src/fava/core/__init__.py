@@ -204,6 +204,7 @@ class FilteredLedger:
             else:
                 not_insurance.append(e)
         if insurance:
+            is_insurance.sort(key=lambda x : x.type)
             return is_insurance
         elif event_type:
             return [event for event in events if event.type == event_type]
@@ -233,9 +234,10 @@ class FilteredLedger:
                 cur['细分类型'] = meta["policy_subtype"]
                 cur['产品'] = meta["policy_product"]
                 cur['备注'] = meta["memo"]
+                cur['buy_count'] = meta["buy_count"]
                 # print(meta)
                 ret.append(cur)
-        ret.sort(key=lambda x : [x.get('被保险人'), x.get('保障类型')])
+        ret.sort(key=lambda x : [x.get('buy_count')])
         final_ret = []
         start = ret[0]['被保险人']
         person_cost = 0

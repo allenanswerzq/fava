@@ -47,7 +47,8 @@ import { extent } from "d3-array";
 
   let person_groups = new Map();
   for (const group of groups) {
-    let person = group[0].type.split("-")[0]
+    // 2021-12-19 event "13-Insurance_妈妈-360医疗补充#医疗" "buy"
+    let person = group[0].type.split("-")[1]
 
     if (group[0].type[0] == "_") {
       // NOTE: hack for Event
@@ -148,6 +149,7 @@ import { extent } from "d3-array";
     }
   }
 
+  console.log(person_groups);
   console.log(groups);
   console.log(group_wait);
   console.log(group_buy)
@@ -167,12 +169,16 @@ import { extent } from "d3-array";
         cur_data.push(d);
     }
 
+    // Reverse here so that the order on the graph is correct
+    cur_data.reverse();
+
     let y = scalePoint()
         .padding(1)
         .domain(cur_data.map((d) => d.type))
         .range([innerHeight, 0]);
 
     function tick_format(d : string) {
+    // 2021-12-19 event "13-Insurance_妈妈-360医疗补充#医疗" "buy"
       return d.split('#')[0].split('_')[1];
     }
 
