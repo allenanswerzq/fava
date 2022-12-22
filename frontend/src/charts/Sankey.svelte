@@ -1,6 +1,8 @@
 <script lang="ts">
   import { getContext } from "svelte";
   import * as Sankey from "d3-sankey";
+  import { urlForAccount } from "../helpers";
+  import router from "../router";
   import { number } from "../lib/validation";
 
   import { domHelpers, positionedTooltip } from "./tooltip";
@@ -8,6 +10,9 @@
 
   import { scaleOrdinal } from "d3-scale";
   import { hclColorRange, } from "./helpers";
+
+  /** The currently hovered account. */
+  let highlighted: string | null = null;
 
   const colors10 = hclColorRange(10);
   const scatterplotScale = scaleOrdinal(colors10);
@@ -31,7 +36,7 @@
   export let colorLinks = (d) => {
     let src = d.source.id.includes("Income");
     let tar = d.target.id.includes("Income");
-    console.log("AAAA", d.source.id, d.target.id);
+    // console.log("AAAA", d.source.id, d.target.id);
     if (src && tar) {
       // income to income
       return scatterplotScale(d.source.id);
@@ -184,18 +189,65 @@
     return ans;
   };
   $: nodes_name = compute_name($data);
+
+  const compute_accounts_name = (g: typeof $data) => {
+    const ans = new Array(g.nodes.length).fill("");
+    for (const node of g.nodes) {
+      const index = node.index;
+      const id = node.id.split("_");
+      ans[index] = id[id.length - 1];
+    }
+    return ans;
+  };
+  $: accounts_name = compute_accounts_name($data);
 </script>
 
 <g class="sankey-layer">
-  <g class="link-group">
+  <g class="link-group" >
     {#each sankeyData.links as d}
-      <path
-        d={link(d)}
-        fill="none"
-        stroke={colorLinks(d)}
-        stroke-opacity="0.8"
-        stroke-width={d.width}
-      />
+      {#if d.target.id.includes("Income")}
+        <path class:faded={highlighted && highlighted != d.source.id}
+          d={link(d)}
+          fill="none"
+          stroke={colorLinks(d)}
+          stroke-opacity="0.8"
+          stroke-width={d.width}
+          on:mouseover={() => {
+            highlighted = d.source.id;
+          }}
+          on:focus={() => {
+            highlighted = d.source.id;
+          }}
+          on:mouseout={() => {
+            highlighted = null;
+          }}
+          on:blur={() => {
+            highlighted = null;
+          }}
+          on:click={() => router.navigate(urlForAccount(accounts_name[d.source.index]))}
+        />
+      {:else}
+        <path class:faded={highlighted && highlighted != d.target.id}
+          d={link(d)}
+          fill="none"
+          stroke={colorLinks(d)}
+          stroke-opacity="0.8"
+          stroke-width={d.width}
+          on:mouseover={() => {
+            highlighted = d.target.id;
+          }}
+          on:focus={() => {
+            highlighted = d.target.id;
+          }}
+          on:mouseout={() => {
+            highlighted = null;
+          }}
+          on:blur={() => {
+            highlighted = null;
+          }}
+          on:click={() => router.navigate(urlForAccount(accounts_name[d.target.index]))}
+        />
+      {/if}
     {/each}
   </g>
   <g class="rect-group">
@@ -204,7 +256,7 @@
         x={d.x0}
         y={d.y0}
         height={d.y1 - d.y0}
-        width={d.x1 - d.x0}
+        width={d.x1 - d.x0 + 4}
         fill={colorNodes(d)}
       />
       <text
@@ -212,8 +264,8 @@
         y={(d.y1 + d.y0) / 2 - 6}
         dy={fontSize / 2 - 2}
         style="
-                            font-size: {fontSize}px;
-                            text-anchor: {d.x0 < $width / 4
+          font-size: {fontSize}px;
+          text-anchor: {d.x0 < $width / 4
           ? 'start'
           : 'end'};fill: {colortext(d)};"
       >
@@ -226,5 +278,9 @@
 <style>
   text {
     pointer-events: none;
+  }
+
+  .faded {
+    opacity: 0.5;
   }
 </style>
