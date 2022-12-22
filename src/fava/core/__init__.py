@@ -564,7 +564,7 @@ class FavaLedger:
         else:
             postings = real_account.txn_postings
 
-        ans = [
+        return [
             (entry, postings_, copy.copy(change), copy.copy(balance))
             for (
                 entry,
@@ -573,17 +573,6 @@ class FavaLedger:
                 balance,
             ) in realization.iterate_with_balance(postings)
         ]
-
-        # TODO: fix running balance issue
-        def sort_key(x):
-            entry = x[0]
-            if isinstance(entry, Transaction):
-                return str(entry.date) + entry.narration
-            else:
-                return str(entry.date)
-
-        ans.sort(key=sort_key)
-        return ans
 
     def get_entry(self, entry_hash: str) -> Directive:
         """Find an entry.
