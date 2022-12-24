@@ -20,12 +20,14 @@ from beancount.core.display_context import DisplayContext
 from beancount.core.inventory import Inventory
 from beancount.core.number import Decimal
 from beancount.core.position import Position
+from beancount.core.position import from_string
 from simplejson import JSONEncoder
 from simplejson import loads
 
 from fava.core._compat import FLAG_UNREALIZED
 from fava.core.conversion import cost_or_value
 from fava.core.conversion import units
+from fava.core.conversion import get_market_value
 from fava.core.module_base import FavaModule
 from fava.core.tree import SerialisedTreeNode
 from fava.core.tree import Tree
@@ -474,12 +476,25 @@ class ChartModule(FavaModule):
         balance_map["Expenses"] = 0
         balance_map["Savings"] = 0
         children = realization.iter_children(root)
+        total_usd_inventory = None
         for child in children:
             t = realization.compute_balance(child)
+            # if t.get_currency_units("USD").number != 0 and child.account == "Income":
+            #     total_usd_inventory = t
             balance_map[child.account] = abs(t.get_currency_units("CNY").number)
 
+        def get_dollor(inv):
+            if inv is None: return (Decimal('0'), Decimal('0'))
+            usd = inv.get_currency_units("USD").number
+            before = inv.get_currency_units("CNY").number
+            after = inv_to_dict(cost_or_value(inv, "CNY", self.ledger.price_map))["CNY"]
+            return (abs(usd), abs(after - before))
+
+        usd, cny = get_dollor(total_usd_inventory)
+        realization.add_account_node(root, "Income", "USD", cny)
+
         realization.add_account_node(root, "Connector", "Expenses", balance_map["Expenses"])
-        savings = (balance_map["Income"] - balance_map["Expenses"])
+        savings = (balance_map["Income"] - balance_map["Expenses"] + cny)
         if savings > 0:
             balance_map["Savings"] = savings
             realization.add_account_node(root, "", "Savings", 0)
@@ -492,8 +507,6 @@ class ChartModule(FavaModule):
         for child in children:
             t = realization.compute_balance(child)
             balance_map[child.account] = abs(t.get_currency_units("CNY").number)
-
-        # print(balance_map)
 
         def check_account(u, v):
             # Whether include this account in the sankey graph.
@@ -519,6 +532,7 @@ class ChartModule(FavaModule):
         nodes = set()
         links = []
         mx = 0
+        small_income = 0
         def dfs(real_account, id=100, pre=None):
             # print("DFS", real_account.account, pre)
             nonlocal id_map
@@ -545,16 +559,22 @@ class ChartModule(FavaModule):
                     u, v = (v, u)  # swap accounts
 
                 # NOTE: Prune links that are less than a percent
-                level = len(v.split(":"))
-                ratio = x[1] / mx
                 if mx > 0:
-                    # print(u, v, level, ratio)
+                    ratio = x[1] / mx
+                    level = len(v.split(":"))
+
                     if "Expenses" in v and level > 2 and ratio < 0.004:
                         continue
 
-                    if "Income" in v and ratio < 0.0004:
+                    if "Income" in v and ratio < 0.001:
+                        if len(u.split(":")) == 2:
+                            nonlocal small_income
+                            small_income += x[1]
+                        else:
+                            print(f"Ignore very samll income {u}")
                         continue
 
+                # Collapse Expense:Transport:* account
                 if "Transport" in v and len(v.split(":")) > 2:
                     continue
 
@@ -572,8 +592,14 @@ class ChartModule(FavaModule):
                 dfs(x[2], id=id_map[x[0]], pre=real_account.account)
 
         dfs(root)
-        print(nodes)
-        print(links)
+
+        nodes.add("800020101_Income:SmallIncome")
+        links.append(
+            ["800020101_Income:SmallIncome",
+              str(id_map["Income"]) + "_" + "Income", str(small_income)])
+
+        # print(nodes)
+        # print(links)
 
         for x in links:
             if "Connector" in x[0] and "Income" in id_map:
