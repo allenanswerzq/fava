@@ -499,7 +499,8 @@ class ChartModule(FavaModule):
             balance_map["Savings"] = savings
             realization.add_account_node(root, "", "Savings", 0)
             realization.add_account_node(root, "Connector", "Savings", savings)
-        elif balance_map["Income"] == 0:
+
+        if balance_map["Income"] < 10:
             # Fake income to make rendering sankey graph work correct
             realization.add_account_node(root, "Income", "Fake", 1)
 
