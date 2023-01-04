@@ -149,3 +149,43 @@ Hold Ctrl or Cmd while clicking to expand one level.') }}">
 </ol>
 </tree-table>
 {% endmacro %}
+
+{% macro budget_tree(root=None) %}
+<tree-table>
+<ol class="flex-table tree-table" title="{{ _('Hold Shift while clicking to expand all children.
+Hold Ctrl or Cmd while clicking to expand one level.') }}">
+  <li class="head">
+    <p>
+      <span class="account-cell"><button type="button" class="link expand-all hidden" title="{{ _('Expand all accounts') }}">{{ _('Expand all') }}</button></span>
+      <span class="num">{{ _('Budget') }} </span>
+      <span class="num other">{{ _('Actual') }}</span>
+    </p>
+  </li>
+  {% for account in [ root ] if account recursive %}
+  {% set budget = account.node_.budget %}
+  {% set actual = account.node_.actual %}
+  <li{{ ' class=toggled' if account.node_.name|collapse_account else '' }}>
+    <p{{ ' class=has-balance'  }}>
+    <span class="account-cell depth-{{ loop.depth0 }} droptarget{{ ' has-children' if account.children_ else '' }}" data-account-name="{{ account.node_.name }}">
+      {% set account_name = account.node_.name %}
+      <a href="{{ url_for('account', name=account_name) }}" class="account">
+        {{- account_name -}}
+      </a>
+    </span>
+    <span class="num">
+      <span class="budget">{{ budget }}</span>
+    </span>
+    <span class="num other">
+      <span class="actual"> {{ actual }} </span>
+    </span>
+    </p>
+    {% if account.children_ %}
+    <ol>
+      {{ loop(account.children_|sort(attribute='name')) }}
+    </ol>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+</tree-table>
+{% endmacro %}

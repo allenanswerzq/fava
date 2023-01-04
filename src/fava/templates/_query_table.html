@@ -46,7 +46,7 @@
 {% endif %}
 {% endmacro %}
 
-{% macro querytable(ledger, contents, types, rows, filter_empty=None, footer=None) %}
+{% macro querytable(ledger, contents, types, rows, filter_empty=None, footer=None, skip_if_zero=None) %}
 {% if contents %}
 <pre><code>{{ contents }}</code></pre>
 {% elif types %}
@@ -59,12 +59,16 @@
     </tr>
   </thead>
   <tbody>
-    {% for row in rows if filter_empty == None or not row[filter_empty].is_empty() %}
-    <tr>
-      {% for name, type in types %}
-      {{ querycell(ledger, name, row[name], type)  }}
-      {% endfor %}
-    </tr>
+    {% for row in rows %}
+      {% set ok1 = skip_if_zero == None or not row[skip_if_zero] == 0 %}
+      {% set ok2 = filter_empty == None or not row[filter_empty].is_empty() %}
+      {% if ok1 and ok2 %}
+        <tr>
+          {% for name, type in types %}
+          {{ querycell(ledger, name, row[name], type)  }}
+          {% endfor %}
+        </tr>
+      {% endif %}
     {% endfor %}
   </tbody>
   {% if footer %}
