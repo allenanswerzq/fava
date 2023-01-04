@@ -68,6 +68,20 @@
     .domain(accounts)
     .range(hclColorRange(accounts.length));
 
+  $: colorRect = (d) => {
+    let ok1 = d.includes("-budget");
+    let ok2 = d.includes("-actual");
+    if (ok1) {
+      return "#3399ff";
+    }
+    else if (ok2) {
+      return "#ff4d94";
+    }
+    else {
+      return colorScale(d);
+    }
+  };
+
   const legend: Writable<[string, string][]> = getContext("chart-legend");
   $: legend.set(
     showStackedBars
@@ -146,7 +160,7 @@
                 x={(x0(bar.data.label) ?? 0) + (x1(currency) ?? 0)}
                 y={y(Math.max(bar[0], bar[1]))}
                 height={Math.abs(y(bar[1]) - y(bar[0]))}
-                fill={colorScale(account)}
+                fill={colorRect(account)}
                 on:mouseover={() => {
                   highlighted = account;
                 }}

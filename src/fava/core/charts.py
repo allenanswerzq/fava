@@ -163,6 +163,31 @@ class ChartModule(FavaModule):
                 yield base, quote, prices
 
     @listify
+    def interval_budget(
+        self,
+        filtered: FilteredLedger,
+        interval: Interval,
+        extension,
+        node: str,
+        conversion: str = None,
+        invert: bool = False,
+    ) -> Generator[DateAndBalanceWithBudget, None, None]:
+        """Renders totals for account (or accounts) in the intervals.
+
+        Args:
+            interval: An interval.
+            accounts: A single account (str) or a tuple of accounts.
+            conversion: The conversion to use.
+            invert: invert all numbers.
+        """
+        ans = extension.get_budget_tree().interval_budget(node)
+        assert ans
+        for x in ans:
+            (begin, balance, account_balances, _) = x
+            yield DateAndBalanceWithBudget( begin, balance, account_balances, {})
+
+
+    @listify
     def interval_totals(
         self,
         filtered: FilteredLedger,
@@ -439,6 +464,32 @@ class ChartModule(FavaModule):
         others_ss = json.dumps(others)
         yield {"assets_ss": assets_ss, "others_ss": others_ss}
 
+
+    @listify
+    def sankey_budget(
+        self, filtered: FilteredLedger, interval: Interval, conversion: str,
+        extension, node
+    ) -> Generator[DateAndBalance, None, None]:
+        """Compute the money flow.
+
+        Args:
+            interval: A string for the interval.
+            conversion: The conversion to use.
+
+        Returns:
+            A list of dicts for all ends of the given interval containing the
+            net worth (Assets + Liabilities) separately converted to all
+            operating currencies.
+        """
+        import json
+        (nodes, links) = extension.get_budget_tree().sankey_budget(node)
+        print(nodes)
+        for x in links:
+            print(x)
+
+        json_node = json.dumps(list(nodes))
+        json_link = json.dumps(links)
+        yield {"nodes_ss": json_node, "links_ss": json_link}
 
     @listify
     def sankey_diagram(
