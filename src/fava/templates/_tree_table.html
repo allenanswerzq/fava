@@ -159,16 +159,18 @@ Hold Ctrl or Cmd while clicking to expand one level.') }}">
       <span class="account-cell"><button type="button" class="link expand-all hidden" title="{{ _('Expand all accounts') }}">{{ _('Expand all') }}</button></span>
       <span class="num">{{ _('Budget') }} </span>
       <span class="num other">{{ _('Actual') }}</span>
+      <span class="num other">{{ _('Available') }}</span>
     </p>
   </li>
   {% for account in [ root ] if account recursive %}
-  {% set budget = account.node_.budget %}
-  {% set actual = account.node_.actual %}
+  {% set budget = account.node_.budget | float %}
+  {% set actual = account.node_.actual | float %}
+  {% set activity = "%.2f"|format(budget - actual) %}
   <li{{ ' class=toggled' if account.node_.name|collapse_account else '' }}>
     <p{{ ' class=has-balance'  }}>
     <span class="account-cell depth-{{ loop.depth0 }} droptarget{{ ' has-children' if account.children_ else '' }}" data-account-name="{{ account.node_.name }}">
       {% set account_name = account.node_.name %}
-      <a href="{{ url_for('account', name=account_name) }}" class="account">
+      <a href="{{ url_for('extension_report', report_name='EnvelopeBudget', node_name=account_name) }}" class="account">
         {{- account_name -}}
       </a>
     </span>
@@ -176,12 +178,15 @@ Hold Ctrl or Cmd while clicking to expand one level.') }}">
       <span class="budget">{{ budget }}</span>
     </span>
     <span class="num other">
-      <span class="actual"> {{ actual }} </span>
+      <span class="actual"> {{ actual * -1 }} </span>
+    </span>
+    <span class="num other">
+      <span class="activity"> {{ activity }} </span>
     </span>
     </p>
     {% if account.children_ %}
     <ol>
-      {{ loop(account.children_|sort(attribute='name')) }}
+      {{ loop(account.children_|sort(attribute='node_.name')|reverse) }}
     </ol>
     {% endif %}
   </li>
