@@ -92,10 +92,24 @@
           .map((c) => [c, $currenciesScale(c)])
   );
 
+  function tick_format(d : string, i) {
+    if (!data.hasBudgetData) return d;
+    let key = data.stacks[0][1][2 * i].key;
+    key = key.split("-actual")[0];
+    let key_ss = key.split(":");
+    if (key_ss.length == 1) return key_ss[0];
+    let ans = "";
+    for (let i = 1; i < key_ss.length; i++) {
+      if (i > 1) ans += ":";
+      ans += key_ss[i];
+    }
+    return ans;
+  }
+
   // Axes
   $: xAxis = axisBottom(x0)
     .tickSizeOuter(0)
-    .tickValues(filterTicks(x0.domain(), innerWidth / 70));
+    .tickValues(filterTicks(x0.domain(), innerWidth / 70)).tickFormat(tick_format);
   $: yAxis = axisLeft(y).tickSize(-innerWidth).tickFormat($ctx.short);
 </script>
 

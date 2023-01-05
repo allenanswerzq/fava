@@ -184,6 +184,7 @@ class ChartModule(FavaModule):
         assert ans
         for x in ans:
             (begin, balance, account_balances, _) = x
+            print(x)
             yield DateAndBalanceWithBudget( begin, balance, account_balances, {})
 
 

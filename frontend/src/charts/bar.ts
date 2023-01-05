@@ -4,7 +4,7 @@ import { stack, stackOffsetDiverging } from "d3-shape";
 import type { FormatterContext } from "../format";
 import { ok } from "../lib/result";
 import type { Result } from "../lib/result";
-import { array, date, number, object, record } from "../lib/validation";
+import { array, boolean, date, number, object, record } from "../lib/validation";
 
 import type { ChartContext } from "./context";
 import type { TooltipContent } from "./tooltip";
@@ -39,6 +39,8 @@ export interface BarChart {
     stacks: [currency: string, stacks: Series<BarChartDatum, string>[]][];
     /** Whether this chart contains any stacks (or is just a single account). */
     hasStackedData: boolean;
+    /** Whether this chart contains any stacks (or is just a single account). */
+    hasBudgetData: boolean;
   };
   tooltipText: (
     c: FormatterContext,
@@ -78,10 +80,21 @@ export function bar(
     label: dateFormat(interval.date),
     account_balances: interval.account_balances,
   }));
-  const accounts = Array.from(
+  var accounts = Array.from(
     new Set(parsedData.map((d) => [...Object.keys(d.account_balances)]).flat(2))
-  ).sort();
+  );
   const hasStackedData = accounts.length > 1;
+
+  var hasBudgetData = false;
+  for (var acc of accounts) {
+    if (acc.includes("-budget")) {
+      hasBudgetData = true;
+      break;
+    }
+  }
+  if (!hasBudgetData) {
+    accounts.sort();
+  }
 
   const stacks = currencies.map(
     (currency): [string, Series<BarChartDatum, string>[]] => [
@@ -95,7 +108,7 @@ export function bar(
 
   return ok({
     type: "barchart" as const,
-    data: { accounts, bar_groups, stacks, hasStackedData },
+    data: { accounts, bar_groups, stacks, hasStackedData, hasBudgetData},
     tooltipText: (c, d, e) => {
       const content: TooltipContent = [];
       if (e === "") {
