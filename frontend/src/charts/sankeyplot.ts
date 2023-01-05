@@ -2,6 +2,7 @@ import { ok } from "../lib/result";
 import type { Result } from "../lib/result";
 import {
   array,
+  boolean,
   date,
   number,
   object,
@@ -22,6 +23,7 @@ export type SankeyPlotLink = {
 export type SankeyPlotData = {
   nodes: SankeyPlotNode[];
   links: SankeyPlotLink[];
+  budget_actual: SankeyPlotLink[];
 };
 export interface SankeyPlot {
   type: "sankeyplot";
@@ -40,7 +42,7 @@ export function sankeyplot(json: undefined): Result<SankeyPlot, string> {
   }
   const parsedData = res.value;
   // Define data and initialize
-  let data: SankeyPlotData = { nodes: [], links: [] };
+  let data: SankeyPlotData = { nodes: [], links: [], budget_actual : []};
   for (const { nodes_ss, links_ss } of parsedData) {
     let nodes = JSON.parse(nodes_ss);
     for (const node of nodes) {
@@ -48,14 +50,19 @@ export function sankeyplot(json: undefined): Result<SankeyPlot, string> {
     }
     let links = JSON.parse(links_ss);
     for (const link of links) {
-      // console.log(link[0], link[1], link[2])
-      // if (link[0] == "Expenses")
-      //   continue
+      let val_ss = link[2].split(' ');
       data.links.push({
         source: link[0],
         target: link[1],
-        value: Number(link[2]),
+        value: Number(val_ss[0]),
       });
+      if (val_ss.length == 2) {
+        data.budget_actual.push({
+          source: link[0],
+          target: link[1],
+          value: Number(val_ss[1]),
+        });
+      }
     }
     // console.log(data)
     // console.log(nodes);

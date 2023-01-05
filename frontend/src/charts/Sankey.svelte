@@ -70,19 +70,8 @@
 
   /** @type {Number} The padding between nodes, passed to [`sankey.nodePadding`](https://github.com/d3/d3-sankey#sankey_nodePadding). */
   export let nodePadding = 20;
-  let expense_count = 0;
   let exclude_percent = 0.005;
-  let name_map = new Map();
   $: fontSize = $width <= 320 ? 8 : 11.5;
-  for (const node of $data.nodes) {
-      const id = node.id.split(":");
-      if (node.id.includes("Expenses") && id.length > 2) {
-        if (!name_map.has(node.id)) {
-          name_map.set(node.id, 1);
-          expense_count += 1;
-        }
-      }
-  }
 
   /** @type {Function} How to sort the links, passed to [`sankey.linkSort`](https://github.com/d3/d3-sankey#sankey_linkSort). */
   //   export let linkSort = null;
@@ -168,6 +157,22 @@
   };
   $: nodes_percent = compute_percent($data);
 
+
+  const compute_budget_actual = (g: typeof $data) => {
+    let name_index_map = new Map();
+    for (const edge of g.links) {
+      let target = edge.target;
+      name_index_map.set(target.id, target.index);
+    }
+    const actual = new Array(g.nodes.length).fill(0);
+    for (const edge of g.budget_actual) {
+      let target = name_index_map.get(edge.target);
+      actual[target] = edge.value;
+    }
+    return actual;
+  };
+  $: nodes_actual = compute_budget_actual($data);
+
   const compute_name = (g: typeof $data) => {
     const ans = new Array(g.nodes.length).fill("");
     for (const node of g.nodes) {
@@ -179,10 +184,20 @@
         const sp = ss.split("_");
         ss = sp[sp.length - 1];
       }
-      if (n > 2 && nodes_percent[index] < exclude_percent) {
-        ans[index] = "";
-      } else {
-        ans[index] = ss + ": " + nodes_total[index].toFixed(2) + " (" + (nodes_percent[index] * 100).toFixed(0) + "%)";
+      if (g.budget_actual.length == 0) {
+        if (n > 2 && nodes_percent[index] < exclude_percent) {
+          ans[index] = "";
+        } else {
+          ans[index] = ss + ": ";
+          ans[index] += nodes_total[index].toFixed(2);
+          ans[index] += " (" + (nodes_percent[index] * 100).toFixed(0) + "%)";
+        }
+      }
+      else {
+        ans[index] = node.id.split("_")[1] + " [";
+        ans[index] += nodes_total[index].toFixed(2) + "/";
+        ans[index] += nodes_actual[index].toFixed(2) + "]";
+        ans[index] += " (" + (nodes_percent[index] * 100).toFixed(0) + "%)";
       }
     }
     // console.log(ans);

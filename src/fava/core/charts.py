@@ -168,7 +168,6 @@ class ChartModule(FavaModule):
         filtered: FilteredLedger,
         interval: Interval,
         extension,
-        node: str,
         conversion: str = None,
         invert: bool = False,
     ) -> Generator[DateAndBalanceWithBudget, None, None]:
@@ -180,11 +179,10 @@ class ChartModule(FavaModule):
             conversion: The conversion to use.
             invert: invert all numbers.
         """
-        ans = extension.get_budget_tree().interval_budget(node)
+        ans = extension.get_budget_tree().interval_budget(filtered)
         assert ans
         for x in ans:
             (begin, balance, account_balances, _) = x
-            print(x)
             yield DateAndBalanceWithBudget( begin, balance, account_balances, {})
 
 
@@ -469,7 +467,7 @@ class ChartModule(FavaModule):
     @listify
     def sankey_budget(
         self, filtered: FilteredLedger, interval: Interval, conversion: str,
-        extension, node
+        extension, node=None
     ) -> Generator[DateAndBalance, None, None]:
         """Compute the money flow.
 
@@ -483,10 +481,10 @@ class ChartModule(FavaModule):
             operating currencies.
         """
         import json
-        (nodes, links) = extension.get_budget_tree().sankey_budget(node)
-        print(nodes)
-        for x in links:
-            print(x)
+        (nodes, links) = extension.get_budget_tree().sankey_budget(filtered, node=node)
+        # print(nodes)
+        # for x in links:
+        #     print(x)
 
         json_node = json.dumps(list(nodes))
         json_link = json.dumps(links)
