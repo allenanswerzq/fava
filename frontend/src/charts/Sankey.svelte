@@ -194,9 +194,12 @@
         }
       }
       else {
-        ans[index] = node.id.split("_")[1] + " [";
+        ans[index] = node.id.split("_")[1]
+        ans[index] += " [";
         ans[index] += nodes_total[index].toFixed(2) + "/";
-        ans[index] += nodes_actual[index].toFixed(2) + "]";
+        // ans[index] += nodes_actual[index].toFixed(2)
+        ans[index] += (nodes_total[index] - nodes_actual[index]).toFixed(2);
+        ans[index] += "]";
         ans[index] += " (" + (nodes_percent[index] * 100).toFixed(0) + "%)";
       }
     }

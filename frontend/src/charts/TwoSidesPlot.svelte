@@ -48,7 +48,6 @@
       y={yScale(asset.account)}
       width={xScale(asset.value)}
       height={yScale.bandwidth()}
-      in:fly={{ x: -200, duration: 1000, delay: i * 50 }}
     />
 
     <!-- <text
@@ -65,7 +64,6 @@
       y={bScale(other.account)}
       width={aScale(other.value)}
       height={bScale.bandwidth()}
-      in:fly={{ x: -200, duration: 1000, delay: i * 50 }}
     />
 
     <!-- <text
