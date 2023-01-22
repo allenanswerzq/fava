@@ -88,8 +88,8 @@ class SankeyTree:
             self.balance_map_[child.account] = weight
             edge = SankeyTreeEdge(real_account.account, child.account, weight, child)
 
-            # Prune out edges first
-            # NOTE: we do not swap direction here
+            # Prune out edges first, NOTE: we do not swap direction here
+            # TODO: handle number mismatch issue caused by pruning edges.
             if self.prune_(edge): continue
 
             # Collapse edge if possiable

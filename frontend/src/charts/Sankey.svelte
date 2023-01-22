@@ -135,12 +135,12 @@
     for (const edge of g.links) {
       let source = edge.source.index;
       let target = edge.target.index;
-      if (edge.target.id.includes("Income")) {
+      if (edge.target.id.includes("Income") || edge.target.id.includes("Assets")) {
         let tmp = target;
         target = source;
         source = tmp;
       }
-      else if (edge.source.id.includes("Income")) {
+      else if (edge.source.id.includes("Income") || edge.source.id.includes("Assets")) {
         ans[source] = 1;
       }
       if (nodes_total[source] > 0) {

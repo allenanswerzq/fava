@@ -43,6 +43,14 @@
 }) %}
 {% endmacro %}
 
+{% macro sankey_balance_sheet(interval) %}
+{% do chart_data.append({
+'type': 'sankeyplot',
+'label': _('Sankey'),
+'data': ledger.charts.sankey_balance_sheet(g.filtered, interval, g.conversion),
+}) %}
+
+{% endmacro %}
 {% macro two_sides(innteval) %}
 {% do chart_data.append({
 'type': 'twosidesplot',

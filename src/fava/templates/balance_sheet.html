@@ -1,5 +1,6 @@
 {% import '_tree_table.html' as tree_table with context %}
 
+{{ charts.sankey_balance_sheet(g.interval) }}
 {{ charts.net_worth(g.interval) }}
 {{ charts.two_sides(g.interval) }}
 {{ charts.hierarchy(ledger.options['name_assets']) }}

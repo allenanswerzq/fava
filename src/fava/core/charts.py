@@ -456,9 +456,9 @@ class ChartModule(FavaModule):
                 if len(k.split(":")) == 2:
                     others.append({"account":k, "value" : str(v)})
 
-        print(assets)
-        print("\n\n\n")
-        print(others)
+        # print(assets)
+        # print("\n\n\n")
+        # print(others)
 
         import json
         assets_ss = json.dumps(assets)
@@ -488,6 +488,97 @@ class ChartModule(FavaModule):
         # for x in links:
         #     print(x)
 
+        json_node = json.dumps(list(nodes))
+        json_link = json.dumps(links)
+        yield {"nodes_ss": json_node, "links_ss": json_link}
+
+    @listify
+    def sankey_balance_sheet(
+        self, filtered: FilteredLedger, interval: Interval, conversion: str
+    ) -> Generator[DateAndBalance, None, None]:
+        """Compute the money flow.
+
+        Args:
+            interval: A string for the interval.
+            conversion: The conversion to use.
+
+        Returns:
+            A list of dicts for all ends of the given interval containing the
+            net worth (Assets + Liabilities) separately converted to all
+            operating currencies.
+        """
+        transactions = (
+            entry
+            for entry in filtered.entries
+            if (
+                isinstance(entry, Transaction)
+                and entry.flag != FLAG_UNREALIZED
+            )
+        )
+        txn = next(transactions, None)
+        txn_entries = []
+        for end_date in filtered.interval_ends(interval):
+            while txn and txn.date < end_date:
+                txn_entries.append(txn)
+                txn = next(transactions, None)
+
+        assets_stat = dict()
+        liabilities_stat = dict()
+        def prune(edge: SankeyTreeEdge):
+            # For income statement
+            if len(edge.u) == 0:
+                # prune out edge not from root -> income/expenses
+                return edge.v not in ("Assets", "Liabilities")
+
+            # Add weight prune to avoid too many branches
+            u, v = edge.u, edge.v
+            if "Assets" in edge.u:
+                # "assets" -> "assets:a:b"
+                # "liabilities" -> "liabilities:a:b"
+                u, v = v, u
+
+            level = len(v.split(":"))
+            if "Assets" in v:
+                level_max = max(edge.weight, assets_stat.get(level, 0))
+                assets_stat[level] = level_max
+            else:
+                level_max = max(edge.weight, liabilities_stat.get(level, 0))
+                liabilities_stat[level] = level_max
+
+            ratio = edge.weight / level_max
+            # print(u, v, level, ratio)
+
+            if "Liabilities" in v and ratio < 0.04:
+                return True
+
+            if "Assets" in v and ratio < 0.004:
+                return True
+
+            return False
+
+        def collapse(edge: SankeyTreeEdge):
+            if "Investment" in edge.v and len(edge.v.split(":")) >= 4:
+                return True
+
+            if "Liabilities" in edge.v and len(edge.v.split(":")) >= 3:
+                return True
+
+            return False
+
+        def finalize(tree: SankeyTree):
+            assets = tree.encode_name(tree.name_id_["Assets"], "Assets")
+            liabilities = tree.encode_name(tree.name_id_["Liabilities"], "Liabilities")
+            tree.links_.append([assets, liabilities, str(tree.balance_map_["Liabilities"])])
+
+            for x in tree.links_:
+                print(x)
+
+            return (tree.nodes_, tree.links_)
+
+        tree = SankeyTree(txn_entries, finalize=finalize, prune=prune, collapse=collapse)
+        (nodes, links) = tree.run()
+
+        import json
         json_node = json.dumps(list(nodes))
         json_link = json.dumps(links)
         yield {"nodes_ss": json_node, "links_ss": json_link}
@@ -524,7 +615,8 @@ class ChartModule(FavaModule):
 
         income_stat = dict()
         expenses_stat = dict()
-        total_small_income = 0
+        total_prune_income = 0
+        total_prune_expenses = 0
         def prune(edge: SankeyTreeEdge):
             # For income statement
             if len(edge.u) == 0:
@@ -534,12 +626,6 @@ class ChartModule(FavaModule):
             if "-Balance" in edge.v: return True
             if "Company" in edge.v: return True
             if "Hospital:" in edge.v: return True
-
-            if "Expenses" in edge.v and len(edge.v.split(":")) > 3:
-                return True
-
-            if "Income" in edge.u and len(edge.u.split(":")) >= 2:
-                return True
 
             # Add weight prune to avoid too many branches
             u, v = edge.u, edge.v
@@ -557,25 +643,31 @@ class ChartModule(FavaModule):
                 expenses_stat[level] = level_max
 
             ratio = edge.weight / level_max
-            print(u, v, level, ratio)
+            # print(u, v, level, ratio)
 
             if "Expenses" in v and level > 2 and ratio < 0.04:
+                nonlocal total_prune_expenses
+                total_prune_expenses += edge.weight
                 return True
 
             if "Income" in v and ratio < 0.004:
-                if len(u.split(":")) == 2:
-                    nonlocal total_small_income
-                    total_small_income += edge.weight
-                else:
-                    print(f"Ignore very samll income {u}")
+                nonlocal total_prune_income
+                total_prune_income += edge.weight
                 return True
 
 
             return False
 
+
         def collapse(edge: SankeyTreeEdge):
             if "Transport" in edge.v and len(edge.v.split(":")) > 2:
                 # Collapse Expense:Transport:* account
+                return True
+
+            if "Expenses" in edge.v and len(edge.v.split(":")) > 3:
+                return True
+
+            if "Income" in edge.u and len(edge.u.split(":")) >= 2:
                 return True
 
             return False
@@ -585,8 +677,8 @@ class ChartModule(FavaModule):
             expense = tree.encode_name(tree.name_id_["Expenses"], "Expenses")
             tree.links_.append([income, expense, str(tree.balance_map_["Expenses"])])
 
-            for x in tree.links_:
-                print(x)
+            # for x in tree.links_:
+            #     print(x)
 
             return (tree.nodes_, tree.links_)
 
