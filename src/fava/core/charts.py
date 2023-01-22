@@ -36,6 +36,8 @@ from fava.util import listify
 from fava.util import pairwise
 from fava.util.date import Interval
 
+from fava.core.sankey import SankeyTreeEdge, SankeyTree
+
 try:
     from flask.json.provider import JSONProvider
 except ImportError:
@@ -491,6 +493,113 @@ class ChartModule(FavaModule):
         yield {"nodes_ss": json_node, "links_ss": json_link}
 
     @listify
+    def sankey_income_statement(
+        self, filtered: FilteredLedger, interval: Interval, conversion: str
+    ) -> Generator[DateAndBalance, None, None]:
+        """Compute the money flow.
+
+        Args:
+            interval: A string for the interval.
+            conversion: The conversion to use.
+
+        Returns:
+            A list of dicts for all ends of the given interval containing the
+            net worth (Assets + Liabilities) separately converted to all
+            operating currencies.
+        """
+        transactions = (
+            entry
+            for entry in filtered.entries
+            if (
+                isinstance(entry, Transaction)
+                and entry.flag != FLAG_UNREALIZED
+            )
+        )
+        txn = next(transactions, None)
+        txn_entries = []
+        for end_date in filtered.interval_ends(interval):
+            while txn and txn.date < end_date:
+                txn_entries.append(txn)
+                txn = next(transactions, None)
+
+        income_stat = dict()
+        expenses_stat = dict()
+        total_small_income = 0
+        def prune(edge: SankeyTreeEdge):
+            # For income statement
+            if len(edge.u) == 0:
+                # prune out edge not from root -> income/expenses
+                return edge.v not in ("Income", "Expenses")
+
+            if "-Balance" in edge.v: return True
+            if "Company" in edge.v: return True
+            if "Hospital:" in edge.v: return True
+
+            if "Expenses" in edge.v and len(edge.v.split(":")) > 3:
+                return True
+
+            if "Income" in edge.u and len(edge.u.split(":")) >= 2:
+                return True
+
+            # Add weight prune to avoid too many branches
+            u, v = edge.u, edge.v
+            if "Income" in edge.u:
+                # "income" -> "income:a:b"
+                # "expense" -> "expense:a:b"
+                u, v = v, u
+
+            level = len(v.split(":"))
+            if "Income" in v:
+                level_max = max(edge.weight, income_stat.get(level, 0))
+                income_stat[level] = level_max
+            else:
+                level_max = max(edge.weight, expenses_stat.get(level, 0))
+                expenses_stat[level] = level_max
+
+            ratio = edge.weight / level_max
+            print(u, v, level, ratio)
+
+            if "Expenses" in v and level > 2 and ratio < 0.04:
+                return True
+
+            if "Income" in v and ratio < 0.004:
+                if len(u.split(":")) == 2:
+                    nonlocal total_small_income
+                    total_small_income += edge.weight
+                else:
+                    print(f"Ignore very samll income {u}")
+                return True
+
+
+            return False
+
+        def collapse(edge: SankeyTreeEdge):
+            if "Transport" in edge.v and len(edge.v.split(":")) > 2:
+                # Collapse Expense:Transport:* account
+                return True
+
+            return False
+
+        def finalize(tree: SankeyTree):
+            income = tree.encode_name(tree.name_id_["Income"], "Income")
+            expense = tree.encode_name(tree.name_id_["Expenses"], "Expenses")
+            tree.links_.append([income, expense, str(tree.balance_map_["Expenses"])])
+
+            for x in tree.links_:
+                print(x)
+
+            return (tree.nodes_, tree.links_)
+
+        tree = SankeyTree(txn_entries, finalize=finalize, prune=prune, collapse=collapse)
+        (nodes, links) = tree.run()
+
+        import json
+        json_node = json.dumps(list(nodes))
+        json_link = json.dumps(links)
+        yield {"nodes_ss": json_node, "links_ss": json_link}
+
+
+    @listify
     def sankey_diagram(
         self, filtered: FilteredLedger, interval: Interval, conversion: str
     ) -> Generator[DateAndBalance, None, None]:
@@ -650,7 +759,8 @@ class ChartModule(FavaModule):
               str(id_map["Income"]) + "_" + "Income", str(small_income)])
 
         # print(nodes)
-        # print(links)
+        # for x in links:
+        #     print(x)
 
         for x in links:
             if "Connector" in x[0] and "Income" in id_map:
@@ -660,7 +770,6 @@ class ChartModule(FavaModule):
                 nodes.add(x[1])
 
         import json
-
         json_node = json.dumps(list(nodes))
         json_link = json.dumps(links)
         yield {"nodes_ss": json_node, "links_ss": json_link}

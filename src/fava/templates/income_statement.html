@@ -4,7 +4,7 @@
 {% set options = ledger.options %}
 {% set invert = ledger.fava_options.invert_income_liabilities_equity %}
 
-{{ charts.sankey_diagram(g.interval) }}
+{{ charts.sankey_income_statement(g.interval) }}
 {{ charts.interval_totals(g.interval, (options['name_income'], options['name_expenses']), label=_('Net Profit'), invert=invert) }}
 {{ charts.interval_totals(g.interval, options['name_income'], label=_('Income'), invert=invert) }}
 {{ charts.interval_totals(g.interval, options['name_expenses'], label=_('Expenses')) }}

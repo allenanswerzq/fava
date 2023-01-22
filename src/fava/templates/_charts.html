@@ -35,11 +35,11 @@
 }) %}
 {% endmacro %}
 
-{% macro sankey_diagram(interval) %}
+{% macro sankey_income_statement(interval) %}
 {% do chart_data.append({
 'type': 'sankeyplot',
 'label': _('Sankey'),
-'data': ledger.charts.sankey_diagram(g.filtered, interval, g.conversion),
+'data': ledger.charts.sankey_income_statement(g.filtered, interval, g.conversion),
 }) %}
 {% endmacro %}
 
