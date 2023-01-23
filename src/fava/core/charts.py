@@ -522,13 +522,27 @@ class ChartModule(FavaModule):
                 txn_entries.append(txn)
                 txn = next(transactions, None)
 
-        assets_stat = dict()
-        liabilities_stat = dict()
         def prune(edge: SankeyTreeEdge):
-            # For income statement
             if len(edge.u) == 0:
                 # prune out edge not from root -> income/expenses
-                return edge.v not in ("Assets", "Liabilities")
+                return edge.v not in ("Assets", "Liabilities", "Equity")
+
+            # if "-Balance" in edge.v: return True
+
+            return False
+
+        assets_stat = dict()
+        liabilities_stat = dict()
+        equity_stat = dict()
+        def collapse(edge: SankeyTreeEdge):
+            if "Investment" in edge.v and len(edge.v.split(":")) >= 4:
+                return edge._replace(collapsed=True)
+
+            if "Liabilities" in edge.v and len(edge.v.split(":")) >= 3:
+                return edge._replace(collapsed=True)
+
+            if "Equity" in edge.v and len(edge.v.split(":")) >= 3:
+                return edge._replace(collapsed=True)
 
             # Add weight prune to avoid too many branches
             u, v = edge.u, edge.v
@@ -541,6 +555,9 @@ class ChartModule(FavaModule):
             if "Assets" in v:
                 level_max = max(edge.weight, assets_stat.get(level, 0))
                 assets_stat[level] = level_max
+            elif "Equity" in v:
+                level_max = max(edge.weight, equity_stat.get(level, 0))
+                equity_stat[level] = level_max
             else:
                 level_max = max(edge.weight, liabilities_stat.get(level, 0))
                 liabilities_stat[level] = level_max
@@ -549,26 +566,22 @@ class ChartModule(FavaModule):
             # print(u, v, level, ratio)
 
             if "Liabilities" in v and ratio < 0.04:
-                return True
+                return edge._replace(collapsed=True)
 
-            if "Assets" in v and ratio < 0.004:
-                return True
+            if "Assets" in v and ratio < 0.01:
+                return edge._replace(collapsed=True)
 
-            return False
+            if "Equity" in v and ratio < 0.01:
+                return edge._replace(collapsed=True)
 
-        def collapse(edge: SankeyTreeEdge):
-            if "Investment" in edge.v and len(edge.v.split(":")) >= 4:
-                return True
-
-            if "Liabilities" in edge.v and len(edge.v.split(":")) >= 3:
-                return True
-
-            return False
+            return edge
 
         def finalize(tree: SankeyTree):
             assets = tree.encode_name(tree.name_id_["Assets"], "Assets")
             liabilities = tree.encode_name(tree.name_id_["Liabilities"], "Liabilities")
+            equity = tree.encode_name(tree.name_id_["Equity"], "Equity")
             tree.links_.append([assets, liabilities, str(tree.balance_map_["Liabilities"])])
+            tree.links_.append([assets, equity, str(tree.balance_map_["Equity"])])
 
             for x in tree.links_:
                 print(x)
@@ -613,10 +626,6 @@ class ChartModule(FavaModule):
                 txn_entries.append(txn)
                 txn = next(transactions, None)
 
-        income_stat = dict()
-        expenses_stat = dict()
-        total_prune_income = 0
-        total_prune_expenses = 0
         def prune(edge: SankeyTreeEdge):
             # For income statement
             if len(edge.u) == 0:
@@ -626,6 +635,22 @@ class ChartModule(FavaModule):
             if "-Balance" in edge.v: return True
             if "Company" in edge.v: return True
             if "Hospital:" in edge.v: return True
+
+            return False
+
+
+        income_stat = dict()
+        expenses_stat = dict()
+        def collapse(edge: SankeyTreeEdge):
+            if "Transport" in edge.v and len(edge.v.split(":")) > 2:
+                # Collapse Expense:Transport:* account
+                return edge._replace(collapsed=True)
+
+            if "Expenses" in edge.v and len(edge.v.split(":")) > 3:
+                return edge._replace(collapsed=True)
+
+            if "Income" in edge.u and len(edge.u.split(":")) >= 2:
+                return edge._replace(collapsed=True)
 
             # Add weight prune to avoid too many branches
             u, v = edge.u, edge.v
@@ -646,36 +671,21 @@ class ChartModule(FavaModule):
             # print(u, v, level, ratio)
 
             if "Expenses" in v and level > 2 and ratio < 0.04:
-                nonlocal total_prune_expenses
-                total_prune_expenses += edge.weight
-                return True
+                return edge._replace(collapsed=True)
 
             if "Income" in v and ratio < 0.004:
-                nonlocal total_prune_income
-                total_prune_income += edge.weight
-                return True
+                return edge._replace(collapsed=True)
 
-
-            return False
-
-
-        def collapse(edge: SankeyTreeEdge):
-            if "Transport" in edge.v and len(edge.v.split(":")) > 2:
-                # Collapse Expense:Transport:* account
-                return True
-
-            if "Expenses" in edge.v and len(edge.v.split(":")) > 3:
-                return True
-
-            if "Income" in edge.u and len(edge.u.split(":")) >= 2:
-                return True
-
-            return False
+            return edge
 
         def finalize(tree: SankeyTree):
             income = tree.encode_name(tree.name_id_["Income"], "Income")
             expense = tree.encode_name(tree.name_id_["Expenses"], "Expenses")
+            profit_value = tree.balance_map_["Income"] - tree.balance_map_["Expenses"]
+            profit = tree.encode_name(801000000, "Profit")
+            tree.nodes_.add(profit)
             tree.links_.append([income, expense, str(tree.balance_map_["Expenses"])])
+            tree.links_.append([income, profit, str(profit_value)])
 
             # for x in tree.links_:
             #     print(x)
@@ -690,181 +700,6 @@ class ChartModule(FavaModule):
         json_link = json.dumps(links)
         yield {"nodes_ss": json_node, "links_ss": json_link}
 
-
-    @listify
-    def sankey_diagram(
-        self, filtered: FilteredLedger, interval: Interval, conversion: str
-    ) -> Generator[DateAndBalance, None, None]:
-        """Compute the money flow.
-
-        Args:
-            interval: A string for the interval.
-            conversion: The conversion to use.
-
-        Returns:
-            A list of dicts for all ends of the given interval containing the
-            net worth (Assets + Liabilities) separately converted to all
-            operating currencies.
-        """
-        transactions = (
-            entry
-            for entry in filtered.entries
-            if (
-                isinstance(entry, Transaction)
-                and entry.flag != FLAG_UNREALIZED
-            )
-        )
-        txn = next(transactions, None)
-        txn_entries = []
-        for end_date in filtered.interval_ends(interval):
-            while txn and txn.date < end_date:
-                txn_entries.append(txn)
-                txn = next(transactions, None)
-
-        root = realization.realize(txn_entries)
-        balance_map = {}
-        balance_map["Income"] = 0
-        balance_map["Expenses"] = 0
-        balance_map["Savings"] = 0
-        children = realization.iter_children(root)
-        total_usd_inventory = None
-        for child in children:
-            t = realization.compute_balance(child)
-            # if t.get_currency_units("USD").number != 0 and child.account == "Income":
-            #     total_usd_inventory = t
-            balance_map[child.account] = abs(t.get_currency_units("CNY").number)
-
-        def get_dollor(inv):
-            if inv is None: return (Decimal('0'), Decimal('0'))
-            usd = inv.get_currency_units("USD").number
-            before = inv.get_currency_units("CNY").number
-            after = inv_to_dict(cost_or_value(inv, "CNY", self.ledger.price_map))["CNY"]
-            return (abs(usd), abs(after - before))
-
-        usd, cny = get_dollor(total_usd_inventory)
-        realization.add_account_node(root, "Income", "USD", cny)
-
-        realization.add_account_node(root, "Connector", "Expenses", balance_map["Expenses"])
-        savings = (balance_map["Income"] - balance_map["Expenses"] + cny)
-        if savings > 0:
-            balance_map["Savings"] = savings
-            realization.add_account_node(root, "", "Savings", 0)
-            realization.add_account_node(root, "Connector", "Savings", savings)
-
-        if balance_map["Income"] < 10:
-            # Fake income to make rendering sankey graph work correct
-            realization.add_account_node(root, "Income", "Fake", 1)
-
-        children = realization.iter_children(root)
-        for child in children:
-            t = realization.compute_balance(child)
-            balance_map[child.account] = abs(t.get_currency_units("CNY").number)
-
-        def check_account(u, v):
-            # Whether include this account in the sankey graph.
-            types = (
-                self.ledger.options["name_income"],
-                self.ledger.options["name_expenses"],
-                # "SocialSecurity",
-                "Connector",
-                "Savings"
-            )
-            if len(u) == 0: return (v in types)
-            return (
-                   ("-Balance" not in v) and
-                   ("Company" not in v) and
-                   ("Hospital:" not in v) and
-                   (
-                    ("Expenses" in v and len(v.split(":")) <= 3) or
-                    (len(v.split(":")) <= 2)
-                   )
-            )
-
-        id_map = {}
-        nodes = set()
-        links = []
-        mx = 0
-        small_income = 0
-        def dfs(real_account, id=100, pre=None):
-            # print("DFS", real_account.account, pre)
-            nonlocal id_map
-            nonlocal mx
-            id_map[real_account.account] = id
-            cur = []
-            for _, real_child in sorted(real_account.items()):
-                v = real_child.account
-                if check_account(real_account.account, v):
-                    if v in balance_map:
-                        w = balance_map[v]
-                    else:
-                        w = balance_map[v.split(':')[1]]
-                    mx = max(mx, w)
-                    cur.append([v, w, real_child])
-
-            cur.sort(key=lambda x: (x[1], x[0]), reverse=True)
-            for i, x in enumerate(cur):
-                u = str(id) + "_" + real_account.account
-                v = str(id * 100 + i) + "_" + x[0]
-                w = str(x[1])
-                id_map[x[0]] = id * 100 + i
-                if real_account.account.startswith("Income"):
-                    u, v = (v, u)  # swap accounts
-
-                # NOTE: Prune links that are less than a percent
-                if mx > 0:
-                    ratio = x[1] / mx
-                    level = len(v.split(":"))
-
-                    if "Expenses" in v and level > 2 and ratio < 0.004:
-                        continue
-
-                    if "Income" in v and ratio < 0.001:
-                        if len(u.split(":")) == 2:
-                            nonlocal small_income
-                            small_income += x[1]
-                        else:
-                            print(f"Ignore very samll income {u}")
-                        continue
-
-                # Collapse Expense:Transport:* account
-                if "Transport" in v and len(v.split(":")) > 2:
-                    continue
-
-                # u --> v
-                if pre is not None and x[1] > 0:
-                    if "Connector" not in u:
-                        nodes.add(u)
-                        nodes.add(v)
-
-                    links.append([u, v, str(w)])
-
-            # print(real_account.account, id_map)
-
-            for x in cur:
-                dfs(x[2], id=id_map[x[0]], pre=real_account.account)
-
-        dfs(root)
-
-        nodes.add("800020101_Income:SmallIncome")
-        links.append(
-            ["800020101_Income:SmallIncome",
-              str(id_map["Income"]) + "_" + "Income", str(small_income)])
-
-        # print(nodes)
-        # for x in links:
-        #     print(x)
-
-        for x in links:
-            if "Connector" in x[0] and "Income" in id_map:
-                x[0] = str(id_map["Income"]) + "_" + "Income"
-                r = ''.join(s for s in x[1].split(':')[1])
-                x[1] = str(id_map[r]) + "_" + r
-                nodes.add(x[1])
-
-        import json
-        json_node = json.dumps(list(nodes))
-        json_link = json.dumps(links)
-        yield {"nodes_ss": json_node, "links_ss": json_link}
 
     @staticmethod
     def can_plot_query(types: list[tuple[str, Any]]) -> bool:

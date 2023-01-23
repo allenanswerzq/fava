@@ -9,7 +9,8 @@ SankeyTreeEdge = NamedTuple(
         ('u', str),
         ('v', str),
         ('weight', float), # TODO: multiple currencies support
-        ('child', RealAccount)])
+        ('child', RealAccount),
+        ('collapsed', bool)])
 
 class SankeyTree:
     """
@@ -60,6 +61,11 @@ class SankeyTree:
     def encode_name(self, id : float, account : str):
         return str(id) + "_" + account
 
+    def encode_weight(self, weight, collapsed):
+        if collapsed:
+            return str(weight) + " " + "collapsed"
+        return str(weight)
+
     def add_results(self, id, nid, edge: SankeyTreeEdge):
         u = self.encode_name(id, edge.u)
         v = self.encode_name(nid, edge.v)
@@ -71,13 +77,13 @@ class SankeyTree:
             # NOTE: we do NOT add root edges
             return
 
-        w = str(edge.weight)
+        w = self.encode_weight(edge.weight, edge.collapsed)
 
         self.nodes_.add(u)
         self.nodes_.add(v)
         self.links_.append([u, v, w])
 
-    def dfs(self, real_account: RealAccount, parent=None, id=100) -> None:
+    def dfs(self, real_account: RealAccount, parent=None, id=100, collapsed=False) -> None:
         self.name_id_[real_account.account] = id
         self.id_name_[id] = real_account.account
         i = 0
@@ -86,14 +92,14 @@ class SankeyTree:
             assert isinstance(child, RealAccount)
             weight = SankeyTree.get_balance(child)
             self.balance_map_[child.account] = weight
-            edge = SankeyTreeEdge(real_account.account, child.account, weight, child)
+            edge = SankeyTreeEdge(real_account.account, child.account, weight, child, collapsed)
 
-            # Prune out edges first, NOTE: we do not swap direction here
-            # TODO: handle number mismatch issue caused by pruning edges.
+            # Prune out edges first
+            # NOTE: we do not swap direction here
             if self.prune_(edge): continue
 
             # Collapse edge if possiable
-            if self.collapse_(edge): continue
+            edge = self.collapse_(edge)
 
             # Assign new id
             nid = id * 100 + i
@@ -101,7 +107,7 @@ class SankeyTree:
 
             self.add_results(id, nid, edge)
 
-            self.dfs(child, parent=real_account, id=nid)
+            self.dfs(child, parent=real_account, id=nid, collapsed=edge.collapsed)
 
     def run(self):
         self.dfs(self.root_)

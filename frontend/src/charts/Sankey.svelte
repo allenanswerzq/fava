@@ -101,15 +101,15 @@
   const compute_total = (g: typeof $data) => {
     const ans = new Array(g.nodes.length).fill(0);
     const in_degree = new Array(g.nodes.length).fill(0);
+    let id_map = new Map();
     for (const edge of g.links) {
       const target = edge.target.index;
+      id_map.set(edge.target.id, target);
       in_degree[target] += 1;
     }
 
-    // console.log(in_degree);
-
     for (const edge of g.links) {
-      // console.log(edge)
+      console.log(edge)
       const source = edge.source.index;
       const target = edge.target.index;
       let value = edge.value;
@@ -122,7 +122,20 @@
       value = ans[target] + edge.value;
       ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
       node_max = Math.max(node_max, ans[target]);
-      //   console.log(edge.source.id, edge.target.id, value, ans[source], ans[target]);
+      // console.log(edge.source.id, edge.target.id, value, ans[source], ans[target]);
+    }
+
+    for (const edge of g.collapsed_links) {
+      console.log(edge)
+      const source = id_map.get(edge.source);
+      const target = id_map.get(edge.target);
+      if (target) {
+        let value = edge.value;
+        value = ans[target] + edge.value;
+        ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
+        node_max = Math.max(node_max, ans[target]);
+        // console.log("AAAAAAA", source, target, edge.source, edge.target, value, ans[source], ans[target]);
+      }
     }
 
     console.log(ans);
@@ -140,7 +153,7 @@
         target = source;
         source = tmp;
       }
-      else if (edge.source.id.includes("Income") || edge.source.id.includes("Assets")) {
+      else if (edge.source.id.includes("Income") || edge.target.id.includes("Assets")) {
         ans[source] = 1;
       }
       if (nodes_total[source] > 0) {
@@ -223,7 +236,7 @@
 <g class="sankey-layer">
   <g class="link-group" >
     {#each sankeyData.links as d}
-      {#if d.target.id.includes("Income")}
+      {#if d.target.id.includes("Income") || d.target.id.includes("Assets")}
         <path class:faded={highlighted && highlighted != d.source.id}
           d={link(d)}
           fill="none"

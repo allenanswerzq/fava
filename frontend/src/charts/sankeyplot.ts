@@ -20,10 +20,18 @@ export type SankeyPlotLink = {
   target: string;
   value: number;
 };
+
+export type SankeyPlotCollapsed = {
+  source: string;
+  target: string;
+  value: number;
+};
+
 export type SankeyPlotData = {
   nodes: SankeyPlotNode[];
   links: SankeyPlotLink[];
   budget_actual: SankeyPlotLink[];
+  collapsed_links: SankeyPlotCollapsed[];
 };
 export interface SankeyPlot {
   type: "sankeyplot";
@@ -42,30 +50,64 @@ export function sankeyplot(json: undefined): Result<SankeyPlot, string> {
   }
   const parsedData = res.value;
   // Define data and initialize
-  let data: SankeyPlotData = { nodes: [], links: [], budget_actual : []};
+  let data: SankeyPlotData = { nodes: [], links: [], budget_actual: [], collapsed_links: []};
   for (const { nodes_ss, links_ss } of parsedData) {
-    let nodes = JSON.parse(nodes_ss);
-    for (const node of nodes) {
-      data.nodes.push({ id: node });
-    }
     let links = JSON.parse(links_ss);
+    let collapsed_map = new Map();
     for (const link of links) {
       let val_ss = link[2].split(' ');
-      data.links.push({
-        source: link[0],
-        target: link[1],
-        value: Number(val_ss[0]),
-      });
-      if (val_ss.length == 2) {
-        data.budget_actual.push({
+      if (val_ss.length == 1) {
+        data.links.push({
           source: link[0],
           target: link[1],
-          value: Number(val_ss[1]),
+          value: Number(val_ss[0]),
         });
       }
+      else if (val_ss.length == 2) {
+        if (val_ss[1] == "collapsed") {
+          // collapsed links
+          if (link[0].includes("Liabilities") || link[0].includes("Expenses") ||
+              link[0].includes("Equity")) {
+            console.log("SET", link[1]);
+            collapsed_map.set(link[1], true);
+          }
+          else {
+            console.log("SET", link[0]);
+            collapsed_map.set(link[0], true);
+          }
+
+          data.collapsed_links.push({
+            source: link[0],
+            target: link[1],
+            value: Number(val_ss[0]),
+          });
+        }
+        else {
+          data.links.push({
+            source: link[0],
+            target: link[1],
+            value: Number(val_ss[0]),
+          });
+
+          // see budget_tree.py
+          data.budget_actual.push({
+            source: link[0],
+            target: link[1],
+            value: Number(val_ss[1]),
+          });
+        }
+      }
+    }
+
+    let nodes = JSON.parse(nodes_ss);
+    for (const node of nodes) {
+      let ok = collapsed_map.get(node);
+      if (ok == true) continue;
+      console.log("GET", node, ok);
+      data.nodes.push({ id: node });
     }
     // console.log(data)
-    // console.log(nodes);
+    console.log("AAAAAAAA", data.nodes);
     // console.log(links_ss)
   }
   return ok({ type: "sankeyplot" as const, data });
