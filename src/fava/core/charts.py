@@ -577,11 +577,11 @@ class ChartModule(FavaModule):
             return edge
 
         def finalize(tree: SankeyTree):
-            assets = tree.encode_name(tree.name_id_["Assets"], "Assets")
-            liabilities = tree.encode_name(tree.name_id_["Liabilities"], "Liabilities")
-            equity = tree.encode_name(tree.name_id_["Equity"], "Equity")
-            tree.links_.append([assets, liabilities, str(tree.balance_map_["Liabilities"])])
-            tree.links_.append([assets, equity, str(tree.balance_map_["Equity"])])
+            assets = tree.encode_name(tree.name_id_.get("Assets", 0), "Assets")
+            liabilities = tree.encode_name(tree.name_id_.get("Liabilities", 0), "Liabilities")
+            equity = tree.encode_name(tree.name_id_.get("Equity", 0), "Equity")
+            tree.links_.append([assets, liabilities, str(tree.balance_map_.get("Liabilities", 0))])
+            tree.links_.append([assets, equity, str(tree.balance_map_.get("Equity", 0))])
 
             for x in tree.links_:
                 print(x)
@@ -679,16 +679,30 @@ class ChartModule(FavaModule):
             return edge
 
         def finalize(tree: SankeyTree):
-            income = tree.encode_name(tree.name_id_["Income"], "Income")
-            expense = tree.encode_name(tree.name_id_["Expenses"], "Expenses")
-            profit_value = tree.balance_map_["Income"] - tree.balance_map_["Expenses"]
-            profit = tree.encode_name(801000000, "Profit")
-            tree.nodes_.add(profit)
-            tree.links_.append([income, expense, str(tree.balance_map_["Expenses"])])
-            tree.links_.append([income, profit, str(profit_value)])
+            income_value = tree.balance_map_.get("Income", 0)
+            expense_value = tree.balance_map_.get("Expenses", 0)
 
-            # for x in tree.links_:
-            #     print(x)
+            if income_value == 0:
+                tree.add_fake_income()
+
+            if expense_value == 0:
+                tree.add_fake_expenses()
+
+            if income_value == 0 and expense_value == 0:
+                return ([], [])
+
+            income = tree.encode_name(tree.name_id_.get("Income", 0), "Income")
+            expense = tree.encode_name(tree.name_id_.get("Expenses", 0), "Expenses")
+            tree.links_.append([income, expense, str(tree.balance_map_.get("Expenses", 0))])
+
+            if income_value > 0 and expense_value > 0:
+                profit_value = income_value - expense_value
+                profit = tree.encode_name(801000000, "Profit")
+                tree.nodes_.add(profit)
+                tree.links_.append([income, profit, str(profit_value)])
+
+            for x in tree.links_:
+                print(x)
 
             return (tree.nodes_, tree.links_)
 

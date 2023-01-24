@@ -58,6 +58,14 @@ class SankeyTree:
     def finalize_default(tree):
         return dict()
 
+    def add_fake_income(self):
+        edge = SankeyTreeEdge("Income", "Income:Fake", 0.1, None, False)
+        self.add_results(0, 10, edge)
+
+    def add_fake_expenses(self):
+        edge = SankeyTreeEdge("Expenses", "Expenses:Fake", 0.1, None, False)
+        self.add_results(0, 10, edge)
+
     def encode_name(self, id : float, account : str):
         return str(id) + "_" + account
 

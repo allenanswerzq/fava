@@ -33,6 +33,11 @@ from fava.core.module_base import FavaModule
 from fava.helpers import FavaAPIException
 from fava.util import next_key
 
+from beancount.core import data
+from beancount.ingest import similar
+from beancount.ingest import extract
+from beancount.loader import load_file, load_string
+
 if TYPE_CHECKING:  # pragma: no cover
     from fava.core import FavaLedger
 
@@ -298,6 +303,17 @@ def save_entry_slice(
     )
     with open(entry.meta["filename"], "w", encoding="utf-8") as file:
         file.writelines(lines)
+
+    # NOTE: also write slice into an extra patch file
+    patch_file = entry.meta["filename"].replace(".bean", ".patch")
+    patch_entries, patch_erros, patch_options = load_file(patch_file)
+    slice_entries, slice_erros, slice_options = load_string(source_slice)
+    patch_entries = similar.deduplicate_entries(
+            patch_entries, slice_entries, comparator=similar.NarrationComparator())
+    patch_entries.extend(slice_entries)
+    patch_entries = data.sorted(patch_entries)
+    with open(patch_file, "w") as file:
+        extract.print_extracted_entries(patch_entries, file)
 
     return sha256_str(source_slice)
 
