@@ -695,8 +695,8 @@ class ChartModule(FavaModule):
             expense = tree.encode_name(tree.name_id_.get("Expenses", 0), "Expenses")
             tree.links_.append([income, expense, str(tree.balance_map_.get("Expenses", 0))])
 
-            if income_value > 0 and expense_value > 0:
-                profit_value = income_value - expense_value
+            profit_value = income_value - expense_value
+            if income_value > 0 and expense_value > 0 and profit_value > 0:
                 profit = tree.encode_name(801000000, "Profit")
                 tree.nodes_.add(profit)
                 tree.links_.append([income, profit, str(profit_value)])
