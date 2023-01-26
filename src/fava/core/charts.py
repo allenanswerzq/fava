@@ -673,7 +673,7 @@ class ChartModule(FavaModule):
             if "Expenses" in v and level > 2 and ratio < 0.04:
                 return edge._replace(collapsed=True)
 
-            if "Income" in v and ratio < 0.004:
+            if "Income" in v and ratio < 0.001:
                 return edge._replace(collapsed=True)
 
             return edge

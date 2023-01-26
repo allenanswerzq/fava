@@ -283,14 +283,14 @@
   </g>
   <g class="rect-group">
     {#each sankeyData.nodes as d, i}
-      <rect
+      <rect class:faded={highlighted && highlighted != d.id}
         x={d.x0}
         y={d.y0}
         height={d.y1 - d.y0}
         width={d.x1 - d.x0 + 4}
         fill={colorNodes(d)}
       />
-      <text
+      <text class:faded={highlighted && highlighted != d.id}
         x={d.x0 < $width / 4 ? d.x1 + 6 : d.x0 - 6}
         y={(d.y1 + d.y0) / 2 - 6}
         dy={fontSize / 2 - 2}
