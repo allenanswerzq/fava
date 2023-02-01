@@ -165,7 +165,10 @@ Hold Ctrl or Cmd while clicking to expand one level.') }}">
   {% for account in [ root ] if account recursive %}
   {% set budget = account.node_.budget | float %}
   {% set actual = account.node_.actual | float %}
-  {% set activity = "%.2f"|format(budget - actual) %}
+  {% set activity = budget - actual | float %}
+  {% set activity_ss = "%.2f"|format(budget - actual) %}
+  {% set budget_ss = "%.2f"|format(budget) %}
+  {% set actual_ss = "%.2f"|format(actual * -1) %}
   <li{{ ' class=toggled' if account.node_.name|collapse_account else '' }}>
     <p{{ ' class=has-balance'  }}>
     <span class="account-cell depth-{{ loop.depth0 }} droptarget{{ ' has-children' if account.children_ else '' }}" data-account-name="{{ account.node_.name }}">
@@ -175,13 +178,19 @@ Hold Ctrl or Cmd while clicking to expand one level.') }}">
       </a>
     </span>
     <span class="num">
-      <span class="budget">{{ budget }}</span>
+      {% if budget != 0 %}
+        <span class="budget">{{ budget_ss }}</span>
+      {% endif %}
     </span>
     <span class="num other">
-      <span class="actual"> {{ actual * -1 }} </span>
+      {% if actual != 0 %}
+        <span class="actual"> {{ actual_ss }} </span>
+      {% endif %}
     </span>
     <span class="num other">
-      <span class="activity"> {{ activity }} </span>
+      {% if activity != 0 %}
+        <span class="activity"> {{ activity_ss }} </span>
+      {% endif %}
     </span>
     </p>
     {% if account.children_ %}
