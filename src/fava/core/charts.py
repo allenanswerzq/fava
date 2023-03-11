@@ -525,7 +525,7 @@ class ChartModule(FavaModule):
         def prune(edge: SankeyTreeEdge):
             if len(edge.u) == 0:
                 # prune out edge not from root -> income/expenses
-                return edge.v not in ("Assets", "Liabilities", "Equity")
+                return edge.v not in ("Assets", "Liabilities")
 
             # if "-Balance" in edge.v: return True
 
@@ -535,7 +535,7 @@ class ChartModule(FavaModule):
         liabilities_stat = dict()
         equity_stat = dict()
         def collapse(edge: SankeyTreeEdge):
-            if "Investment" in edge.v and len(edge.v.split(":")) >= 4:
+            if "Assets" in edge.u and len(edge.u.split(":")) >= 3:
                 return edge._replace(collapsed=True)
 
             if "Liabilities" in edge.v and len(edge.v.split(":")) >= 3:
@@ -579,9 +579,9 @@ class ChartModule(FavaModule):
         def finalize(tree: SankeyTree):
             assets = tree.encode_name(tree.name_id_.get("Assets", 0), "Assets")
             liabilities = tree.encode_name(tree.name_id_.get("Liabilities", 0), "Liabilities")
-            equity = tree.encode_name(tree.name_id_.get("Equity", 0), "Equity")
+            # equity = tree.encode_name(tree.name_id_.get("Equity", 0), "Equity")
             tree.links_.append([assets, liabilities, str(tree.balance_map_.get("Liabilities", 0))])
-            tree.links_.append([assets, equity, str(tree.balance_map_.get("Equity", 0))])
+            # tree.links_.append([assets, equity, str(tree.balance_map_.get("Equity", 0))])
 
             for x in tree.links_:
                 print(x)
@@ -667,7 +667,7 @@ class ChartModule(FavaModule):
                 level_max = max(edge.weight, expenses_stat.get(level, 0))
                 expenses_stat[level] = level_max
 
-            ratio = edge.weight / level_max
+            ratio = float(edge.weight) / max(float(level_max), 0.0001)
             # print(u, v, level, ratio)
 
             if "Expenses" in v and level > 2 and ratio < 0.04:

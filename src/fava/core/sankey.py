@@ -3,6 +3,7 @@ from beancount.core.inventory import Inventory
 from beancount.core.realization import realize, RealAccount, iter_children, compute_balance
 
 from typing import NamedTuple, Any
+from fava.core.conversion import *
 
 SankeyTreeEdge = NamedTuple(
     'SankeyTreeEdge', [
@@ -41,7 +42,7 @@ class SankeyTree:
             return abs(real_account[1].balance.get_currency_units("CNY").number)
         elif isinstance(real_account, RealAccount):
             # print(real_account.account, real_account.balance)
-            return abs(real_account.balance.get_currency_units("CNY").number)
+            return abs(real_account.balance.reduce(get_cost).get_currency_units("CNY").number)
         else:
             assert False
 
@@ -129,7 +130,7 @@ class SankeyTree:
 def test_basic():
     raw = """
 2022-08-31 * "test income to asset"
-    Assets:Bank:BoA      100 CNY
+    Assets:CurrentAssets:Bank:BoA      100 CNY
     Income:Google:Salary  -100 CNY
 
 2022-09-19 * "test asset to expense"
@@ -137,7 +138,7 @@ def test_basic():
     Expenses:Housing:Rent   100.00 CNY
 
 2022-12-30 * "test liabilities to expense"
-    Liabilities:CreditCard:CMB  -43.97 CNY
+    Liabilities:Current:CreditCard:CMB  -43.97 CNY
     Expenses:Food:Shop           43.97 CNY
 """
     from beancount.loader import load_string
@@ -161,7 +162,7 @@ def test_basic():
 def test_prune_collapse():
     raw = """
 2022-08-31 * "test income to asset"
-    Assets:Bank:BoA      100 CNY
+    Assets:CurrentAssets:Bank:BoA      100 CNY
     Income:Google:Salary  -100 CNY
 
 2022-09-19 * "test asset to expense"
@@ -169,7 +170,7 @@ def test_prune_collapse():
     Expenses:Housing:Rent   100.00 CNY
 
 2022-12-30 * "test liabilities to expense"
-    Liabilities:CreditCard:CMB  -43.97 CNY
+    Liabilities:Current:CreditCard:CMB  -43.97 CNY
     Expenses:Food:Shop           43.97 CNY
 """
     from beancount.loader import load_string
