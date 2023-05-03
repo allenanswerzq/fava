@@ -642,9 +642,9 @@ class ChartModule(FavaModule):
         income_stat = dict()
         expenses_stat = dict()
         def collapse(edge: SankeyTreeEdge):
-            if "Transport" in edge.v and len(edge.v.split(":")) > 2:
-                # Collapse Expense:Transport:* account
-                return edge._replace(collapsed=True)
+            # if "Transport" in edge.v and len(edge.v.split(":")) > 2:
+            #     # Collapse Expense:Transport:* account
+            #     return edge._replace(collapsed=True)
 
             if "Expenses" in edge.v and len(edge.v.split(":")) > 3:
                 return edge._replace(collapsed=True)

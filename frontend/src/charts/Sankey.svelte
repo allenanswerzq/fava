@@ -207,7 +207,10 @@
         }
       }
       else {
-        ans[index] = node.id.split("_")[1]
+        var full = node.id.split("_")[1];
+        var full_ss = full.split(":");
+        var n_ss = full_ss.length;
+        ans[index] = full_ss[n_ss - 1];
         ans[index] += " [";
         ans[index] += nodes_total[index].toFixed(2) + "/";
         // ans[index] += nodes_actual[index].toFixed(2)
