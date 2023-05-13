@@ -158,6 +158,7 @@ import { extent } from "d3-array";
   $: group_yAxis = new Map();
   $: group_xAxis = new Map();
   $: group_tiptext = new Map();
+  $: group_height = new Map();
     // Scales
   $: dateExtent = extent(data, (d) => d.date);
   $: x = scaleUtc().domain(dateExtent[0] ? dateExtent : [0, 1]).range([0, innerWidth]);
@@ -171,15 +172,33 @@ import { extent } from "d3-array";
 
     // Reverse here so that the order on the graph is correct
     cur_data.reverse();
-
+    // each line with height equals 15
+    const height = innerHeight + (groups.length - 3) * 10;
     let y = scalePoint()
         .padding(1)
         .domain(cur_data.map((d) => d.type))
-        .range([innerHeight, 0]);
+        .range([height, 0]);
+
+      group_height.set(person, height);
 
     function tick_format(d : string) {
-    // 2021-12-19 event "13-Insurance_妈妈-360医疗补充#医疗" "buy"
-      return d.split('#')[0].split('_')[1];
+      const tick_length = 21;
+      // 2021-12-19 event "13-Insurance_妈妈-360医疗补充#医疗" "buy"
+      let res = d.split('#')[0].split('_')[1].trim();
+      let english = 0;
+      for (var i = 0; i < res.length; i++) {
+        if (res.charCodeAt(i) >= 0 && res.charCodeAt(i) <= 255) {
+          english++;
+        }
+      }
+      const chinese = res.length - english;
+      const pad = tick_length - chinese * 2 - english;
+      let ans = res;
+      for (var i = 0; i < pad; i++) {
+        ans += "_";
+      }
+      console.log("AAAAAAAAAAAA", ans, ans.length, res, res.length, pad, chinese, english, innerHeight, groups.length);
+      return ans;
     }
 
     let yAxis = axisLeft(y)
