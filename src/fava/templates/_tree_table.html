@@ -173,9 +173,15 @@ Hold Ctrl or Cmd while clicking to expand one level.') }}">
     <p{{ ' class=has-balance'  }}>
     <span class="account-cell depth-{{ loop.depth0 }} droptarget{{ ' has-children' if account.children_ else '' }}" data-account-name="{{ account.node_.name }}">
       {% set account_name = account.node_.name %}
-      <a href="{{ url_for('extension_report', report_name='EnvelopeBudget', node_name=account_name) }}" class="account">
-        {{- account_name -}}
-      </a>
+      {% if 'Expenses:' in account_name %}
+        <a href="{{ url_for('account', name=account_name, time='month-2' + ' - ' + 'day') }}" class="account">
+          {{- account_name -}}
+        </a>
+      {% else %}
+        <a href="{{ url_for('extension_report', report_name='EnvelopeBudget', node_name=account_name) }}" class="account">
+          {{- account_name -}}
+        </a>
+      {% endif %}
     </span>
     <span class="num">
       {% if budget != 0 %}
