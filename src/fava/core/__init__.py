@@ -518,7 +518,7 @@ class FavaLedger:
         ]
 
         interval_tuples = list(
-            reversed(list(pairwise(filtered.interval_ends(interval))))
+            list(pairwise(filtered.interval_ends(interval)))
         )
 
         interval_balances = [

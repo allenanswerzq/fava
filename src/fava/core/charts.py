@@ -196,6 +196,7 @@ class ChartModule(FavaModule):
         accounts: str | tuple[str],
         conversion: str,
         invert: bool = False,
+        compute_assets: bool = False,
     ) -> Generator[DateAndBalanceWithBudget, None, None]:
         """Renders totals for account (or accounts) in the intervals.
 
@@ -207,6 +208,29 @@ class ChartModule(FavaModule):
         """
         # pylint: disable=too-many-locals
         price_map = self.ledger.price_map
+        today = date.today()
+        if compute_assets:
+            min_accounts = [
+                account
+                for account in self.ledger.accounts.keys()
+                if account.startswith("Assets:")
+            ]
+            for begin, end in pairwise(filtered.interval_ends(interval)):
+                if begin > today:
+                    break
+                entries = list(iter_entry_dates(self.ledger.all_entries, date.min, end))
+                root = realization.realize(entries, min_accounts=min_accounts, compute_balance=True)
+                children = realization.iter_children(root)
+                for child in children:
+                    child.balance = realization.compute_balance(child)
+                total_assets = root.get("Assets")
+                assert not total_assets.balance.is_empty()
+                account_balances = {}
+                for name in ["CurrentInvests", "CurrentAssets", "NonCurrentAssets"]:
+                    account_balances["Assets:" + name] = total_assets.get(name).balance
+                yield DateAndBalanceWithBudget(begin, total_assets.balance, account_balances, {})
+
+        empty_count = 0
         for begin, end in pairwise(filtered.interval_ends(interval)):
             inventory = Inventory()
             entries = iter_entry_dates(filtered.entries, begin, end)
@@ -223,6 +247,12 @@ class ChartModule(FavaModule):
             balance = cost_or_value(
                 inventory, conversion, price_map, end - ONE_DAY
             )
+
+            if balance.is_empty() and begin > today:
+                empty_count += 1
+                if empty_count > 3:
+                    return
+
             account_balances = {}
             for account, acct_value in account_inventories.items():
                 account_balances[account] = cost_or_value(
@@ -251,49 +281,8 @@ class ChartModule(FavaModule):
             )
 
     @listify
-    def linechanges(
-        self, filtered: FilteredLedger, account_name: str, conversion: str
-    ) -> Generator[DateAndBalance, None, None]:
-        """The balance of an account.
-
-        Args:
-            account_name: A string.
-            conversion: The conversion to use.
-
-        Returns:
-            A list of dicts for all dates on which the balance of the given
-            account has changed containing the balance (in units) of the
-            account at that date.
-        """
-        real_account = realization.get_or_create(
-            filtered.root_account, account_name
-        )
-        postings = realization.get_postings(real_account)
-        journal = realization.iterate_with_balance(postings)
-
-        # When the balance for a commodity just went to zero, it will be
-        # missing from the 'balance' so keep track of currencies that last had
-        # a balance.
-        last_currencies = None
-
-        price_map = self.ledger.price_map
-        for entry, _, change, balance_inventory in journal:
-            if change.is_empty():
-                continue
-
-            balance = inv_to_dict(
-                cost_or_value(
-                    balance_inventory, conversion, price_map, entry.date
-                )
-            )
-            c = change.to_string().split(' ')[0].split('(')[1]
-            assert len(c)
-            yield DateAndBalance(entry.date, {"CNY" : Decimal(c)})
-
-
-    @listify
     def linechart(
-        self, filtered: FilteredLedger, account_name: str, conversion: str
+        self, filtered: FilteredLedger, accounts_name: str, conversion: str
     ) -> Generator[DateAndBalance, None, None]:
         """The balance of an account.
 
@@ -306,35 +295,39 @@ class ChartModule(FavaModule):
             account has changed containing the balance (in units) of the
             account at that date.
         """
-        real_account = realization.get_or_create(
-            filtered.root_account, account_name
-        )
-        postings = realization.get_postings(real_account)
-        journal = realization.iterate_with_balance(postings)
+        if isinstance(accounts_name, str):
+            accounts_name = [accounts_name]
 
-        # When the balance for a commodity just went to zero, it will be
-        # missing from the 'balance' so keep track of currencies that last had
-        # a balance.
-        last_currencies = None
-
-        price_map = self.ledger.price_map
-        for entry, _, change, balance_inventory in journal:
-            if change.is_empty():
-                continue
-
-            balance = inv_to_dict(
-                cost_or_value(
-                    balance_inventory, conversion, price_map, entry.date
-                )
+        for account_name in accounts_name:
+            real_account = realization.get_or_create(
+                filtered.root_account, account_name
             )
+            postings = realization.get_postings(real_account)
+            journal = realization.iterate_with_balance(postings)
 
-            currencies = set(balance.keys())
-            if last_currencies:
-                for currency in last_currencies - currencies:
-                    balance[currency] = 0
-            last_currencies = currencies
+            # When the balance for a commodity just went to zero, it will be
+            # missing from the 'balance' so keep track of currencies that last had
+            # a balance.
+            last_currencies = None
 
-            yield DateAndBalance(entry.date, balance)
+            price_map = self.ledger.price_map
+            for entry, _, change, balance_inventory in journal:
+                if change.is_empty():
+                    continue
+
+                balance = inv_to_dict(
+                    cost_or_value(
+                        balance_inventory, conversion, price_map, entry.date
+                    )
+                )
+
+                currencies = set(balance.keys())
+                if last_currencies:
+                    for currency in last_currencies - currencies:
+                        balance[currency] = 0
+                last_currencies = currencies
+
+                yield DateAndBalance(entry.date, balance)
 
     @listify
     def net_worth(
@@ -381,90 +374,6 @@ class ChartModule(FavaModule):
                     inventory, conversion, price_map, end_date - ONE_DAY
                 ),
             )
-
-    @listify
-    def sankey_account(
-        self, filtered: FilteredLedger, interval: Interval, conversion: str
-    ) -> Generator[DateAndBalance, None, None]:
-        import csv
-        file = "/Users/zqjxw73/guava/temp/budget.csv" # todo
-        mp = {}
-        with open(file) as f:
-            for index, row in enumerate(csv.DictReader(f)):
-                if row["First"] != '':
-                    cur = ""
-                    for i, k in enumerate(row.values()):
-                        if len(k) == 0: break
-                        if i > 0: cur += ":"
-                        cur += k
-                        if cur not in mp: mp[cur] = 0
-                        mp[cur] += 1
-
-        root = "Account"
-        nodes = set()
-        links = []
-        nodes.add(root)
-        for k, v in mp.items():
-            t = k.split(":")
-            if len(t) == 1:
-                nodes.add(t[0])
-                links.append([root, k, str(v)])
-                # print(f"Account [{v}] {t[0]}")
-            else:
-                # print(f"{t[-2]} [{v}] {t[-1]}")
-                nodes.add(k)
-                links.append([":".join(x for x in t[:-1]), k, str(v)])
-
-        import json
-
-        json_node = json.dumps(list(nodes))
-        json_link = json.dumps(links)
-        yield {"nodes_ss": json_node, "links_ss": json_link}
-
-    @listify
-    def two_sides(self, filtered: FilteredLedger, interval: Interval, conversion: str) -> Generator[DateAndBalance, None, None]:
-        transactions = (
-            entry
-            for entry in filtered.entries
-            if (
-                isinstance(entry, Transaction)
-                and entry.flag != FLAG_UNREALIZED
-            )
-        )
-
-        root = realization.realize(transactions)
-        children = realization.iter_children(root)
-        balance_map = {}
-        for child in children:
-            t = realization.compute_balance(child)
-            balance_map[child.account] = abs(t.get_currency_units("CNY").number)
-
-        assets = []
-        others = []
-        for k, v in balance_map.items():
-            if v <= 0: continue
-            if "Income" in k: continue
-            if "Expenses" in k: continue
-            if "-Balance" in k: continue
-
-            if "Assets" in k:
-                if len(k.split(":")) == 2:
-                    assets.append({"account":k, "value" : str(v)})
-            else:
-                print(k)
-                assert "Income" not in k, "{}".format(k)
-                if len(k.split(":")) == 2:
-                    others.append({"account":k, "value" : str(v)})
-
-        # print(assets)
-        # print("\n\n\n")
-        # print(others)
-
-        import json
-        assets_ss = json.dumps(assets)
-        others_ss = json.dumps(others)
-        yield {"assets_ss": assets_ss, "others_ss": others_ss}
-
 
     @listify
     def sankey_budget(

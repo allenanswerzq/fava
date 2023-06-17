@@ -36,7 +36,7 @@ FY_QUARTER_RE = re.compile(r"^fy(\d{4})-q(\d)$")
 
 VARIABLE_RE = re.compile(
     r"\(?(fiscal_year|year|fiscal_quarter|quarter"
-    r"|month|week|day)(?:([-+])(\d+))?\)?"
+    r"|month|week|day|future)(?:([-+])(\d+))?\)?"
 )
 
 
@@ -196,6 +196,12 @@ def substitute(string: str, fye: FiscalYearEnd | None = None) -> str:
             string = string.replace(
                 complete_match, (today + delta).isoformat()
             )
+        if interval == "future":
+            delta = datetime.timedelta(200)
+            string = string.replace(
+                complete_match, (today + delta).isoformat()
+            )
+
     return string
 
 

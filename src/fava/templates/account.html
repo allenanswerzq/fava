@@ -8,12 +8,17 @@
 {% set short_title = account_name %}
 
 {% set journal = subreport == 'journal' %}
+{% set compute_assets = account_name == 'Liabilities' %}
 
 {% block content %}
 <div class="droptarget" data-account-name="{{ account_name }}">
   {{ charts.account_balance(account_name) }}
-  {{ charts.interval_totals(g.interval, account_name, label=_('Changes')) }}
-  <!-- {{ charts.line_changes(account_name) }} -->
+
+  {% if compute_assets %}
+  {{ charts.assets_libilities([account_name, "Assets"]) }}
+  {% endif %}
+
+  {{ charts.interval_totals(g.interval, account_name, label=_('Changes'), compute_assets=compute_assets) }}
 
   {% if not journal %}
   {{ charts.hierarchy(account_name) }}
@@ -32,10 +37,11 @@
   {% set accumulate = subreport == 'balances' %}
   {% set interval_balances, dates = ledger.interval_balances(g.filtered, g.interval, account_name, accumulate) %}
   {% if interval_balances %}
-  {% for begin_date, end_date in dates[:3] %}
-  {{ charts.hierarchy(account_name, begin_date, end_date, label=begin_date|format_date) }}
-  {% endfor %}
   {{ tree_table.account_tree(account_name, interval_balances, dates, accumulate) }}
+  {% if compute_assets %}
+  {% set assets_balances, dates = ledger.interval_balances(g.filtered, g.interval, "Assets", accumulate) %}
+  {{ tree_table.account_tree("Assets", assets_balances, dates, True) }}
+  {% endif %}
   {% endif %}
   {% endif %}
 </div>

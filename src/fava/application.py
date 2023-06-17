@@ -231,10 +231,14 @@ def _perform_global_filters() -> None:
         if request.blueprint != "json_api":
             ledger.changed()
 
+        time = request.args.get("time")
+        if time == None:
+            time = "2016 - day"
+
         g.filtered = ledger.get_filtered(
             account=request.args.get("account"),
             filter=request.args.get("filter"),
-            time=request.args.get("time"),
+            time=time,
         )
 
 

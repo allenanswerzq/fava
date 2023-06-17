@@ -11,11 +11,11 @@
 }) %}
 {% endmacro %}
 
-{% macro interval_totals(interval, account_name, label=None, invert=False) %}
+{% macro interval_totals(interval, account_name, label=None, invert=False, compute_assets=False) %}
 {% do chart_data.append({
 'type': 'bar',
 'label': account_name if not label else label,
-'data': ledger.charts.interval_totals(g.filtered, interval, account_name, g.conversion, invert=invert),
+'data': ledger.charts.interval_totals(g.filtered, interval, account_name, g.conversion, invert=invert, compute_assets=compute_assets),
 }) %}
 {% endmacro %}
 
@@ -49,22 +49,6 @@
 'label': _('Sankey'),
 'data': ledger.charts.sankey_balance_sheet(g.filtered, interval, g.conversion),
 }) %}
-
-{% endmacro %}
-{% macro two_sides(innteval) %}
-{% do chart_data.append({
-'type': 'twosidesplot',
-'label': _('TwoSides'),
-'data': ledger.charts.two_sides(g.filtered, interval, g.conversion),
-}) %}
-{% endmacro %}
-
-{% macro sankey_account(interval) %}
-{% do chart_data.append({
-'type': 'sankeyplot',
-'label': _('Accounts'),
-'data': ledger.charts.sankey_account(g.filtered, interval, g.conversion),
-}) %}
 {% endmacro %}
 
 {% macro account_balance(account_name, increment_sum=False) %}
@@ -75,13 +59,13 @@
 }) %}
 {% endmacro %}
 
-<!-- {% macro line_changes(account_name, increment_sum=False) %}
+{% macro assets_libilities(account_name, increment_sum=False) %}
 {% do chart_data.append({
 'type': 'balances',
-'label': _('Line Changes'),
-'data': ledger.charts.linechanges(g.filtered, account_name, g.conversion),
+'label': _('Total Assets Liabilities'),
+'data': ledger.charts.linechart(g.filtered, account_name, g.conversion),
 }) %}
-{% endmacro %} -->
+{% endmacro %}
 
 {% macro commodities() %}
 {% for base, quote, prices in ledger.charts.prices(g.filtered) %}
