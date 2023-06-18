@@ -232,7 +232,9 @@ def _perform_global_filters() -> None:
             ledger.changed()
 
         time = request.args.get("time")
-        if time == None:
+        if "insurance" in str(request):
+            time = None
+        elif time == None:
             time = "2016 - day"
 
         g.filtered = ledger.get_filtered(
