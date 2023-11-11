@@ -444,6 +444,9 @@ class ChartModule(FavaModule):
         liabilities_stat = dict()
         equity_stat = dict()
         def collapse(edge: SankeyTreeEdge):
+            if "Assets" == edge.v:
+                return edge
+
             if "Assets" in edge.u and len(edge.u.split(":")) >= 3:
                 return edge._replace(collapsed=True)
 
@@ -497,7 +500,8 @@ class ChartModule(FavaModule):
 
             return (tree.nodes_, tree.links_)
 
-        tree = SankeyTree(txn_entries, finalize=finalize, prune=prune, collapse=collapse)
+        tree = SankeyTree(txn_entries, finalize=finalize, prune=prune, collapse=collapse, 
+                          conversion=conversion, price_map=self.ledger.price_map)
         (nodes, links) = tree.run()
 
         import json
@@ -575,9 +579,8 @@ class ChartModule(FavaModule):
             else:
                 level_max = max(edge.weight, expenses_stat.get(level, 0))
                 expenses_stat[level] = level_max
-
+            
             ratio = float(edge.weight) / max(float(level_max), 0.0001)
-            # print(u, v, level, ratio)
 
             if "Expenses" in v and level > 2 and ratio < 0.04:
                 return edge._replace(collapsed=True)
@@ -615,7 +618,8 @@ class ChartModule(FavaModule):
 
             return (tree.nodes_, tree.links_)
 
-        tree = SankeyTree(txn_entries, finalize=finalize, prune=prune, collapse=collapse)
+        tree = SankeyTree(txn_entries, finalize=finalize, prune=prune, collapse=collapse, 
+                          conversion=conversion, price_map=self.ledger.price_map)
         (nodes, links) = tree.run()
 
         import json

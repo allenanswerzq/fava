@@ -3,6 +3,8 @@ from beancount.core.inventory import Inventory
 from beancount.core.realization import realize, RealAccount, iter_children, compute_balance
 
 from typing import NamedTuple, Any
+from beancount.core.number import Decimal
+from fava.core.conversion import *
 from fava.core.conversion import *
 
 SankeyTreeEdge = NamedTuple(
@@ -16,7 +18,8 @@ SankeyTreeEdge = NamedTuple(
 class SankeyTree:
     """
     """
-    def __init__(self, txns, prune=None, collapse=None, finalize=None):
+    def __init__(self, txns, prune=None, collapse=None, finalize=None, 
+                 conversion=None, price_map=None):
         self.txns_ = txns
         self.root_ = realize(self.txns_, compute_balance=True)
         children = iter_children(self.root_)
@@ -26,6 +29,8 @@ class SankeyTree:
         self.prune_ = prune or SankeyTree.prune_default
         self.collapse_ = collapse or SankeyTree.collapse_default
         self.finalize_ = finalize or SankeyTree.finalize_default
+        self.conversion = conversion
+        self.price_map = price_map
 
         self.name_id_ = dict()
         self.id_name_ = dict()
@@ -33,19 +38,36 @@ class SankeyTree:
 
         self.links_ = list()
         self.nodes_ = set()
+    
+    def inv_to_dict(self, inventory: Inventory) -> dict[str, Decimal]:
+        """Convert an inventory to a simple cost->number dict."""
+        return {
+            pos.units.currency: pos.units.number
+            for pos in inventory
+            if pos.units.number is not None
+        }
 
-    @staticmethod
-    def get_balance(real_account):
+    def get_balance(self, real_account):
+        inventory = None
+        account = None
         if isinstance(real_account, tuple):
-            # (key, value)
-            # print(real_account[0], real_account[1].balance)
-            return abs(real_account[1].balance.get_currency_units("CNY").number)
+            account = real_account[0]
+            inventory = real_account[1].balance
         elif isinstance(real_account, RealAccount):
-            # print(real_account.account, real_account.balance)
-            return abs(real_account.balance.reduce(get_cost).get_currency_units("CNY").number)
+            account = real_account.account
+            inventory = real_account.balance
         else:
             assert False
 
+        balance = self.inv_to_dict(
+            cost_or_value(inventory, self.conversion, self.price_map)
+        )
+
+        if 'CNY' in balance:
+            return abs(balance['CNY'])
+        else:
+            return 0
+        
 
     @staticmethod
     def prune_default(edge: SankeyTreeEdge) -> bool:
@@ -96,10 +118,10 @@ class SankeyTree:
         self.name_id_[real_account.account] = id
         self.id_name_[id] = real_account.account
         i = 0
-        for k, child in sorted(real_account.items(), key=SankeyTree.get_balance, reverse=True):
+        for k, child in sorted(real_account.items(), key=self.get_balance, reverse=True):
             # k is a str looks like: Assets:Current:Bank
             assert isinstance(child, RealAccount)
-            weight = SankeyTree.get_balance(child)
+            weight = self.get_balance(child)
             self.balance_map_[child.account] = weight
             edge = SankeyTreeEdge(real_account.account, child.account, weight, child, collapsed)
 
