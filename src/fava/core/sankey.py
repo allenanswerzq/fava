@@ -104,8 +104,11 @@ class SankeyTree:
         if "Income" in u or "Asset" in u:
             u, v = v, u
 
-        elif len(edge.u) == 0:
+        if len(edge.u) == 0:
             # NOTE: we do NOT add root edges
+            return
+        
+        if edge.u == "Liabilities":
             return
 
         w = self.encode_weight(edge.weight, edge.collapsed)
@@ -160,7 +163,7 @@ def test_basic():
     Expenses:Housing:Rent   100.00 CNY
 
 2022-12-30 * "test liabilities to expense"
-    Liabilities:Current:CreditCard:CMB  -43.97 CNY
+    Liabilities:Current:CreditCard-CMB  -43.97 CNY
     Expenses:Food:Shop           43.97 CNY
 """
     from beancount.loader import load_string
@@ -192,7 +195,7 @@ def test_prune_collapse():
     Expenses:Housing:Rent   100.00 CNY
 
 2022-12-30 * "test liabilities to expense"
-    Liabilities:Current:CreditCard:CMB  -43.97 CNY
+    Liabilities:Current:CreditCard-CMB  -43.97 CNY
     Expenses:Food:Shop           43.97 CNY
 """
     from beancount.loader import load_string

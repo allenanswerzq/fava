@@ -148,12 +148,12 @@
     for (const edge of g.links) {
       let source = edge.source.index;
       let target = edge.target.index;
-      if (edge.target.id.includes("Income") || edge.target.id.includes("Assets")) {
+      if (edge.target.id.includes("Income") || edge.target.id.includes("Liabilities")) {
         let tmp = target;
         target = source;
         source = tmp;
       }
-      else if (edge.source.id.includes("Income") || edge.target.id.includes("Assets")) {
+      else if (edge.source.id.includes("Income") || edge.target.id.includes("Liabilities")) {
         ans[source] = 1;
       }
       if (nodes_total[source] > 0) {
@@ -239,7 +239,7 @@
 <g class="sankey-layer">
   <g class="link-group" >
     {#each sankeyData.links as d}
-      {#if d.target.id.includes("Income") || d.target.id.includes("Assets")}
+      {#if d.target.id.includes("Income") || d.target.id.includes("Liabilities")}
         <path class:faded={highlighted && highlighted != d.source.id}
           d={link(d)}
           fill="none"
@@ -293,18 +293,33 @@
         width={d.x1 - d.x0 + 4}
         fill={colorNodes(d)}
       />
-      <text class:faded={highlighted && highlighted != d.id}
-        x={d.x0 < $width / 4 ? d.x1 + 6 : d.x0 - 6}
-        y={(d.y1 + d.y0) / 2 - 6}
-        dy={fontSize / 2 - 2}
-        style="
-          font-size: {fontSize}px;
-          text-anchor: {d.x0 < $width / 4
-          ? 'start'
-          : 'end'};fill: {colortext(d)};"
-      >
-        {nodes_name[d.index]}
-      </text>
+      {#if d.id.split(":").length >= 3}
+        <text class:faded={highlighted && highlighted != d.id}
+          x={d.x0 < $width / 4 ? d.x1 + 6: d.x0 + 12}
+          y={(d.y1 + d.y0) / 2 - 2}
+          dy={fontSize / 2 - 2}
+          style="
+            font-size: {fontSize}px;
+            text-anchor: {d.x0 < $width / 4
+            ? 'start'
+            : 'start'};fill: {colortext(d)};"
+        >
+          {nodes_name[d.index]}
+        </text>
+      {:else}
+        <text class:faded={highlighted && highlighted != d.id}
+          x={d.x0 < $width / 4 ? d.x1 + 6: d.x0 - 6}
+          y={(d.y1 + d.y0) / 2 - 6}
+          dy={fontSize / 2 - 2}
+          style="
+            font-size: {fontSize}px;
+            text-anchor: {d.x0 < $width / 4
+            ? 'start'
+            : 'end'};fill: {colortext(d)};"
+        >
+          {nodes_name[d.index]}
+        </text>
+      {/if}
     {/each}
   </g>
 </g>

@@ -66,13 +66,14 @@ export function sankeyplot(json: undefined): Result<SankeyPlot, string> {
       else if (val_ss.length == 2) {
         if (val_ss[1] == "collapsed") {
           // collapsed links
-          if (link[0].includes("Liabilities") || link[0].includes("Expenses") ||
-              link[0].includes("Equity")) {
-            console.log("SET", link[1]);
+          let first_part = link[0].split(":")[0].split("_")[1];
+          // console.log("AAAAAAAA", first_part);
+          if (first_part.includes("Assets") || first_part.includes("Expenses") || first_part.includes("Equity")) {
+            console.log("Collapsing", link[1]);
             collapsed_map.set(link[1], true);
           }
           else {
-            console.log("SET", link[0]);
+            console.log("Collapsing", link[0]);
             collapsed_map.set(link[0], true);
           }
 
@@ -107,7 +108,7 @@ export function sankeyplot(json: undefined): Result<SankeyPlot, string> {
       data.nodes.push({ id: node });
     }
     // console.log(data)
-    console.log("AAAAAAAA", data.nodes);
+    // console.log("AAAAAAAA", data.nodes);
     // console.log(links_ss)
   }
   return ok({ type: "sankeyplot" as const, data });

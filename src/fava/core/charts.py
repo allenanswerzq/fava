@@ -297,7 +297,6 @@ class ChartModule(FavaModule):
         """
         if isinstance(accounts_name, str):
             accounts_name = [accounts_name]
-
         for account_name in accounts_name:
             real_account = realization.get_or_create(
                 filtered.root_account, account_name
@@ -446,11 +445,11 @@ class ChartModule(FavaModule):
         def collapse(edge: SankeyTreeEdge):
             if "Assets" == edge.v:
                 return edge
-
+            
             if "Assets" in edge.u and len(edge.u.split(":")) >= 3:
                 return edge._replace(collapsed=True)
 
-            if "Liabilities" in edge.v and len(edge.v.split(":")) >= 3:
+            if "Liabilities" in edge.v and len(edge.v.split(":")) >= 4:
                 return edge._replace(collapsed=True)
 
             if "Equity" in edge.v and len(edge.v.split(":")) >= 3:
@@ -490,13 +489,20 @@ class ChartModule(FavaModule):
 
         def finalize(tree: SankeyTree):
             assets = tree.encode_name(tree.name_id_.get("Assets", 0), "Assets")
-            liabilities = tree.encode_name(tree.name_id_.get("Liabilities", 0), "Liabilities")
+            # liabilities = tree.encode_name(tree.name_id_.get("Liabilities", 0), "Liabilities")
             # equity = tree.encode_name(tree.name_id_.get("Equity", 0), "Equity")
-            tree.links_.append([assets, liabilities, str(tree.balance_map_.get("Liabilities", 0))])
+            # tree.links_.append([assets, liabilities, str(tree.balance_map_.get("Liabilities", 0))])
             # tree.links_.append([assets, equity, str(tree.balance_map_.get("Equity", 0))])
+            # liabilities = tree.encode_name(tree.name_id_.get("Liabilities", 0), "Liabilities")
+            current = tree.encode_name(tree.name_id_.get("Liabilities:Current", 0), "Liabilities:Current")
+            tree.links_.append([assets, current, str(tree.balance_map_.get("Liabilities:Current", 0))])
 
-            for x in tree.links_:
-                print(x)
+            noncurrent = tree.encode_name(tree.name_id_.get("Liabilities:NonCurrent", 0), "Liabilities:NonCurrent")
+            noncurrent_val = tree.balance_map_.get("Liabilities:NonCurrent", 0)
+            if noncurrent_val > 0:
+                tree.links_.append([assets, noncurrent, str(noncurrent_val)])
+            else:
+                tree.nodes_.remove(noncurrent)
 
             return (tree.nodes_, tree.links_)
 
@@ -504,6 +510,11 @@ class ChartModule(FavaModule):
                           conversion=conversion, price_map=self.ledger.price_map)
         (nodes, links) = tree.run()
 
+        for x in links:
+            # NOTE: reverse the direction
+            x[1], x[0] = x[0], x[1]
+            # print(x)
+        
         import json
         json_node = json.dumps(list(nodes))
         json_link = json.dumps(links)
@@ -613,8 +624,8 @@ class ChartModule(FavaModule):
                 tree.nodes_.add(profit)
                 tree.links_.append([income, profit, str(profit_value)])
 
-            for x in tree.links_:
-                print(x)
+            # for x in tree.links_:
+            #     print(x)
 
             return (tree.nodes_, tree.links_)
 

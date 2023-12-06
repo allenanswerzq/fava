@@ -16,8 +16,9 @@
 
 <style>
   .chart-container {
-    width: 100%;
+    width: 86%;
     height: 350px;
     margin-top: 20px;
+    /* margin-left: 80px; */
   }
 </style>
