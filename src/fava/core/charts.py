@@ -502,7 +502,8 @@ class ChartModule(FavaModule):
             if noncurrent_val > 0:
                 tree.links_.append([assets, noncurrent, str(noncurrent_val)])
             else:
-                tree.nodes_.remove(noncurrent)
+                if noncurrent in tree.nodes_:
+                    tree.nodes_.remove(noncurrent)
 
             return (tree.nodes_, tree.links_)
 
