@@ -10,6 +10,7 @@
 
   import { scaleOrdinal } from "d3-scale";
   import { hclColorRange, } from "./helpers";
+  import { Tag } from "@lezer/highlight";
 
   /** The currently hovered account. */
   let highlighted: string | null = null;
@@ -109,7 +110,6 @@
     }
 
     for (const edge of g.links) {
-      console.log(edge)
       const source = edge.source.index;
       const target = edge.target.index;
       let value = edge.value;
@@ -119,14 +119,27 @@
         ans[source] = Math.round((value + Number.EPSILON) * 100) / 100;
       }
 
-      value = ans[target] + edge.value;
-      ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
-      node_max = Math.max(node_max, ans[target]);
+      let sr = edge.source.id.split(":");
+      if (sr.length == 1 && sr[0].includes("Assets")) {
+        ans[source] += value;
+      }
+
+      let tg = edge.target.id.split(":");
+      if (tg.length == 1 && tg[0].includes("Assets")) {
+        // TODO: here maybe buggy
+        // console.log("AAAAAAAAA", edge.source, edge.target);
+        // ans[target] = 0;
+      }
+      else {
+        value = ans[target] + edge.value;
+        ans[target] = Math.round((value + Number.EPSILON) * 100) / 100;
+        node_max = Math.max(node_max, ans[target]);
+      }
       // console.log(edge.source.id, edge.target.id, value, ans[source], ans[target]);
     }
 
     for (const edge of g.collapsed_links) {
-      console.log(edge)
+      // console.log(edge)
       const source = id_map.get(edge.source);
       const target = id_map.get(edge.target);
       if (target) {
@@ -138,7 +151,7 @@
       }
     }
 
-    console.log(ans);
+    // console.log(ans);
     return ans;
   };
   $: nodes_total = compute_total($data);
@@ -148,6 +161,7 @@
     for (const edge of g.links) {
       let source = edge.source.index;
       let target = edge.target.index;
+      // console.log(edge.source, edge.target);
       if (edge.target.id.includes("Income") || edge.target.id.includes("Liabilities")) {
         let tmp = target;
         target = source;
@@ -156,7 +170,11 @@
       else if (edge.source.id.includes("Income") || edge.target.id.includes("Liabilities")) {
         ans[source] = 1;
       }
-      if (nodes_total[source] > 0) {
+      let tg = edge.target.id.split(":");
+      if (tg.length == 1 && tg[0].includes("Assets")) {
+        ans[target] = 0;
+      }
+      else if (nodes_total[source] > 0) {
         let value = nodes_total[target] / nodes_total[source];
         if (edge.target.id.includes("Expenses") && edge.target.id.split(":").length > 2) {
           ans[target] = Math.round((value + Number.EPSILON) * 100) / 100 * ans[source];
