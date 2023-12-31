@@ -464,13 +464,13 @@ class ChartModule(FavaModule):
 
             level = len(v.split(":"))
             if "Assets" in v:
-                level_max = max(edge.weight, assets_stat.get(level, 0))
+                level_max = max(edge.weight, assets_stat.get(level, 1))
                 assets_stat[level] = level_max
             elif "Equity" in v:
-                level_max = max(edge.weight, equity_stat.get(level, 0))
+                level_max = max(edge.weight, equity_stat.get(level, 1))
                 equity_stat[level] = level_max
             else:
-                level_max = max(edge.weight, liabilities_stat.get(level, 0))
+                level_max = max(edge.weight, liabilities_stat.get(level, 1))
                 liabilities_stat[level] = level_max
 
             ratio = edge.weight / level_max
@@ -586,13 +586,13 @@ class ChartModule(FavaModule):
 
             level = len(v.split(":"))
             if "Income" in v:
-                level_max = max(edge.weight, income_stat.get(level, 0))
+                level_max = max(edge.weight, income_stat.get(level, 1))
                 income_stat[level] = level_max
             else:
-                level_max = max(edge.weight, expenses_stat.get(level, 0))
+                level_max = max(edge.weight, expenses_stat.get(level, 1))
                 expenses_stat[level] = level_max
             
-            ratio = float(edge.weight) / max(float(level_max), 0.0001)
+            ratio = float(edge.weight) / max(float(level_max), 1)
 
             if "Expenses" in v and level > 2 and ratio < 0.04:
                 return edge._replace(collapsed=True)
