@@ -454,9 +454,12 @@ class ChartModule(FavaModule):
 
             if "Equity" in edge.v and len(edge.v.split(":")) >= 3:
                 return edge._replace(collapsed=True)
-
+            
+            if "Liabilities" in edge.u:
+                edge = edge._replace(weight=-edge.weight)
+            
             # Add weight prune to avoid too many branches
-            u, v = edge.u, edge.v
+            u, v, weight = edge.u, edge.v, abs(edge.weight)
             if "Assets" in edge.u:
                 # "assets" -> "assets:a:b"
                 # "liabilities" -> "liabilities:a:b"
@@ -464,16 +467,16 @@ class ChartModule(FavaModule):
 
             level = len(v.split(":"))
             if "Assets" in v:
-                level_max = max(edge.weight, assets_stat.get(level, 1))
+                level_max = max(weight, assets_stat.get(level, 1))
                 assets_stat[level] = level_max
             elif "Equity" in v:
-                level_max = max(edge.weight, equity_stat.get(level, 1))
+                level_max = max(weight, equity_stat.get(level, 1))
                 equity_stat[level] = level_max
             else:
-                level_max = max(edge.weight, liabilities_stat.get(level, 1))
+                level_max = max(weight, liabilities_stat.get(level, 1))
                 liabilities_stat[level] = level_max
 
-            ratio = edge.weight / level_max
+            ratio = weight / level_max
             # print(u, v, level, ratio)
 
             if "Liabilities" in v and ratio < 0.04:
@@ -495,15 +498,18 @@ class ChartModule(FavaModule):
             # tree.links_.append([assets, equity, str(tree.balance_map_.get("Equity", 0))])
             # liabilities = tree.encode_name(tree.name_id_.get("Liabilities", 0), "Liabilities")
             current = tree.encode_name(tree.name_id_.get("Liabilities:Current", 0), "Liabilities:Current")
-            tree.links_.append([assets, current, str(tree.balance_map_.get("Liabilities:Current", 0))])
+            tree.links_.append([assets, current, str(abs(tree.balance_map_.get("Liabilities:Current", 0)))])
 
             noncurrent = tree.encode_name(tree.name_id_.get("Liabilities:NonCurrent", 0), "Liabilities:NonCurrent")
-            noncurrent_val = tree.balance_map_.get("Liabilities:NonCurrent", 0)
+            noncurrent_val = abs(tree.balance_map_.get("Liabilities:NonCurrent", 0))
             if noncurrent_val > 0:
                 tree.links_.append([assets, noncurrent, str(noncurrent_val)])
             else:
                 if noncurrent in tree.nodes_:
                     tree.nodes_.remove(noncurrent)
+
+            for x in tree.links_:
+                print(x)
 
             return (tree.nodes_, tree.links_)
 

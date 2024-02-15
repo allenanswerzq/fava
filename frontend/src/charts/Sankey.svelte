@@ -154,10 +154,10 @@
     for (const edge of g.links) {
       const source = edge.source.index;
       const target = edge.target.index;
-      if (edge.source.id.includes("Income")) {
+      if (edge.source.id.includes("Income") || edge.source.id.includes("Liabilities")) {
         ans[source] = -ans[source];
       }
-      if (edge.target.id.includes("Income")) {
+      if (edge.target.id.includes("Income") || edge.target.id.includes("Liabilities")) {
         ans[target] = -ans[target];
       }
       if (edge.target.id.includes("Profit")) {
@@ -168,7 +168,7 @@
     for (const edge of g.collapsed_links) {
       const target = id_map.get(edge.target);
       if (target) {
-        if (edge.target.includes("Income")) {
+        if (edge.target.includes("Income") || edge.target.includes("Liabilities")) {
           ans[target] = -ans[target];
         }
       }
@@ -196,7 +196,8 @@
       if (tg.length == 1 && tg[0].includes("Assets")) {
         ans[target] = 0;
       }
-      else if (nodes_total[source] > 0) {
+      // else if (nodes_total[source] > 0) {
+      else {
         let value = nodes_total[target] / nodes_total[source];
         if (edge.target.id.includes("Expenses") && edge.target.id.split(":").length > 2) {
           ans[target] = Math.round((value + Number.EPSILON) * 100) / 100 * ans[source];
