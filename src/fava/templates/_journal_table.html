@@ -98,13 +98,6 @@
             {{ render_tags_links(entry) }}
         {% endif %}
         </span>
-        <span class="indicators">
-          {{ render_metadata_indicators(metadata) }}
-          {% for posting in entry.postings %}
-          <span{% if posting.flag %} class="{{ posting.flag|flag_to_type }}"{% endif %}></span>
-          {{ render_metadata_indicators(posting.meta|remove_keys(['__automatic__', 'lineno', 'filename'])) }}
-          {% endfor %}
-        </span>
         {% if type == 'balance' %}
           {{ commodity_macros.render_amount(ledger, entry.amount, 'num bal' + (' pending' if entry.diff_amount else '')) }}
         {% endif %}

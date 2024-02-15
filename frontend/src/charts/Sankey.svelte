@@ -151,6 +151,28 @@
       }
     }
 
+    for (const edge of g.links) {
+      const source = edge.source.index;
+      const target = edge.target.index;
+      if (edge.source.id.includes("Income")) {
+        ans[source] = -ans[source];
+      }
+      if (edge.target.id.includes("Income")) {
+        ans[target] = -ans[target];
+      }
+      if (edge.target.id.includes("Profit")) {
+        ans[target] = -ans[target];
+      }
+    }
+
+    for (const edge of g.collapsed_links) {
+      const target = id_map.get(edge.target);
+      if (target) {
+        if (edge.target.includes("Income")) {
+          ans[target] = -ans[target];
+        }
+      }
+    }
     // console.log(ans);
     return ans;
   };

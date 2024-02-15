@@ -64,7 +64,8 @@ class SankeyTree:
         )
 
         if 'CNY' in balance:
-            return abs(balance['CNY'])
+            # return abs(balance['CNY'])
+            return balance['CNY']
         else:
             return 0
         
@@ -116,12 +117,25 @@ class SankeyTree:
         self.nodes_.add(u)
         self.nodes_.add(v)
         self.links_.append([u, v, w])
+    
+    def sortkey_balance(self, real_account):
+        if isinstance(real_account, tuple):
+            account = real_account[0]
+        elif isinstance(real_account, RealAccount):
+            account = real_account.account
+        else:
+            assert False
+
+        if 'Income:' in account:
+            return -self.get_balance(real_account)
+        else:
+            return self.get_balance(real_account)
 
     def dfs(self, real_account: RealAccount, parent=None, id=100, collapsed=False) -> None:
         self.name_id_[real_account.account] = id
         self.id_name_[id] = real_account.account
         i = 0
-        for k, child in sorted(real_account.items(), key=self.get_balance, reverse=True):
+        for k, child in sorted(real_account.items(), key=self.sortkey_balance, reverse='Income' not in real_account.account):
             # k is a str looks like: Assets:Current:Bank
             assert isinstance(child, RealAccount)
             weight = self.get_balance(child)

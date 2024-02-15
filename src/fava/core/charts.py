@@ -571,6 +571,9 @@ class ChartModule(FavaModule):
             #     # Collapse Expense:Transport:* account
             #     return edge._replace(collapsed=True)
 
+            if "Income" in edge.u:
+                edge = edge._replace(weight=-edge.weight)
+
             if "Expenses" in edge.v and len(edge.v.split(":")) > 3:
                 return edge._replace(collapsed=True)
 
@@ -578,7 +581,7 @@ class ChartModule(FavaModule):
                 return edge._replace(collapsed=True)
 
             # Add weight prune to avoid too many branches
-            u, v = edge.u, edge.v
+            u, v, weight = edge.u, edge.v, abs(edge.weight)
             if "Income" in edge.u:
                 # "income" -> "income:a:b"
                 # "expense" -> "expense:a:b"
@@ -586,13 +589,13 @@ class ChartModule(FavaModule):
 
             level = len(v.split(":"))
             if "Income" in v:
-                level_max = max(edge.weight, income_stat.get(level, 1))
+                level_max = max(weight, income_stat.get(level, 1))
                 income_stat[level] = level_max
             else:
-                level_max = max(edge.weight, expenses_stat.get(level, 1))
+                level_max = max(weight, expenses_stat.get(level, 1))
                 expenses_stat[level] = level_max
             
-            ratio = float(edge.weight) / max(float(level_max), 1)
+            ratio = float(weight) / max(float(level_max), 1)
 
             if "Expenses" in v and level > 2 and ratio < 0.04:
                 return edge._replace(collapsed=True)
@@ -619,11 +622,18 @@ class ChartModule(FavaModule):
             expense = tree.encode_name(tree.name_id_.get("Expenses", 0), "Expenses")
             tree.links_.append([income, expense, str(tree.balance_map_.get("Expenses", 0))])
 
-            profit_value = income_value - expense_value
-            if income_value > 0 and expense_value > 0 and profit_value > 0:
-                profit = tree.encode_name(801000000, "Profit")
-                tree.nodes_.add(profit)
-                tree.links_.append([income, profit, str(profit_value)])
+            if income_value < 0:
+                profit_value = -income_value - expense_value
+                if income_value < 0 and expense_value > 0 and profit_value > 0:
+                    profit = tree.encode_name(801000000, "Profit")
+                    tree.nodes_.add(profit)
+                    tree.links_.append([income, profit, str(profit_value)])
+            else:
+                profit_value = income_value + expense_value
+                if income_value > 0 and expense_value > 0 and profit_value > 0:
+                    profit = tree.encode_name(801000000, "Profit")
+                    tree.nodes_.add(profit)
+                    tree.links_.append([income, profit, str(profit_value)])
 
             # for x in tree.links_:
             #     print(x)
