@@ -63,11 +63,18 @@ class SankeyTree:
             cost_or_value(inventory, self.conversion, self.price_map)
         )
 
-        if 'CNY' in balance:
-            # return abs(balance['CNY'])
-            return balance['CNY']
-        else:
+        if not inventory.is_empty():
+            print('\n\n------------------------------')
+            print(account)
+            print(inventory)
+            print(balance)
+
+        if len(balance) == 0:
             return 0
+        elif self.conversion in balance:
+            return balance[self.conversion]
+        else:
+            assert False, inventory
         
 
     @staticmethod

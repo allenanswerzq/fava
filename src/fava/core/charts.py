@@ -508,8 +508,8 @@ class ChartModule(FavaModule):
                 if noncurrent in tree.nodes_:
                     tree.nodes_.remove(noncurrent)
 
-            for x in tree.links_:
-                print(x)
+            # for x in tree.links_:
+            #     print(x)
 
             return (tree.nodes_, tree.links_)
 
