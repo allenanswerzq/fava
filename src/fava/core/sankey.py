@@ -67,10 +67,19 @@ class SankeyTree:
             print('\n\n------------------------------')
             print(account)
             print(inventory)
+            print(self.conversion)
             print(balance)
 
         if len(balance) == 0:
             return 0
+
+        elif self.conversion == 'at_cost':
+            # NOTE: use CNY for at_cost compute
+            if 'CNY' in balance:
+                return balance['CNY']
+            else:
+                return 0
+
         elif self.conversion in balance:
             return balance[self.conversion]
         else:
