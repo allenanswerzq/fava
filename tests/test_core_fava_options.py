@@ -10,6 +10,7 @@ import pytest
 from fava.core.charts import dumps
 from fava.core.fava_options import FavaOptions
 from fava.core.fava_options import InsertEntryOption
+from fava.core.fava_options import InvalidAccountDepthOptionError
 from fava.core.fava_options import NotARegularExpressionError
 from fava.core.fava_options import parse_options
 from fava.core.fava_options import UnknownLocaleOptionError
@@ -51,6 +52,8 @@ def test_fava_options(load_doc_custom_entries: list[Custom]) -> None:
     2016-04-14 custom "fava-option" "conversion-currencies" "USD EUR HOOLI"
     2016-06-14 custom "fava-option" "default-file" "/some/file/name"
     2016-04-14 custom "fava-option" "language" "en"
+    2016-04-14 custom "fava-option" "sankey-income-depth" "3"
+    2016-04-14 custom "fava-option" "sankey-expense-depth" "4"
     """
 
     options, errors = parse_options(load_doc_custom_entries)
@@ -76,6 +79,8 @@ def test_fava_options(load_doc_custom_entries: list[Custom]) -> None:
     assert options.fiscal_year_end == FiscalYearEnd(1, 11)
     assert options.conversion_currencies == ("USD", "EUR", "HOOLI")
     assert options.default_file == str(Path("/some/file/name").absolute())
+    assert options.sankey_income_depth == 3
+    assert options.sankey_expense_depth == 4
 
 
 def test_fava_options_language() -> None:
@@ -89,6 +94,15 @@ def test_fava_options_language() -> None:
     with pytest.raises(UnsupportedLanguageOptionError):
         options.set_language("km")
     options.set_language("zh")
+
+
+def test_fava_options_sankey_depth_defaults_and_validation() -> None:
+    options = FavaOptions()
+
+    assert options.sankey_income_depth == 2
+    assert options.sankey_expense_depth == 2
+    with pytest.raises(InvalidAccountDepthOptionError):
+        options.set_sankey_depth("sankey_income_depth", "0")
 
 
 def test_fava_options_import_dirs(

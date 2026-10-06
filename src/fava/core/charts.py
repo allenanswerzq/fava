@@ -20,6 +20,7 @@ from fava.beans.helpers import slice_entry_dates
 from fava.core.conversion import conversion_from_str
 from fava.core.inventory import CounterInventory
 from fava.core.module_base import FavaModule
+from fava.core.sankey import build_income_statement_sankey
 from fava.util import listify
 from fava.util.date import FiscalYearEnd
 
@@ -36,6 +37,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from fava.core import FilteredLedger
     from fava.core.conversion import Conversion
     from fava.core.inventory import SimpleCounterInventory
+    from fava.core.sankey import SankeyData
     from fava.core.tree import SerialisedTreeNode
     from fava.util.date import Interval
 
@@ -101,6 +103,35 @@ class DateAndBalanceWithBudget(Struct, frozen=True):
 
 class ChartModule(FavaModule):
     """Return data for the various charts in Fava."""
+
+    def income_statement_sankey(
+        self,
+        filtered: FilteredLedger,
+        conversion: str | Conversion,
+    ) -> SankeyData:
+        """Build Sankey data for the filtered income statement."""
+        conv = conversion_from_str(conversion)
+        options = self.ledger.options
+        tree = filtered.root_tree
+        prices = self.ledger.prices
+        end_date = filtered.end_date
+        income = tree.get(options["name_income"]).serialise(
+            conv,
+            prices,
+            end_date,
+        )
+        expenses = tree.get(options["name_expenses"]).serialise(
+            conv,
+            prices,
+            end_date,
+        )
+        fava_options = self.ledger.fava_options
+        return build_income_statement_sankey(
+            income,
+            expenses,
+            income_depth=fava_options.sankey_income_depth,
+            expense_depth=fava_options.sankey_expense_depth,
+        )
 
     def hierarchy(
         self,
