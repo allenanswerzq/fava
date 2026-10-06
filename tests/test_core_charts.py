@@ -263,6 +263,115 @@ def test_build_income_statement_sankey() -> None:
     ] == {"EUR": Decimal(80), "USD": Decimal(70)}
 
 
+def test_build_income_statement_sankey_routes_balances_by_sign() -> None:
+    """Normal and contra balances coexist in one signed Sankey graph."""
+    salary = SerialisedTreeNode(
+        "Revenue:Salary",
+        SimpleCounterInventory({"USD": Decimal(-100)}),
+        SimpleCounterInventory({"USD": Decimal(-100)}),
+        (),
+        has_txns=True,
+    )
+    reversal = SerialisedTreeNode(
+        "Revenue:Reversal",
+        SimpleCounterInventory({"USD": Decimal(20)}),
+        SimpleCounterInventory({"USD": Decimal(20)}),
+        (),
+        has_txns=True,
+    )
+    income = SerialisedTreeNode(
+        "Revenue",
+        SimpleCounterInventory(),
+        SimpleCounterInventory({"USD": Decimal(-80)}),
+        (reversal, salary),
+        has_txns=False,
+    )
+    housing = SerialisedTreeNode(
+        "Costs:Housing",
+        SimpleCounterInventory({"USD": Decimal(70)}),
+        SimpleCounterInventory({"USD": Decimal(70)}),
+        (),
+        has_txns=True,
+    )
+    refund = SerialisedTreeNode(
+        "Costs:Refund",
+        SimpleCounterInventory({"USD": Decimal(-10)}),
+        SimpleCounterInventory({"USD": Decimal(-10)}),
+        (),
+        has_txns=True,
+    )
+    expenses = SerialisedTreeNode(
+        "Costs",
+        SimpleCounterInventory(),
+        SimpleCounterInventory({"USD": Decimal(60)}),
+        (housing, refund),
+        has_txns=False,
+    )
+
+    data = build_income_statement_sankey(income, expenses)
+    nodes = {node.id: node for node in data.nodes}
+    links = {(link.source, link.target): link.value for link in data.links}
+
+    assert links[("account:Revenue:Salary", "account:Revenue")] == {
+        "USD": Decimal(100)
+    }
+    assert links[("account:Revenue", "account:Revenue:Reversal")] == {
+        "USD": Decimal(20)
+    }
+    assert links[("account:Costs", "account:Costs:Housing")] == {
+        "USD": Decimal(70)
+    }
+    assert links[("account:Costs:Refund", "account:Costs")] == {
+        "USD": Decimal(10)
+    }
+    assert links[("account:Revenue", "account:Costs")] == {
+        "USD": Decimal(60)
+    }
+    assert links[("account:Revenue", "net-profit")] == {
+        "USD": Decimal(20)
+    }
+    assert nodes["net-profit"].balance == {"USD": Decimal(20)}
+    assert "net-loss" not in nodes
+    assert nodes["account:Revenue"].kind == "account"
+    assert nodes["account:Revenue"].role is None
+    assert nodes["account:Revenue"].column == 1
+    assert nodes["account:Revenue"].level == 0
+    assert nodes["account:Revenue:Salary"].column == 0
+    assert nodes["account:Revenue:Salary"].level == 1
+    assert nodes["account:Costs"].column == 2
+    assert nodes["account:Costs"].level == 0
+    assert nodes["account:Costs:Housing"].column == 3
+    assert nodes["account:Costs:Housing"].level == 1
+    assert nodes["net-profit"].kind == "result"
+    assert nodes["net-profit"].role == "net_profit"
+    assert nodes["net-profit"].column == 2
+    assert nodes["net-profit"].level is None
+    assert all(
+        number > 0 for link in data.links for number in link.value.values()
+    )
+    for node_id, expected in [
+        ("account:Revenue", Decimal(100)),
+        ("account:Costs", Decimal(70)),
+    ]:
+        incoming = sum(
+            (
+                link.value.get("USD", Decimal())
+                for link in data.links
+                if link.target == node_id
+            ),
+            start=Decimal(),
+        )
+        outgoing = sum(
+            (
+                link.value.get("USD", Decimal())
+                for link in data.links
+                if link.source == node_id
+            ),
+            start=Decimal(),
+        )
+        assert incoming == outgoing == expected
+
+
 def test_build_empty_income_statement_sankey() -> None:
     """An empty income statement produces an empty graph."""
     empty_income = SerialisedTreeNode(
