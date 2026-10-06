@@ -65,6 +65,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from fava.core.inventory import SimpleCounterInventory
     from fava.core.query import QueryResultTable
     from fava.core.query import QueryResultText
+    from fava.core.sankey import SankeyData
     from fava.core.tree import SerialisedTreeNode
     from fava.internal_api import ChartData
     from fava.util.date import DateRange
@@ -732,6 +733,16 @@ def get_income_statement() -> TreeReport:
         g.filtered.date_range,
         charts,
         trees=[tree.serialise_with_context() for tree in trees],
+    )
+
+
+@api_endpoint
+def get_income_statement_sankey() -> SankeyData:
+    """Get Sankey data for the filtered income statement."""
+    g.ledger.changed()
+    return g.ledger.charts.income_statement_sankey(
+        g.filtered,
+        g.conversion,
     )
 
 

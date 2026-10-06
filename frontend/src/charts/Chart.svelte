@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
 
+  import { _ } from "../i18n.ts";
   import { router } from "../router.ts";
   import {
     bar_chart_mode,
@@ -16,6 +17,7 @@
   import type { FavaChart } from "./index.ts";
   import LineChart from "./LineChart.svelte";
   import ModeSwitch from "./ModeSwitch.svelte";
+  import Sankey from "./Sankey.svelte";
   import ScatterPlot from "./ScatterPlot.svelte";
   import { Tooltip } from "./tooltip.ts";
 
@@ -33,6 +35,23 @@
 
   /** Width of the chart. */
   let width = $state<number>();
+  let sankey_currency = $derived(
+    chart.type === "sankey" ? chart.currency : null,
+  );
+  let sankey_currencies = $derived(
+    chart.type === "sankey" ? chart.currencies : null,
+  );
+  let sankey_data = $derived(chart.type === "sankey" ? chart.data : null);
+  let sankey_load_failed = $state(false);
+
+  $effect(() => {
+    if (chart.type === "sankey" && $show_charts) {
+      sankey_load_failed = false;
+      void chart.load().catch(() => {
+        sankey_load_failed = true;
+      });
+    }
+  });
 </script>
 
 <div class="flex-row">
@@ -56,6 +75,13 @@
         legend={chart.currencies}
         color={false}
         active={chart.treemap_currency}
+      />
+    {/if}
+    {#if chart.type === "sankey"}
+      <ChartLegend
+        legend={$sankey_currencies ?? []}
+        color={false}
+        active={chart.currency}
       />
     {/if}
     <span class="spacer"></span>
@@ -84,7 +110,7 @@
   bind:clientWidth={width}
   {@attach tooltip.init.bind(tooltip)}
 >
-  {#if width}
+  {#if width != null && width > 0 && $show_charts}
     {#if chart.type === "barchart"}
       <BarChart {chart} {width} />
     {:else if chart.type === "hierarchy"}
@@ -93,6 +119,19 @@
       <LineChart {chart} {width} />
     {:else if chart.type === "scatterplot"}
       <ScatterPlot {chart} {width} />
+    {:else if chart.type === "sankey"}
+      {#if $sankey_data}
+        <Sankey
+          data={$sankey_data}
+          currency={$sankey_currency ?? ""}
+          role_labels={chart.role_labels}
+          {width}
+        />
+      {:else if sankey_load_failed}
+        <p role="alert">{_("Loading chart failed.")}</p>
+      {:else}
+        <p aria-busy="true">{_("Loading chart...")}</p>
+      {/if}
     {/if}
   {/if}
 </div>

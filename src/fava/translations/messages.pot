@@ -2,6 +2,14 @@
 msgid "File change detected. Click to reload."
 msgstr ""
 
+#: frontend/src/charts/Chart.svelte:131
+msgid "Loading chart failed."
+msgstr ""
+
+#: frontend/src/charts/Chart.svelte:133
+msgid "Loading chart..."
+msgstr ""
+
 #: frontend/src/charts/ChartSwitcher.svelte:26
 #: frontend/src/reports/import/Extract.svelte:100
 msgid "Previous"
@@ -31,7 +39,13 @@ msgid "Converted to %(currency)s"
 msgstr ""
 
 #: frontend/src/charts/HierarchyContainer.svelte:33
+#: frontend/src/charts/Sankey.svelte:147
 msgid "Chart is empty."
+msgstr ""
+
+#: frontend/src/charts/Sankey.svelte:143
+#, python-format
+msgid "Sankey diagram for %(currency)s"
 msgstr ""
 
 #: frontend/src/editor/DeleteButton.svelte:12
@@ -235,7 +249,7 @@ msgstr ""
 
 #: frontend/src/reports/accounts/AccountReport.svelte:64
 #: frontend/src/reports/accounts/AccountReport.svelte:67
-#: src/fava/json_api.py:808
+#: src/fava/json_api.py:819
 msgid "Changes"
 msgstr ""
 
@@ -567,17 +581,31 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:38
+#: frontend/src/reports/tree_reports/index.ts:41
+msgid "Sankey"
+msgstr ""
+
+#: frontend/src/reports/tree_reports/index.ts:44
+#: frontend/src/stores/accounts.ts:113 src/fava/json_api.py:710
+#: src/fava/json_api.py:728
+msgid "Net Profit"
+msgstr ""
+
+#: frontend/src/reports/tree_reports/index.ts:45
+msgid "Net Loss"
+msgstr ""
+
+#: frontend/src/reports/tree_reports/index.ts:51
 #: frontend/src/sidebar/AsideContents.svelte:30
 msgid "Income Statement"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:49
+#: frontend/src/reports/tree_reports/index.ts:62
 #: frontend/src/sidebar/AsideContents.svelte:31
 msgid "Balance Sheet"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:63
+#: frontend/src/reports/tree_reports/index.ts:76
 #: frontend/src/sidebar/AsideContents.svelte:32
 msgid "Trial Balance"
 msgstr ""
@@ -600,11 +628,6 @@ msgstr ""
 
 #: frontend/src/sidebar/FilterForm.svelte:63
 msgid "Filter by tag, payee, …"
-msgstr ""
-
-#: frontend/src/stores/accounts.ts:113 src/fava/json_api.py:709
-#: src/fava/json_api.py:727
-msgid "Net Profit"
 msgstr ""
 
 #: frontend/src/stores/chart.ts:29
@@ -673,11 +696,11 @@ msgstr ""
 msgid "Net Worth"
 msgstr ""
 
-#: src/fava/json_api.py:715
+#: src/fava/json_api.py:716
 msgid "Income"
 msgstr ""
 
-#: src/fava/json_api.py:721
+#: src/fava/json_api.py:722
 msgid "Expenses"
 msgstr ""
 

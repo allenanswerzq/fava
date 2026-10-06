@@ -12,9 +12,15 @@ import type { ChartContext } from "./context.ts";
 import { type HierarchyChart, ParsedHierarchyChart } from "./hierarchy.ts";
 import type { LineChart } from "./line.ts";
 import { ParsedLineChart } from "./line.ts";
+import type { SankeyChart } from "./sankey.ts";
 import { ScatterPlot } from "./scatterplot.ts";
 
-export type FavaChart = HierarchyChart | BarChart | ScatterPlot | LineChart;
+export type FavaChart =
+  | HierarchyChart
+  | BarChart
+  | ScatterPlot
+  | LineChart
+  | SankeyChart;
 
 /*
  * The charts are parsed / loaded from the raw JSON into classed implementing

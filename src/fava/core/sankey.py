@@ -130,14 +130,10 @@ def _connect_root_balances(
             (expense_id, expenses.get(currency, ZERO)),
         )
         sources: list[tuple[str, Decimal]] = [
-            (node_id, -number)
-            for node_id, number in roots
-            if number < ZERO
+            (node_id, -number) for node_id, number in roots if number < ZERO
         ]
         sinks: list[tuple[str, Decimal]] = [
-            (node_id, number)
-            for node_id, number in roots
-            if number > ZERO
+            (node_id, number) for node_id, number in roots if number > ZERO
         ]
         source_total = sum((value for _, value in sources), start=ZERO)
         sink_total = sum((value for _, value in sinks), start=ZERO)

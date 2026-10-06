@@ -1,0 +1,141 @@
+{
+  "links": [
+    {
+      "source": "account:Expenses",
+      "target": "account:Expenses:Financial",
+      "value": { "USD": "137.50" }
+    },
+    {
+      "source": "account:Expenses",
+      "target": "account:Expenses:Food",
+      "value": { "USD": "6601.98" }
+    },
+    {
+      "source": "account:Expenses",
+      "target": "account:Expenses:Health",
+      "value": { "USD": "2519.40" }
+    },
+    {
+      "source": "account:Expenses",
+      "target": "account:Expenses:Home",
+      "value": { "USD": "31302.44" }
+    },
+    {
+      "source": "account:Expenses",
+      "target": "account:Expenses:Taxes",
+      "value": { "IRAUSD": "17500.00", "USD": "51477.20" }
+    },
+    {
+      "source": "account:Expenses",
+      "target": "account:Expenses:Transport",
+      "value": { "USD": "1440.00" }
+    },
+    {
+      "source": "account:Income",
+      "target": "account:Expenses",
+      "value": { "IRAUSD": "17500", "USD": "93478.52" }
+    },
+    {
+      "source": "account:Income",
+      "target": "net-profit",
+      "value": { "USD": "35857.24", "VACHR": "130" }
+    },
+    {
+      "source": "account:Income:US",
+      "target": "account:Income",
+      "value": { "IRAUSD": "17500", "USD": "129335.76", "VACHR": "130" }
+    }
+  ],
+  "nodes": [
+    {
+      "account": "Expenses",
+      "balance": { "IRAUSD": "17500.00", "USD": "93478.52" },
+      "column": 2,
+      "id": "account:Expenses",
+      "kind": "account",
+      "level": 0,
+      "role": null
+    },
+    {
+      "account": "Expenses:Financial",
+      "balance": { "USD": "137.50" },
+      "column": 3,
+      "id": "account:Expenses:Financial",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Expenses:Food",
+      "balance": { "USD": "6601.98" },
+      "column": 3,
+      "id": "account:Expenses:Food",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health",
+      "balance": { "USD": "2519.40" },
+      "column": 3,
+      "id": "account:Expenses:Health",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Expenses:Home",
+      "balance": { "USD": "31302.44" },
+      "column": 3,
+      "id": "account:Expenses:Home",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes",
+      "balance": { "IRAUSD": "17500.00", "USD": "51477.20" },
+      "column": 3,
+      "id": "account:Expenses:Taxes",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Expenses:Transport",
+      "balance": { "USD": "1440.00" },
+      "column": 3,
+      "id": "account:Expenses:Transport",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Income",
+      "balance": { "IRAUSD": "17500", "USD": "129335.76", "VACHR": "130" },
+      "column": 1,
+      "id": "account:Income",
+      "kind": "account",
+      "level": 0,
+      "role": null
+    },
+    {
+      "account": "Income:US",
+      "balance": { "IRAUSD": "17500", "USD": "129335.76", "VACHR": "130" },
+      "column": 0,
+      "id": "account:Income:US",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": null,
+      "balance": { "USD": "35857.24", "VACHR": "130" },
+      "column": 2,
+      "id": "net-profit",
+      "kind": "result",
+      "level": null,
+      "role": "net_profit"
+    }
+  ]
+}

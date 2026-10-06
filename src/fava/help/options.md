@@ -136,16 +136,16 @@ to hide the links altogether.
 Default: `2`
 
 The maximum absolute account depth shown for income accounts in the income
-statement Sankey chart. For example, depth `2` groups
-`Income:Salary:Work` into `Income:Salary`.
+statement Sankey chart. For example, depth `2` groups `Income:Salary:Work` into
+`Income:Salary`.
 
 ## sankey-expense-depth
 
 Default: `2`
 
 The maximum absolute account depth shown for expense accounts in the income
-statement Sankey chart. For example, depth `2` groups
-`Expenses:Housing:Rent` into `Expenses:Housing`.
+statement Sankey chart. For example, depth `2` groups `Expenses:Housing:Rent`
+into `Expenses:Housing`.
 
 ## upcoming-events
 

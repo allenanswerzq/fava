@@ -1,5 +1,6 @@
 import { get as store_get } from "svelte/store";
 
+import { sankey_validator } from "../charts/sankey.ts";
 import {
   Document,
   type Entry,
@@ -63,6 +64,7 @@ type GetEndpoint =
   | "help"
   | "imports"
   | "income_statement"
+  | "income_statement_sankey"
   | "journal_page"
   | "trial_balance"
   | "ledger_data"
@@ -279,6 +281,11 @@ export const get_imports = define_paramless_endpoint(
 export const get_income_statement = define_endpoint(
   "income_statement",
   tree_report_validator,
+  filters_conversion_interval,
+);
+export const get_income_statement_sankey = define_endpoint(
+  "income_statement_sankey",
+  sankey_validator,
   filters_conversion_interval,
 );
 export const get_journal_page = define_endpoint(

@@ -167,9 +167,7 @@ option "operating_currency" "USD"
     links = {(link.source, link.target): link.value for link in data.links}
 
     assert nodes["account:Income:Salary"].balance == {"USD": Decimal(150)}
-    assert nodes["account:Expenses:Housing"].balance == {
-        "USD": Decimal(150)
-    }
+    assert nodes["account:Expenses:Housing"].balance == {"USD": Decimal(150)}
     assert "net-profit" not in nodes
     assert "net-loss" not in nodes
     assert links[("account:Income", "account:Expenses")] == {
@@ -324,12 +322,8 @@ def test_build_income_statement_sankey_routes_balances_by_sign() -> None:
     assert links[("account:Costs:Refund", "account:Costs")] == {
         "USD": Decimal(10)
     }
-    assert links[("account:Revenue", "account:Costs")] == {
-        "USD": Decimal(60)
-    }
-    assert links[("account:Revenue", "net-profit")] == {
-        "USD": Decimal(20)
-    }
+    assert links[("account:Revenue", "account:Costs")] == {"USD": Decimal(60)}
+    assert links[("account:Revenue", "net-profit")] == {"USD": Decimal(20)}
     assert nodes["net-profit"].balance == {"USD": Decimal(20)}
     assert "net-loss" not in nodes
     assert nodes["account:Revenue"].kind == "account"

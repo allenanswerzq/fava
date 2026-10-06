@@ -1,6 +1,7 @@
 import {
   get_balance_sheet,
   get_income_statement,
+  get_income_statement_sankey,
   get_trial_balance,
 } from "../../api/index.ts";
 import {
@@ -8,6 +9,7 @@ import {
   ParsedHierarchyChart,
 } from "../../charts/hierarchy.ts";
 import type { ParsedFavaChart } from "../../charts/index.ts";
+import { ParsedSankeyChart } from "../../charts/sankey.ts";
 import { _ } from "../../i18n.ts";
 import { get_url_filters } from "../../stores/filters.ts";
 import { Route } from "../route.ts";
@@ -25,7 +27,8 @@ export const income_statement = new Route(
   "income_statement",
   IncomeStatement,
   async (url) => {
-    const report = await get_income_statement(get_url_filters(url));
+    const filters = get_url_filters(url);
+    const report = await get_income_statement(filters);
     const [income, _profit, expenses] = report.trees;
     if (income && expenses) {
       report.charts.push(
@@ -33,6 +36,16 @@ export const income_statement = new Route(
         ParsedHierarchyChart.from_node(expenses),
       );
     }
+    report.charts.push(
+      new ParsedSankeyChart(
+        _("Sankey"),
+        async () => get_income_statement_sankey(filters),
+        {
+          net_profit: _("Net Profit"),
+          net_loss: _("Net Loss"),
+        },
+      ),
+    );
     return report;
   },
   () => _("Income Statement"),

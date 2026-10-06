@@ -1037,6 +1037,10 @@ def test_api_filter_error(
         ("events", "/long-example/api/events"),
         ("journal", "/example/api/journal"),
         ("income_statement", "/long-example/api/income_statement?time=2014"),
+        (
+            "income_statement_sankey",
+            "/long-example/api/income_statement_sankey?time=2014",
+        ),
         ("narrations", "/long-example/api/narrations"),
         ("trial_balance", "/long-example/api/trial_balance?time=2014"),
         ("balance_sheet", "/long-example/api/balance_sheet"),
