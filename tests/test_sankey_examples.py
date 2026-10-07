@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from fava.core.sankey import SankeyData
 
 
-EXAMPLES = Path(__file__).parent / "data" / "sankey"
+EXAMPLES = Path(__file__).parent / "sankey_data"
 
 
 def _ledger(name: str) -> FavaLedger:
