@@ -44,6 +44,8 @@ export type SankeyLink = SankeyData["links"][number];
 /** A node reduced to the values needed to draw one currency. */
 export interface SankeyGraphNode extends Omit<SankeyNode, "balance"> {
   balance: number;
+  /** Preserve the full branch width when descendants are hidden. */
+  fixedValue?: number;
 }
 
 /** A directed link reduced to one positive width. */
@@ -58,6 +60,18 @@ export interface SankeyGraph {
   links: SankeyGraphLink[];
 }
 
+/** Expansion metadata for one visible account branch. */
+export interface SankeyBranch {
+  expanded: boolean;
+  hidden_accounts: number;
+}
+
+/** A graph filtered to its currently expanded account branches. */
+export interface SankeyGraphView {
+  graph: SankeyGraph;
+  branches: ReadonlyMap<string, SankeyBranch>;
+}
+
 /** A node with all coordinates required by the renderer. */
 export interface SankeyLayoutNode extends SankeyGraphNode {
   value: number;
@@ -70,8 +84,10 @@ export interface SankeyLayoutNode extends SankeyGraphNode {
 }
 
 /** A link with resolved nodes and vertical attachment points. */
-export interface SankeyLayoutLink
-  extends Omit<SankeyGraphLink, "source" | "target"> {
+export interface SankeyLayoutLink extends Omit<
+  SankeyGraphLink,
+  "source" | "target"
+> {
   source: SankeyLayoutNode;
   target: SankeyLayoutNode;
   width: number;
@@ -91,6 +107,7 @@ export interface SankeyLayoutOptions {
   height: number;
   node_width?: number;
   node_padding?: number;
+  max_column?: number;
 }
 
 /** Geometry for a link path and its directional arrow. */
@@ -250,19 +267,360 @@ export function sankey_graph_for_currency(
 
 const node_center = (node: SankeyLayoutNode) => (node.y0 + node.y1) / 2;
 
+function compare_order_paths(
+  left: readonly number[],
+  right: readonly number[],
+): number {
+  const length = Math.min(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    const difference = (left[index] ?? 0) - (right[index] ?? 0);
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return left.length - right.length;
+}
+
+interface SankeyHierarchy {
+  parent: Map<string, string>;
+  children: Map<string, SankeyGraphNode[]>;
+  roots: SankeyGraphNode[];
+}
+
+function sankey_hierarchy(graph: SankeyGraph): SankeyHierarchy {
+  const account_ids = new Map(
+    graph.nodes.flatMap((node) =>
+      node.account == null ? [] : [[node.account, node.id] as const],
+    ),
+  );
+  const parent = new Map<string, string>();
+  const children = new Map<string, SankeyGraphNode[]>();
+  for (const node of graph.nodes) {
+    if (node.account == null) {
+      continue;
+    }
+    let account = node.account;
+    while (account.includes(":")) {
+      account = account.slice(0, account.lastIndexOf(":"));
+      const parent_id = account_ids.get(account);
+      if (parent_id != null) {
+        parent.set(node.id, parent_id);
+        const siblings = children.get(parent_id);
+        if (siblings) {
+          siblings.push(node);
+        } else {
+          children.set(parent_id, [node]);
+        }
+        break;
+      }
+    }
+  }
+  return {
+    parent,
+    children,
+    roots: graph.nodes.filter(({ id }) => !parent.has(id)),
+  };
+}
+
+function sankey_node_flow(graph: SankeyGraph): Map<string, number> {
+  const incoming = new Map(graph.nodes.map(({ id }) => [id, 0]));
+  const outgoing = new Map(graph.nodes.map(({ id }) => [id, 0]));
+  for (const link of graph.links) {
+    outgoing.set(link.source, (outgoing.get(link.source) ?? 0) + link.value);
+    incoming.set(link.target, (incoming.get(link.target) ?? 0) + link.value);
+  }
+  return new Map(
+    graph.nodes.map(({ id }) => [
+      id,
+      Math.max(incoming.get(id) ?? 0, outgoing.get(id) ?? 0),
+    ]),
+  );
+}
+
+/** Choose the most valuable branches that fit within a column node budget. */
+export function sankey_default_expanded_nodes(
+  graph: SankeyGraph,
+  max_nodes_per_column = 12,
+): Set<string> {
+  const hierarchy = sankey_hierarchy(graph);
+  const flow = sankey_node_flow(graph);
+  const column_counts = new Map<number, number>();
+  for (const node of hierarchy.roots) {
+    column_counts.set(node.column, (column_counts.get(node.column) ?? 0) + 1);
+  }
+  const budget = Math.max(1, Math.floor(max_nodes_per_column));
+  const candidates = hierarchy.roots.filter((node) =>
+    hierarchy.children.has(node.id),
+  );
+  const expanded = new Set<string>();
+  const sort_candidates = () => {
+    candidates.sort(
+      (left, right) =>
+        (flow.get(right.id) ?? 0) - (flow.get(left.id) ?? 0) ||
+        left.id.localeCompare(right.id),
+    );
+  };
+  sort_candidates();
+
+  while (candidates.length > 0) {
+    const node = candidates.shift();
+    if (node == null) {
+      break;
+    }
+    const children = hierarchy.children.get(node.id) ?? [];
+    if (
+      children.length === 1 &&
+      !hierarchy.children.has(children[0]?.id ?? "")
+    ) {
+      continue;
+    }
+    const additions = new Map<number, number>();
+    for (const child of children) {
+      additions.set(child.column, (additions.get(child.column) ?? 0) + 1);
+    }
+    const fits = [...additions].every(
+      ([column, count]) => (column_counts.get(column) ?? 0) + count <= budget,
+    );
+    if (!fits) {
+      continue;
+    }
+    expanded.add(node.id);
+    for (const [column, count] of additions) {
+      column_counts.set(column, (column_counts.get(column) ?? 0) + count);
+    }
+    candidates.push(
+      ...children.filter((child) => hierarchy.children.has(child.id)),
+    );
+    sort_candidates();
+  }
+  return expanded;
+}
+
+/** Filter a Sankey graph to roots and descendants of expanded branches. */
+export function sankey_graph_view(
+  graph: SankeyGraph,
+  expanded_nodes: ReadonlySet<string>,
+): SankeyGraphView {
+  const hierarchy = sankey_hierarchy(graph);
+  const flow = sankey_node_flow(graph);
+  const visible = new Set<string>();
+  const visit = (node: SankeyGraphNode) => {
+    visible.add(node.id);
+    if (expanded_nodes.has(node.id)) {
+      for (const child of hierarchy.children.get(node.id) ?? []) {
+        visit(child);
+      }
+    }
+  };
+  for (const root of hierarchy.roots) {
+    visit(root);
+  }
+
+  const descendant_counts = new Map<string, number>();
+  const count_descendants = (id: string): number => {
+    const cached = descendant_counts.get(id);
+    if (cached != null) {
+      return cached;
+    }
+    const count = (hierarchy.children.get(id) ?? []).reduce(
+      (sum, child) => sum + 1 + count_descendants(child.id),
+      0,
+    );
+    descendant_counts.set(id, count);
+    return count;
+  };
+  const branches = new Map<string, SankeyBranch>();
+  for (const node of graph.nodes) {
+    const children = hierarchy.children.get(node.id) ?? [];
+    if (visible.has(node.id) && children.length > 0) {
+      branches.set(node.id, {
+        expanded: expanded_nodes.has(node.id),
+        hidden_accounts: count_descendants(node.id),
+      });
+    }
+  }
+
+  return {
+    graph: {
+      currency: graph.currency,
+      nodes: graph.nodes.flatMap((node) => {
+        if (!visible.has(node.id)) {
+          return [];
+        }
+        const branch = branches.get(node.id);
+        return branch != null && !branch.expanded
+          ? [{ ...node, fixedValue: flow.get(node.id) ?? 0 }]
+          : [node];
+      }),
+      links: graph.links.filter(
+        ({ source, target }) => visible.has(source) && visible.has(target),
+      ),
+    },
+    branches,
+  };
+}
+
+/** Build a self-contained graph for inspecting one account subtree. */
+export function sankey_focused_graph(
+  graph: SankeyGraph,
+  root_id: string,
+): SankeyGraph {
+  const hierarchy = sankey_hierarchy(graph);
+  const visible = new Set<string>();
+  const visit = (id: string) => {
+    visible.add(id);
+    for (const child of hierarchy.children.get(id) ?? []) {
+      visit(child.id);
+    }
+  };
+  visit(root_id);
+
+  const nodes = graph.nodes.filter(({ id }) => visible.has(id));
+  const min_column =
+    nodes.length > 0 ? Math.min(...nodes.map(({ column }) => column)) : 0;
+  return {
+    currency: graph.currency,
+    nodes: nodes.map((node) => ({
+      ...node,
+      column: node.column - min_column,
+    })),
+    links: graph.links.filter(
+      ({ source, target }) => visible.has(source) && visible.has(target),
+    ),
+  };
+}
+
+/** Derive stable, hierarchy-aware order paths for all visible nodes. */
+function sankey_order_paths(graph: SankeyGraph): Map<string, number[]> {
+  const { parent, children } = sankey_hierarchy(graph);
+  const flow = sankey_node_flow(graph);
+
+  const compare_nodes = (left: SankeyGraphNode, right: SankeyGraphNode) =>
+    (right.kind === "account" ? 1 : 0) - (left.kind === "account" ? 1 : 0) ||
+    (flow.get(right.id) ?? 0) - (flow.get(left.id) ?? 0) ||
+    left.id.localeCompare(right.id);
+  for (const siblings of children.values()) {
+    siblings.sort(compare_nodes);
+  }
+
+  const roots_by_column = new Map<number, SankeyGraphNode[]>();
+  for (const node of graph.nodes) {
+    if (!parent.has(node.id)) {
+      const roots = roots_by_column.get(node.column);
+      if (roots) {
+        roots.push(node);
+      } else {
+        roots_by_column.set(node.column, [node]);
+      }
+    }
+  }
+
+  const paths = new Map<string, number[]>();
+  const assign = (node: SankeyGraphNode, path: number[]) => {
+    paths.set(node.id, path);
+    for (const [index, child] of (children.get(node.id) ?? []).entries()) {
+      assign(child, [...path, index]);
+    }
+  };
+  for (const roots of roots_by_column.values()) {
+    roots.sort(compare_nodes);
+    for (const [index, root] of roots.entries()) {
+      assign(root, [index]);
+    }
+  }
+  return paths;
+}
+
+function move_node(node: SankeyLayoutNode, offset: number): void {
+  node.y0 += offset;
+  node.y1 += offset;
+}
+
+function resolve_column_collisions(
+  column: SankeyLayoutNode[],
+  height: number,
+  padding: number,
+): void {
+  let next_y = 0;
+  for (const node of column) {
+    if (node.y0 < next_y) {
+      move_node(node, next_y - node.y0);
+    }
+    next_y = node.y1 + padding;
+  }
+
+  next_y = height;
+  for (const node of [...column].reverse()) {
+    if (node.y1 > next_y) {
+      move_node(node, next_y - node.y1);
+    }
+    next_y = node.y0 - padding;
+  }
+}
+
+/** Align parents with their child groups while preserving hierarchy order. */
+function relax_columns(
+  columns: Map<number, SankeyLayoutNode[]>,
+  height: number,
+  padding: number,
+): void {
+  const ordered_columns = [...columns.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([, column]) => column);
+  for (let iteration = 0; iteration < 8; iteration += 1) {
+    const alpha = 0.55 * (1 - iteration / 10);
+    const sweep =
+      iteration % 2 === 0 ? ordered_columns : [...ordered_columns].reverse();
+    for (const column of sweep) {
+      for (const node of column) {
+        let weighted_center = 0;
+        let total_weight = 0;
+        for (const link of [...node.sourceLinks, ...node.targetLinks]) {
+          const neighbour = link.source === node ? link.target : link.source;
+          if (neighbour.column === node.column) {
+            continue;
+          }
+          weighted_center += node_center(neighbour) * link.value;
+          total_weight += link.value;
+        }
+        if (total_weight > 0) {
+          move_node(
+            node,
+            (weighted_center / total_weight - node_center(node)) * alpha,
+          );
+        }
+      }
+      resolve_column_collisions(column, height, padding);
+    }
+  }
+}
+
 /** Position a graph while keeping every node in its semantic column. */
 export function layout_sankey(
   graph: SankeyGraph,
-  { width, height, node_width = 8, node_padding = 16 }: SankeyLayoutOptions,
+  {
+    width,
+    height,
+    node_width = 8,
+    node_padding = 16,
+    max_column: requested_max_column,
+  }: SankeyLayoutOptions,
 ): SankeyLayoutGraph {
   if (!graph.nodes.length) {
     return { currency: graph.currency, nodes: [], links: [] };
   }
 
+  const order_paths = sankey_order_paths(graph);
   const initial = sankey<SankeyGraphNode, SankeyGraphLink>()
     .nodeId(({ id }) => id)
     .nodeWidth(Math.min(node_width, width))
     .nodePadding(node_padding)
+    .nodeSort((left, right) =>
+      compare_order_paths(
+        order_paths.get(left.id) ?? [],
+        order_paths.get(right.id) ?? [],
+      ),
+    )
     .size([width, height])({
     nodes: graph.nodes.map((node) => ({ ...node })),
     links: graph.links.map((link) => ({ ...link })),
@@ -278,7 +636,7 @@ export function layout_sankey(
       columns.set(node.column, [node]);
     }
   }
-  const max_column = Math.max(...columns.keys());
+  const max_column = Math.max(requested_max_column ?? 0, ...columns.keys());
   const max_nodes_in_column = Math.max(
     ...[...columns.values()].map((column) => column.length),
   );
@@ -298,7 +656,13 @@ export function layout_sankey(
     max_column > 0 ? (width - Math.min(node_width, width)) / max_column : 0;
 
   for (const [column_index, column] of columns) {
-    column.sort((a, b) => a.y0 - b.y0 || a.id.localeCompare(b.id));
+    column.sort(
+      (left, right) =>
+        compare_order_paths(
+          order_paths.get(left.id) ?? [],
+          order_paths.get(right.id) ?? [],
+        ) || left.id.localeCompare(right.id),
+    );
     const used_height =
       column.reduce((sum, node) => sum + node.value * scale, 0) +
       padding * (column.length - 1);
@@ -311,6 +675,8 @@ export function layout_sankey(
       y = node.y1 + padding;
     }
   }
+
+  relax_columns(columns, height, padding);
 
   for (const link of links) {
     link.width = link.value * scale;

@@ -19,7 +19,10 @@ import {
   ParsedSankeyChart,
   type SankeyGraph,
   sankey_currencies,
+  sankey_default_expanded_nodes,
+  sankey_focused_graph,
   sankey_graph_for_currency,
+  sankey_graph_view,
   sankey_link_geometry,
   sankey_validator,
 } from "../src/charts/sankey.ts";
@@ -411,6 +414,211 @@ test("keep a dense Sankey column visible", () => {
 
   ok(layout.nodes.every((node) => node.y1 > node.y0));
   ok(layout.links.every((link) => link.width > 0));
+});
+
+test("keep a terminal single-child Sankey branch collapsed by default", () => {
+  const graph: SankeyGraph = {
+    currency: "USD",
+    nodes: [
+      {
+        id: "root",
+        account: "Income",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 0,
+        balance: 10,
+      },
+      {
+        id: "only-child",
+        account: "Income:Only",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 1,
+        balance: 10,
+      },
+    ],
+    links: [{ source: "only-child", target: "root", value: 10 }],
+  };
+
+  const expanded = sankey_default_expanded_nodes(graph);
+  deepEqual([...expanded], []);
+  const view = sankey_graph_view(graph, expanded);
+  deepEqual(
+    view.graph.nodes.map(({ id }) => id),
+    ["root"],
+  );
+  equal(view.graph.nodes[0]?.fixedValue, 10);
+});
+
+test("keep hierarchical Sankey branches together and order them by flow", () => {
+  const graph: SankeyGraph = {
+    currency: "USD",
+    nodes: [
+      {
+        id: "b-small",
+        account: "Income:B:Small",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 2,
+        balance: 20,
+      },
+      {
+        id: "a-small",
+        account: "Income:A:Small",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 2,
+        balance: 30,
+      },
+      {
+        id: "group-b",
+        account: "Income:B",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 80,
+      },
+      {
+        id: "b-large",
+        account: "Income:B:Large",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 2,
+        balance: 60,
+      },
+      {
+        id: "income",
+        account: "Income",
+        kind: "account",
+        role: null,
+        column: 2,
+        level: 0,
+        balance: 180,
+      },
+      {
+        id: "a-large",
+        account: "Income:A:Large",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 2,
+        balance: 70,
+      },
+      {
+        id: "group-a",
+        account: "Income:A",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 100,
+      },
+    ],
+    links: [
+      { source: "b-small", target: "group-b", value: 20 },
+      { source: "a-small", target: "group-a", value: 30 },
+      { source: "group-b", target: "income", value: 80 },
+      { source: "b-large", target: "group-b", value: 60 },
+      { source: "a-large", target: "group-a", value: 70 },
+      { source: "group-a", target: "income", value: 100 },
+    ],
+  };
+
+  const layout = layout_sankey(graph, {
+    width: 400,
+    height: 400,
+    node_width: 10,
+    node_padding: 10,
+  });
+  const nodes_by_column = Map.groupBy(layout.nodes, (node) => node.column);
+  const ordered_ids = (column: number) =>
+    (nodes_by_column.get(column) ?? [])
+      .sort((left, right) => left.y0 - right.y0)
+      .map(({ id }) => id);
+
+  deepEqual(ordered_ids(0), ["a-large", "a-small", "b-large", "b-small"]);
+  deepEqual(ordered_ids(1), ["group-a", "group-b"]);
+
+  const expanded = sankey_default_expanded_nodes(graph, 3);
+  deepEqual([...expanded], ["income", "group-a"]);
+  const view = sankey_graph_view(graph, expanded);
+  deepEqual(view.graph.nodes.map(({ id }) => id).sort(), [
+    "a-large",
+    "a-small",
+    "group-a",
+    "group-b",
+    "income",
+  ]);
+  deepEqual(view.branches.get("group-b"), {
+    expanded: false,
+    hidden_accounts: 2,
+  });
+  equal(view.graph.nodes.find(({ id }) => id === "group-b")?.fixedValue, 80);
+});
+
+test("build a rebased Sankey graph for one focused account branch", () => {
+  const graph: SankeyGraph = {
+    currency: "USD",
+    nodes: [
+      {
+        id: "outside",
+        account: "Expenses:Outside",
+        kind: "account",
+        role: null,
+        column: 4,
+        level: 1,
+        balance: 30,
+      },
+      {
+        id: "focus",
+        account: "Expenses:Focus",
+        kind: "account",
+        role: null,
+        column: 4,
+        level: 1,
+        balance: 70,
+      },
+      {
+        id: "child",
+        account: "Expenses:Focus:Child",
+        kind: "account",
+        role: null,
+        column: 5,
+        level: 2,
+        balance: 70,
+      },
+      {
+        id: "expenses",
+        account: "Expenses",
+        kind: "account",
+        role: null,
+        column: 3,
+        level: 0,
+        balance: 100,
+      },
+    ],
+    links: [
+      { source: "expenses", target: "outside", value: 30 },
+      { source: "expenses", target: "focus", value: 70 },
+      { source: "focus", target: "child", value: 70 },
+    ],
+  };
+
+  const focused = sankey_focused_graph(graph, "focus");
+  deepEqual(
+    focused.nodes.map(({ id, column }) => [id, column]),
+    [
+      ["focus", 0],
+      ["child", 1],
+    ],
+  );
+  deepEqual(focused.links, [{ source: "focus", target: "child", value: 70 }]);
 });
 
 test("handle data for hierarchical chart", async () => {

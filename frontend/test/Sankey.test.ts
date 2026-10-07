@@ -12,10 +12,14 @@ import { initialise_ledger_data } from "./helpers.ts";
 test.before(initialise_ledger_data);
 test.beforeEach(setup_jsdom);
 
-test("render a dense Sankey at a readable responsive size", async () => {
-  const leaves = Array.from({ length: 14 }, (_, index) => ({
+test("inspect a dense Sankey branch without expanding the overview", async () => {
+  const accounts = Array.from(
+    { length: 14 },
+    (_, index) => `Expenses:Category ${index.toString()}`,
+  );
+  const leaves = accounts.map((account, index) => ({
     id: `leaf-${index.toString()}`,
-    account: `Income:Long leaf account ${index.toString()}`,
+    account,
     kind: "account" as const,
     role: null,
     column: 0,
@@ -27,7 +31,7 @@ test("render a dense Sankey at a readable responsive size", async () => {
       ...leaves,
       {
         id: "root",
-        account: "Income",
+        account: "Expenses",
         kind: "account",
         role: null,
         column: 1,
@@ -43,28 +47,123 @@ test("render a dense Sankey at a readable responsive size", async () => {
   }).unwrap();
   const target = document.querySelector("article");
   ok(target);
+  const tooltip = new Tooltip();
+  tooltip.init(target);
   const component = mount(Sankey, {
     target,
     props: {
       data,
       currency: "USD",
       width: 220,
-      tooltip: new Tooltip(),
+      tooltip,
     },
   });
 
   await tick();
 
-  const svg = target.querySelector("svg");
+  const svg = target.querySelector(".overview > .scroll > svg");
   ok(svg);
   ok(Number(svg.getAttribute("width")) > 220);
-  equal(Number(svg.getAttribute("height")), 544);
-  const nodes = [...target.querySelectorAll<SVGRectElement>("rect.node")];
-  const links = [...target.querySelectorAll<SVGPathElement>("path.flow")];
+  equal(Number(svg.getAttribute("height")), 360);
+  equal(target.querySelectorAll("rect.node").length, 1);
+  equal(target.querySelectorAll("path.flow").length, 0);
+  const inspect = target.querySelector<SVGTextElement>("text.branch-inspect");
+  ok(inspect);
+  equal(inspect.textContent, "+14");
+  equal(inspect.getAttribute("aria-haspopup"), "dialog");
+  inspect.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+  await tick();
+
+  equal(Number(svg.getAttribute("height")), 360);
+  equal(target.querySelectorAll(".overview > .scroll rect.node").length, 1);
+  equal(target.querySelectorAll(".overview > .scroll path.flow").length, 0);
+  const focus = target.querySelector<HTMLElement>("div.focus");
+  ok(focus);
+  equal(focus.getAttribute("role"), "dialog");
+  equal(focus.getAttribute("aria-label"), "Details for Expenses");
+  ok(target.querySelector("svg.connector path"));
+  equal(target.querySelector(".overview.dimmed"), null);
+  const heading = focus.querySelector("h3");
+  ok(heading);
+  equal(heading.textContent.trim(), "Details for Expenses");
+  const focused_svg = focus.querySelector("svg");
+  ok(focused_svg);
+  equal(Number(focused_svg.getAttribute("height")), 528);
+  const nodes = [...focus.querySelectorAll<SVGRectElement>("rect.node")];
+  const links = [...focus.querySelectorAll<SVGPathElement>("path.flow")];
+  const link_targets = [
+    ...focus.querySelectorAll<SVGPathElement>("path.flow-target"),
+  ];
   equal(nodes.length, 15);
   equal(links.length, 14);
+  equal(link_targets.length, 14);
   ok(nodes.every((node) => Number(node.getAttribute("height")) > 0));
   ok(links.every((link) => Number(link.getAttribute("stroke-width")) > 0));
+  ok(
+    link_targets.every(
+      (link) => Number(link.getAttribute("stroke-width")) >= 16,
+    ),
+  );
+  ok(link_targets.every((link) => link.getAttribute("aria-hidden") === "true"));
+  const first_link_target = link_targets[0];
+  ok(first_link_target);
+  first_link_target.dispatchEvent(new MouseEvent("mouseenter"));
+  const tooltip_element = target.querySelector(".tooltip");
+  ok(tooltip_element);
+  equal(tooltip_element.textContent.includes("→ Expenses"), true);
+  const root = focus.querySelector<SVGAElement>('a[aria-label="Expenses"]');
+  ok(root);
+  const root_rect = root.querySelector("rect.node");
+  const first_leaf = focus.querySelector<SVGAElement>(
+    `a[aria-label="${accounts[0] ?? ""}"]`,
+  );
+  const first_leaf_rect = first_leaf?.querySelector("rect.node");
+  ok(root_rect);
+  ok(first_leaf_rect);
+  ok(
+    Number(root_rect.getAttribute("x")) <
+      Number(first_leaf_rect.getAttribute("x")),
+  );
+  const root_group = root.parentElement;
+  ok(root_group);
+  root_group.dispatchEvent(new MouseEvent("mouseenter"));
+  equal(tooltip_element.textContent.includes("←"), true);
+  const first_account = accounts[0];
+  ok(first_account !== undefined);
+  equal(
+    tooltip_element.textContent.includes(first_account.split(":").at(-1) ?? ""),
+    true,
+  );
+  const backdrop = target.querySelector("button.backdrop");
+  ok(backdrop);
+  equal(backdrop.getAttribute("tabindex"), "-1");
+  const close = focus.querySelector<HTMLButtonElement>("button.close");
+  ok(close);
+  equal(document.activeElement, close);
+  close.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+  await tick();
+
+  equal(Number(svg.getAttribute("height")), 360);
+  equal(target.querySelector("div.focus"), null);
+  equal(target.querySelectorAll(".overview > .scroll rect.node").length, 1);
+  equal(inspect.textContent, "+14");
+  equal(document.activeElement, inspect);
+
+  inspect.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  await tick();
+  ok(target.querySelector("div.focus"));
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  await tick();
+  equal(target.querySelector("div.focus"), null);
+  equal(document.activeElement, inspect);
 
   await unmount(component);
 });
