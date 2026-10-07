@@ -89,11 +89,6 @@ class InvalidFiscalYearEndOptionError(ValueError):  # noqa: D101
         super().__init__(f"Invalid 'fiscal_year_end' option: '{value}'.")
 
 
-class InvalidAccountDepthOptionError(ValueError):  # noqa: D101
-    def __init__(self, key: str, value: int) -> None:
-        super().__init__(f"Option `{key}` must be at least 1, got {value}.")
-
-
 @dataclass
 class FavaOptions:
     """Options for Fava that can be set in the Beancount file."""
@@ -114,8 +109,6 @@ class FavaOptions:
     invert_income_liabilities_equity: bool = False
     language: str | None = None
     locale: str | None = None
-    sankey_expense_depth: int = 2
-    sankey_income_depth: int = 2
     show_accounts_with_zero_balance: bool = True
     show_accounts_with_zero_transactions: bool = True
     show_closed_accounts: bool = False
@@ -187,13 +180,6 @@ class FavaOptions:
         except UnknownLocaleError as err:
             raise UnknownLocaleOptionError(value) from err
 
-    def set_sankey_depth(self, key: str, value: str) -> None:
-        """Set and validate an account depth used by a Sankey chart."""
-        depth = int(value)
-        if depth < 1:
-            raise InvalidAccountDepthOptionError(key, depth)
-        setattr(self, key, depth)
-
 
 _fields = fields(FavaOptions)
 All_OPTS = {f.name for f in _fields}
@@ -232,8 +218,6 @@ def parse_option_custom_entry(  # noqa: PLR0912
         options.set_language(value)
     elif key == "locale":
         options.set_locale(value)
-    elif key in {"sankey_expense_depth", "sankey_income_depth"}:
-        options.set_sankey_depth(key, value)
     elif key in STR_OPTS:
         setattr(options, key, value)
     elif key in BOOL_OPTS:

@@ -5,7 +5,7 @@ svg text {
 
 .tooltip {
   position: absolute;
-  z-index: var(--z-index-floating-ui);
+  z-index: var(--z-index-chart-tooltip);
   min-width: 5em;
   padding: 0.5em;
   font-family: var(--font-family-monospaced);

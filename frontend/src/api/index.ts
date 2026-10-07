@@ -53,6 +53,7 @@ class InvalidResponseDataError extends Error {
 type DeleteEndpoint = "document" | "source_slice";
 type GetEndpoint =
   | "balance_sheet"
+  | "balance_sheet_sankey"
   | "account_report"
   | "changed"
   | "commodities"
@@ -240,6 +241,11 @@ export const get_account_report = define_endpoint(
 export const get_balance_sheet = define_endpoint(
   "balance_sheet",
   tree_report_validator,
+  filters_conversion_interval,
+);
+export const get_balance_sheet_sankey = define_endpoint(
+  "balance_sheet_sankey",
+  sankey_validator,
   filters_conversion_interval,
 );
 export const get_changed = define_paramless_endpoint("changed", boolean);

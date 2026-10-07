@@ -8,6 +8,7 @@
   --z-index-floating-ui: 1;
   --z-index-autocomplete: 2;
   --z-index-keyboard-overlays: 3;
+  --z-index-chart-tooltip: 4;
 
   /* Named colors */
   --error: hsl(0deg 100% 30%);

@@ -39,13 +39,27 @@ msgid "Converted to %(currency)s"
 msgstr ""
 
 #: frontend/src/charts/HierarchyContainer.svelte:33
-#: frontend/src/charts/Sankey.svelte:147
+#: frontend/src/charts/SankeyDiagram.svelte:231
 msgid "Chart is empty."
 msgstr ""
 
-#: frontend/src/charts/Sankey.svelte:143
+#: frontend/src/charts/Sankey.svelte:289 frontend/src/charts/Sankey.svelte:315
+msgid "Close details"
+msgstr ""
+
+#: frontend/src/charts/Sankey.svelte:301
+#, python-format
+msgid "Details for %(account)s"
+msgstr ""
+
+#: frontend/src/charts/SankeyDiagram.svelte:225
 #, python-format
 msgid "Sankey diagram for %(currency)s"
+msgstr ""
+
+#: frontend/src/charts/SankeyDiagram.svelte:330
+#, python-format
+msgid "Inspect %(account)s"
 msgstr ""
 
 #: frontend/src/editor/DeleteButton.svelte:12
@@ -249,7 +263,7 @@ msgstr ""
 
 #: frontend/src/reports/accounts/AccountReport.svelte:64
 #: frontend/src/reports/accounts/AccountReport.svelte:67
-#: src/fava/json_api.py:819
+#: src/fava/json_api.py:829
 msgid "Changes"
 msgstr ""
 
@@ -581,31 +595,40 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:41
+#: frontend/src/reports/tree_reports/index.ts:42
+#: frontend/src/reports/tree_reports/index.ts:64
 msgid "Sankey"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:44
+#: frontend/src/reports/tree_reports/index.ts:45
 #: frontend/src/stores/accounts.ts:113 src/fava/json_api.py:710
 #: src/fava/json_api.py:728
 msgid "Net Profit"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:45
+#: frontend/src/reports/tree_reports/index.ts:46
 msgid "Net Loss"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:51
+#: frontend/src/reports/tree_reports/index.ts:52
 #: frontend/src/sidebar/AsideContents.svelte:30
 msgid "Income Statement"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:62
+#: frontend/src/reports/tree_reports/index.ts:67
+msgid "Balance Shortfall"
+msgstr ""
+
+#: frontend/src/reports/tree_reports/index.ts:68
+msgid "Balance Surplus"
+msgstr ""
+
+#: frontend/src/reports/tree_reports/index.ts:74
 #: frontend/src/sidebar/AsideContents.svelte:31
 msgid "Balance Sheet"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:76
+#: frontend/src/reports/tree_reports/index.ts:88
 #: frontend/src/sidebar/AsideContents.svelte:32
 msgid "Trial Balance"
 msgstr ""

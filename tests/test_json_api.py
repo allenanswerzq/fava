@@ -1045,6 +1045,10 @@ def test_api_filter_error(
         ("trial_balance", "/long-example/api/trial_balance?time=2014"),
         ("balance_sheet", "/long-example/api/balance_sheet"),
         (
+            "balance_sheet_sankey",
+            "/long-example/api/balance_sheet_sankey",
+        ),
+        (
             "balance_sheet_with_cost",
             "/long-example/api/balance_sheet?conversion=at_value",
         ),

@@ -1,8 +1,9 @@
 import type { Attachment } from "svelte/attachments";
 
-/** A tooltip, a light wrapper around a `<div>` that's added to the `<body>` */
+/** A tooltip, wrapping a `<div>` positioned within its chart container. */
 export class Tooltip {
   private div: HTMLDivElement;
+  private container: HTMLElement | null = null;
 
   constructor() {
     this.div = document.createElement("div");
@@ -10,6 +11,7 @@ export class Tooltip {
   }
 
   init(node: HTMLElement): void {
+    this.container = node;
     node.appendChild(this.div);
   }
 
@@ -42,7 +44,13 @@ export class Tooltip {
         this.content(getter());
       };
       const mousemove = (event: MouseEvent) => {
-        this.position(event.offsetX, event.offsetY);
+        const bounds = this.container?.getBoundingClientRect();
+        if (bounds) {
+          this.position(
+            event.clientX - bounds.left,
+            event.clientY - bounds.top,
+          );
+        }
       };
       const hide = this.hide.bind(this);
 

@@ -31,6 +31,136 @@
       "value": { "USD": "1440.00" }
     },
     {
+      "source": "account:Expenses:Financial",
+      "target": "account:Expenses:Financial:Commissions",
+      "value": { "USD": "89.50" }
+    },
+    {
+      "source": "account:Expenses:Financial",
+      "target": "account:Expenses:Financial:Fees",
+      "value": { "USD": "48.00" }
+    },
+    {
+      "source": "account:Expenses:Food",
+      "target": "account:Expenses:Food:Groceries",
+      "value": { "USD": "2424.91" }
+    },
+    {
+      "source": "account:Expenses:Food",
+      "target": "account:Expenses:Food:Restaurant",
+      "value": { "USD": "4177.07" }
+    },
+    {
+      "source": "account:Expenses:Health",
+      "target": "account:Expenses:Health:Dental",
+      "value": { "USD": "75.40" }
+    },
+    {
+      "source": "account:Expenses:Health",
+      "target": "account:Expenses:Health:Life",
+      "value": { "USD": "632.32" }
+    },
+    {
+      "source": "account:Expenses:Health",
+      "target": "account:Expenses:Health:Medical",
+      "value": { "USD": "711.88" }
+    },
+    {
+      "source": "account:Expenses:Health",
+      "target": "account:Expenses:Health:Vision",
+      "value": { "USD": "1099.80" }
+    },
+    {
+      "source": "account:Expenses:Health:Dental",
+      "target": "account:Expenses:Health:Dental:Insurance",
+      "value": { "USD": "75.40" }
+    },
+    {
+      "source": "account:Expenses:Health:Life",
+      "target": "account:Expenses:Health:Life:GroupTermLife",
+      "value": { "USD": "632.32" }
+    },
+    {
+      "source": "account:Expenses:Health:Medical",
+      "target": "account:Expenses:Health:Medical:Insurance",
+      "value": { "USD": "711.88" }
+    },
+    {
+      "source": "account:Expenses:Health:Vision",
+      "target": "account:Expenses:Health:Vision:Insurance",
+      "value": { "USD": "1099.80" }
+    },
+    {
+      "source": "account:Expenses:Home",
+      "target": "account:Expenses:Home:Electricity",
+      "value": { "USD": "780.00" }
+    },
+    {
+      "source": "account:Expenses:Home",
+      "target": "account:Expenses:Home:Internet",
+      "value": { "USD": "959.79" }
+    },
+    {
+      "source": "account:Expenses:Home",
+      "target": "account:Expenses:Home:Phone",
+      "value": { "USD": "762.65" }
+    },
+    {
+      "source": "account:Expenses:Home",
+      "target": "account:Expenses:Home:Rent",
+      "value": { "USD": "28800.00" }
+    },
+    {
+      "source": "account:Expenses:Taxes",
+      "target": "account:Expenses:Taxes:Y2014",
+      "value": { "IRAUSD": "17500.00", "USD": "51477.20" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014",
+      "target": "account:Expenses:Taxes:Y2014:US",
+      "value": { "IRAUSD": "17500.00", "USD": "51477.20" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014:US",
+      "target": "account:Expenses:Taxes:Y2014:US:CityNYC",
+      "value": { "USD": "4547.92" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014:US",
+      "target": "account:Expenses:Taxes:Y2014:US:Federal",
+      "value": { "IRAUSD": "17500.00", "USD": "27635.92" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014:US",
+      "target": "account:Expenses:Taxes:Y2014:US:Medicare",
+      "value": { "USD": "2772.12" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014:US",
+      "target": "account:Expenses:Taxes:Y2014:US:SDI",
+      "value": { "USD": "29.12" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014:US",
+      "target": "account:Expenses:Taxes:Y2014:US:SocSec",
+      "value": { "USD": "7000.04" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014:US",
+      "target": "account:Expenses:Taxes:Y2014:US:State",
+      "value": { "USD": "9492.08" }
+    },
+    {
+      "source": "account:Expenses:Taxes:Y2014:US:Federal",
+      "target": "account:Expenses:Taxes:Y2014:US:Federal:PreTax401k",
+      "value": { "IRAUSD": "17500.00" }
+    },
+    {
+      "source": "account:Expenses:Transport",
+      "target": "account:Expenses:Transport:Tram",
+      "value": { "USD": "1440.00" }
+    },
+    {
       "source": "account:Income",
       "target": "account:Expenses",
       "value": { "IRAUSD": "17500", "USD": "93478.52" }
@@ -44,13 +174,63 @@
       "source": "account:Income:US",
       "target": "account:Income",
       "value": { "IRAUSD": "17500", "USD": "129335.76", "VACHR": "130" }
+    },
+    {
+      "source": "account:Income:US",
+      "target": "account:Income:US:ETrade",
+      "value": { "USD": "46.44" }
+    },
+    {
+      "source": "account:Income:US:BayBook",
+      "target": "account:Income:US",
+      "value": { "USD": "129382.20", "VACHR": "130" }
+    },
+    {
+      "source": "account:Income:US:BayBook:GroupTermLife",
+      "target": "account:Income:US:BayBook",
+      "value": { "USD": "632.32" }
+    },
+    {
+      "source": "account:Income:US:BayBook:Match401k",
+      "target": "account:Income:US:BayBook",
+      "value": { "USD": "8750.00" }
+    },
+    {
+      "source": "account:Income:US:BayBook:Salary",
+      "target": "account:Income:US:BayBook",
+      "value": { "USD": "119999.88" }
+    },
+    {
+      "source": "account:Income:US:BayBook:Vacation",
+      "target": "account:Income:US:BayBook",
+      "value": { "VACHR": "130" }
+    },
+    {
+      "source": "account:Income:US:ETrade",
+      "target": "account:Income:US:ETrade:Gains",
+      "value": { "USD": "98.12" }
+    },
+    {
+      "source": "account:Income:US:ETrade:Dividends",
+      "target": "account:Income:US:ETrade",
+      "value": { "USD": "51.68" }
+    },
+    {
+      "source": "account:Income:US:Federal",
+      "target": "account:Income:US",
+      "value": { "IRAUSD": "17500" }
+    },
+    {
+      "source": "account:Income:US:Federal:PreTax401k",
+      "target": "account:Income:US:Federal",
+      "value": { "IRAUSD": "17500" }
     }
   ],
   "nodes": [
     {
       "account": "Expenses",
       "balance": { "IRAUSD": "17500.00", "USD": "93478.52" },
-      "column": 2,
+      "column": 4,
       "id": "account:Expenses",
       "kind": "account",
       "level": 0,
@@ -59,61 +239,295 @@
     {
       "account": "Expenses:Financial",
       "balance": { "USD": "137.50" },
-      "column": 3,
+      "column": 5,
       "id": "account:Expenses:Financial",
       "kind": "account",
       "level": 1,
       "role": null
     },
     {
+      "account": "Expenses:Financial:Commissions",
+      "balance": { "USD": "89.50" },
+      "column": 6,
+      "id": "account:Expenses:Financial:Commissions",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Financial:Fees",
+      "balance": { "USD": "48.00" },
+      "column": 6,
+      "id": "account:Expenses:Financial:Fees",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
       "account": "Expenses:Food",
       "balance": { "USD": "6601.98" },
-      "column": 3,
+      "column": 5,
       "id": "account:Expenses:Food",
       "kind": "account",
       "level": 1,
       "role": null
     },
     {
+      "account": "Expenses:Food:Groceries",
+      "balance": { "USD": "2424.91" },
+      "column": 6,
+      "id": "account:Expenses:Food:Groceries",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Food:Restaurant",
+      "balance": { "USD": "4177.07" },
+      "column": 6,
+      "id": "account:Expenses:Food:Restaurant",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
       "account": "Expenses:Health",
       "balance": { "USD": "2519.40" },
-      "column": 3,
+      "column": 5,
       "id": "account:Expenses:Health",
       "kind": "account",
       "level": 1,
       "role": null
     },
     {
+      "account": "Expenses:Health:Dental",
+      "balance": { "USD": "75.40" },
+      "column": 6,
+      "id": "account:Expenses:Health:Dental",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health:Dental:Insurance",
+      "balance": { "USD": "75.40" },
+      "column": 7,
+      "id": "account:Expenses:Health:Dental:Insurance",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health:Life",
+      "balance": { "USD": "632.32" },
+      "column": 6,
+      "id": "account:Expenses:Health:Life",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health:Life:GroupTermLife",
+      "balance": { "USD": "632.32" },
+      "column": 7,
+      "id": "account:Expenses:Health:Life:GroupTermLife",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health:Medical",
+      "balance": { "USD": "711.88" },
+      "column": 6,
+      "id": "account:Expenses:Health:Medical",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health:Medical:Insurance",
+      "balance": { "USD": "711.88" },
+      "column": 7,
+      "id": "account:Expenses:Health:Medical:Insurance",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health:Vision",
+      "balance": { "USD": "1099.80" },
+      "column": 6,
+      "id": "account:Expenses:Health:Vision",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Health:Vision:Insurance",
+      "balance": { "USD": "1099.80" },
+      "column": 7,
+      "id": "account:Expenses:Health:Vision:Insurance",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
       "account": "Expenses:Home",
       "balance": { "USD": "31302.44" },
-      "column": 3,
+      "column": 5,
       "id": "account:Expenses:Home",
       "kind": "account",
       "level": 1,
       "role": null
     },
     {
+      "account": "Expenses:Home:Electricity",
+      "balance": { "USD": "780.00" },
+      "column": 6,
+      "id": "account:Expenses:Home:Electricity",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Home:Internet",
+      "balance": { "USD": "959.79" },
+      "column": 6,
+      "id": "account:Expenses:Home:Internet",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Home:Phone",
+      "balance": { "USD": "762.65" },
+      "column": 6,
+      "id": "account:Expenses:Home:Phone",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Home:Rent",
+      "balance": { "USD": "28800.00" },
+      "column": 6,
+      "id": "account:Expenses:Home:Rent",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
       "account": "Expenses:Taxes",
       "balance": { "IRAUSD": "17500.00", "USD": "51477.20" },
-      "column": 3,
+      "column": 5,
       "id": "account:Expenses:Taxes",
       "kind": "account",
       "level": 1,
       "role": null
     },
     {
+      "account": "Expenses:Taxes:Y2014",
+      "balance": { "IRAUSD": "17500.00", "USD": "51477.20" },
+      "column": 6,
+      "id": "account:Expenses:Taxes:Y2014",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US",
+      "balance": { "IRAUSD": "17500.00", "USD": "51477.20" },
+      "column": 7,
+      "id": "account:Expenses:Taxes:Y2014:US",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US:CityNYC",
+      "balance": { "USD": "4547.92" },
+      "column": 8,
+      "id": "account:Expenses:Taxes:Y2014:US:CityNYC",
+      "kind": "account",
+      "level": 4,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US:Federal",
+      "balance": { "IRAUSD": "17500.00", "USD": "27635.92" },
+      "column": 8,
+      "id": "account:Expenses:Taxes:Y2014:US:Federal",
+      "kind": "account",
+      "level": 4,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US:Federal:PreTax401k",
+      "balance": { "IRAUSD": "17500.00" },
+      "column": 9,
+      "id": "account:Expenses:Taxes:Y2014:US:Federal:PreTax401k",
+      "kind": "account",
+      "level": 5,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US:Medicare",
+      "balance": { "USD": "2772.12" },
+      "column": 8,
+      "id": "account:Expenses:Taxes:Y2014:US:Medicare",
+      "kind": "account",
+      "level": 4,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US:SDI",
+      "balance": { "USD": "29.12" },
+      "column": 8,
+      "id": "account:Expenses:Taxes:Y2014:US:SDI",
+      "kind": "account",
+      "level": 4,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US:SocSec",
+      "balance": { "USD": "7000.04" },
+      "column": 8,
+      "id": "account:Expenses:Taxes:Y2014:US:SocSec",
+      "kind": "account",
+      "level": 4,
+      "role": null
+    },
+    {
+      "account": "Expenses:Taxes:Y2014:US:State",
+      "balance": { "USD": "9492.08" },
+      "column": 8,
+      "id": "account:Expenses:Taxes:Y2014:US:State",
+      "kind": "account",
+      "level": 4,
+      "role": null
+    },
+    {
       "account": "Expenses:Transport",
       "balance": { "USD": "1440.00" },
-      "column": 3,
+      "column": 5,
       "id": "account:Expenses:Transport",
       "kind": "account",
       "level": 1,
       "role": null
     },
     {
+      "account": "Expenses:Transport:Tram",
+      "balance": { "USD": "1440.00" },
+      "column": 6,
+      "id": "account:Expenses:Transport:Tram",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
       "account": "Income",
       "balance": { "IRAUSD": "17500", "USD": "129335.76", "VACHR": "130" },
-      "column": 1,
+      "column": 3,
       "id": "account:Income",
       "kind": "account",
       "level": 0,
@@ -122,16 +536,106 @@
     {
       "account": "Income:US",
       "balance": { "IRAUSD": "17500", "USD": "129335.76", "VACHR": "130" },
-      "column": 0,
+      "column": 2,
       "id": "account:Income:US",
       "kind": "account",
       "level": 1,
       "role": null
     },
     {
+      "account": "Income:US:BayBook",
+      "balance": { "USD": "129382.20", "VACHR": "130" },
+      "column": 1,
+      "id": "account:Income:US:BayBook",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Income:US:BayBook:GroupTermLife",
+      "balance": { "USD": "632.32" },
+      "column": 0,
+      "id": "account:Income:US:BayBook:GroupTermLife",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Income:US:BayBook:Match401k",
+      "balance": { "USD": "8750.00" },
+      "column": 0,
+      "id": "account:Income:US:BayBook:Match401k",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Income:US:BayBook:Salary",
+      "balance": { "USD": "119999.88" },
+      "column": 0,
+      "id": "account:Income:US:BayBook:Salary",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Income:US:BayBook:Vacation",
+      "balance": { "VACHR": "130" },
+      "column": 0,
+      "id": "account:Income:US:BayBook:Vacation",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Income:US:ETrade",
+      "balance": { "USD": "46.44" },
+      "column": 1,
+      "id": "account:Income:US:ETrade",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Income:US:ETrade:Dividends",
+      "balance": { "USD": "51.68" },
+      "column": 0,
+      "id": "account:Income:US:ETrade:Dividends",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Income:US:ETrade:Gains",
+      "balance": { "USD": "98.12" },
+      "column": 0,
+      "id": "account:Income:US:ETrade:Gains",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Income:US:Federal",
+      "balance": { "IRAUSD": "17500" },
+      "column": 1,
+      "id": "account:Income:US:Federal",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Income:US:Federal:PreTax401k",
+      "balance": { "IRAUSD": "17500" },
+      "column": 0,
+      "id": "account:Income:US:Federal:PreTax401k",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
       "account": null,
       "balance": { "USD": "35857.24", "VACHR": "130" },
-      "column": 2,
+      "column": 4,
       "id": "net-profit",
       "kind": "result",
       "level": null,

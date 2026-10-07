@@ -20,6 +20,7 @@ from fava.beans.helpers import slice_entry_dates
 from fava.core.conversion import conversion_from_str
 from fava.core.inventory import CounterInventory
 from fava.core.module_base import FavaModule
+from fava.core.sankey import build_balance_sheet_sankey
 from fava.core.sankey import build_income_statement_sankey
 from fava.util import listify
 from fava.util.date import FiscalYearEnd
@@ -104,6 +105,38 @@ class DateAndBalanceWithBudget(Struct, frozen=True):
 class ChartModule(FavaModule):
     """Return data for the various charts in Fava."""
 
+    def balance_sheet_sankey(
+        self,
+        filtered: FilteredLedger,
+        conversion: str | Conversion,
+    ) -> SankeyData:
+        """Build Sankey data for the filtered closed balance sheet."""
+        conv = conversion_from_str(conversion)
+        options = self.ledger.options
+        tree = filtered.root_tree_closed
+        prices = self.ledger.prices
+        end_date = filtered.end_date
+        assets = tree.get(options["name_assets"]).serialise(
+            conv,
+            prices,
+            end_date,
+        )
+        liabilities = tree.get(options["name_liabilities"]).serialise(
+            conv,
+            prices,
+            end_date,
+        )
+        equity = tree.get(options["name_equity"]).serialise(
+            conv,
+            prices,
+            end_date,
+        )
+        return build_balance_sheet_sankey(
+            assets,
+            liabilities,
+            equity,
+        )
+
     def income_statement_sankey(
         self,
         filtered: FilteredLedger,
@@ -125,13 +158,7 @@ class ChartModule(FavaModule):
             prices,
             end_date,
         )
-        fava_options = self.ledger.fava_options
-        return build_income_statement_sankey(
-            income,
-            expenses,
-            income_depth=fava_options.sankey_income_depth,
-            expense_depth=fava_options.sankey_expense_depth,
-        )
+        return build_income_statement_sankey(income, expenses)
 
     def hierarchy(
         self,

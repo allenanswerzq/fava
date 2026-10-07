@@ -98,6 +98,19 @@ def _account_depth(account: str) -> int:
     return account.count(":") + 1
 
 
+def _account_tree_span(root: SerialisedTreeNode) -> int:
+    """Return the deepest non-zero level relative to an account root."""
+    root_depth = _account_depth(root.account)
+    span = 0
+    remaining = [root]
+    while remaining:
+        node = remaining.pop()
+        if _sankey_balance(node.balance_children):
+            span = max(span, _account_depth(node.account) - root_depth)
+        remaining.extend(node.children)
+    return span
+
+
 def _add_link(
     links: dict[tuple[str, str], SimpleCounterInventory],
     source: str,
@@ -112,39 +125,99 @@ def _add_link(
         ).add(currency, value)
 
 
-def _connect_root_balances(
-    income_id: str,
-    income: Mapping[str, Decimal],
-    expense_id: str,
-    expenses: Mapping[str, Decimal],
+def _add_account_tree(
+    root: SerialisedTreeNode,
+    *,
+    root_column: int,
+    column_step: Literal[-1, 1],
+    nodes: dict[str, SankeyNode],
     links: dict[tuple[str, str], SimpleCounterInventory],
+) -> Mapping[str, Decimal]:
+    """Add an account hierarchy and return its signed root balance."""
+    root_depth = _account_depth(root.account)
+
+    def visit(node: SerialisedTreeNode) -> Mapping[str, Decimal]:
+        child_values: list[
+            tuple[SerialisedTreeNode, Mapping[str, Decimal]]
+        ] = []
+        for child in sorted(
+            node.children,
+            key=lambda item: item.account,
+        ):
+            child_value = visit(child)
+            if child_value:
+                child_values.append((child, child_value))
+
+        node_balance = _sankey_balance(node.balance_children)
+        if not node_balance and not child_values:
+            return node.balance_children
+        node_id = _account_id(node.account)
+        nodes[node_id] = SankeyNode(
+            node_id,
+            node.account,
+            "account",
+            None,
+            root_column
+            + column_step * (_account_depth(node.account) - root_depth),
+            _account_depth(node.account) - root_depth,
+            node_balance,
+        )
+        for child, value in child_values:
+            child_id = _account_id(child.account)
+            for currency, number in value.items():
+                source, target = (
+                    (child_id, node_id)
+                    if number < ZERO
+                    else (node_id, child_id)
+                )
+                _add_link(
+                    links,
+                    source,
+                    target,
+                    currency,
+                    abs(number),
+                )
+        return node.balance_children
+
+    return visit(root)
+
+
+def _connect_signed_balances(
+    roots: Sequence[tuple[str, Mapping[str, Decimal]]],
+    links: dict[tuple[str, str], SimpleCounterInventory],
+    *,
+    residual_source_id: str,
+    residual_sink_id: str,
 ) -> tuple[SimpleCounterInventory, SimpleCounterInventory]:
-    """Connect signed root balances and return profit and loss totals."""
-    profit = SimpleCounterInventory()
-    loss = SimpleCounterInventory()
-    profit_id = "net-profit"
-    loss_id = "net-loss"
-    for currency in sorted(income.keys() | expenses.keys()):
-        roots = (
-            (income_id, income.get(currency, ZERO)),
-            (expense_id, expenses.get(currency, ZERO)),
+    """Route signed root balances and return source and sink residuals."""
+    residual_source = SimpleCounterInventory()
+    residual_sink = SimpleCounterInventory()
+    currencies = set().union(*(balance.keys() for _, balance in roots))
+    for currency in sorted(currencies):
+        signed_roots = tuple(
+            (node_id, balance.get(currency, ZERO))
+            for node_id, balance in roots
         )
         sources: list[tuple[str, Decimal]] = [
-            (node_id, -number) for node_id, number in roots if number < ZERO
+            (node_id, -number)
+            for node_id, number in signed_roots
+            if number < ZERO
         ]
         sinks: list[tuple[str, Decimal]] = [
-            (node_id, number) for node_id, number in roots if number > ZERO
+            (node_id, number)
+            for node_id, number in signed_roots
+            if number > ZERO
         ]
         source_total = sum((value for _, value in sources), start=ZERO)
         sink_total = sum((value for _, value in sinks), start=ZERO)
         if source_total > sink_total:
             difference = source_total - sink_total
-            profit.add(currency, difference)
-            sinks.append((profit_id, difference))
+            residual_sink.add(currency, difference)
+            sinks.append((residual_sink_id, difference))
         elif sink_total > source_total:
             difference = sink_total - source_total
-            loss.add(currency, difference)
-            sources.append((loss_id, difference))
+            residual_source.add(currency, difference)
+            sources.append((residual_source_id, difference))
 
         source_index = 0
         sink_index = 0
@@ -160,102 +233,56 @@ def _connect_root_balances(
             if sinks[sink_index][1] == ZERO:
                 sink_index += 1
 
+    return residual_source, residual_sink
+
+
+def _connect_root_balances(
+    income_id: str,
+    income: Mapping[str, Decimal],
+    expense_id: str,
+    expenses: Mapping[str, Decimal],
+    links: dict[tuple[str, str], SimpleCounterInventory],
+) -> tuple[SimpleCounterInventory, SimpleCounterInventory]:
+    """Connect signed root balances and return profit and loss totals."""
+    profit_id = "net-profit"
+    loss_id = "net-loss"
+    loss, profit = _connect_signed_balances(
+        ((income_id, income), (expense_id, expenses)),
+        links,
+        residual_source_id=loss_id,
+        residual_sink_id=profit_id,
+    )
     return profit, loss
 
 
 def build_income_statement_sankey(
     income: SerialisedTreeNode,
     expenses: SerialisedTreeNode,
-    *,
-    income_depth: int = 2,
-    expense_depth: int = 2,
 ) -> SankeyData:
     """Build an income-statement flow from two converted account trees.
 
-    Accounts are included down to the configured absolute account depth.
-    Values remain grouped by currency so the frontend can render one graph per
-    currency.
+    The complete non-zero hierarchy is preserved so the frontend can collapse
+    dense branches adaptively and reveal them on demand. Values remain grouped
+    by currency so the frontend can render one graph per currency.
     """
     nodes: dict[str, SankeyNode] = {}
     link_values: dict[tuple[str, str], SimpleCounterInventory] = {}
 
-    def add_account_tree(
-        root: SerialisedTreeNode,
-        *,
-        account_type: Literal["income", "expense"],
-        max_depth: int,
-        root_column: int,
-        column_step: Literal[-1, 1],
-    ) -> Mapping[str, Decimal]:
-        root_depth = _account_depth(root.account)
-        if max_depth < root_depth:
-            msg = (
-                f"Sankey {account_type} depth {max_depth} is above root "
-                f"account `{root.account}` at depth {root_depth}."
-            )
-            raise ValueError(msg)
-
-        def visit(node: SerialisedTreeNode) -> Mapping[str, Decimal]:
-            child_values: list[
-                tuple[SerialisedTreeNode, Mapping[str, Decimal]]
-            ] = []
-            if _account_depth(node.account) < max_depth:
-                for child in sorted(
-                    node.children,
-                    key=lambda item: item.account,
-                ):
-                    child_value = visit(child)
-                    if child_value:
-                        child_values.append((child, child_value))
-
-            node_balance = _sankey_balance(node.balance_children)
-            if not node_balance and not child_values:
-                return node.balance_children
-            node_id = _account_id(node.account)
-            nodes[node_id] = SankeyNode(
-                node_id,
-                node.account,
-                "account",
-                None,
-                root_column
-                + column_step * (_account_depth(node.account) - root_depth),
-                _account_depth(node.account) - root_depth,
-                node_balance,
-            )
-            for child, value in child_values:
-                child_id = _account_id(child.account)
-                for currency, number in value.items():
-                    source, target = (
-                        (child_id, node_id)
-                        if number < ZERO
-                        else (node_id, child_id)
-                    )
-                    _add_link(
-                        link_values,
-                        source,
-                        target,
-                        currency,
-                        abs(number),
-                    )
-            return node.balance_children
-
-        return visit(root)
-
-    income_root_column = income_depth - _account_depth(income.account)
+    income_root_column = _account_tree_span(income)
     expense_root_column = income_root_column + 1
-    income_total = add_account_tree(
+    income_total = _add_account_tree(
         income,
-        account_type="income",
-        max_depth=income_depth,
         root_column=income_root_column,
         column_step=-1,
+        nodes=nodes,
+        links=link_values,
     )
-    expense_total = add_account_tree(
+    expense_total = _add_account_tree(
         expenses,
-        account_type="expense",
-        max_depth=expense_depth,
         root_column=expense_root_column,
         column_step=1,
+        nodes=nodes,
+        links=link_values,
     )
 
     income_id = _account_id(income.account)
@@ -286,6 +313,87 @@ def build_income_statement_sankey(
             income_root_column,
             None,
             loss,
+        )
+
+    return SankeyData(
+        tuple(sorted(nodes.values(), key=lambda node: node.id)),
+        tuple(
+            SankeyLink(source, target, value)
+            for (source, target), value in sorted(link_values.items())
+        ),
+    )
+
+
+def build_balance_sheet_sankey(
+    assets: SerialisedTreeNode,
+    liabilities: SerialisedTreeNode,
+    equity: SerialisedTreeNode,
+) -> SankeyData:
+    """Build a balance-sheet flow from three converted account trees.
+
+    Normal liability and equity balances fund the asset root from the left;
+    the asset hierarchy then distributes that funding to the right. Contra
+    balances retain their accounting direction and therefore draw backward.
+    """
+    nodes: dict[str, SankeyNode] = {}
+    link_values: dict[tuple[str, str], SimpleCounterInventory] = {}
+
+    liability_span = _account_tree_span(liabilities)
+    equity_span = _account_tree_span(equity)
+    funding_root_column = max(liability_span, equity_span)
+    asset_root_column = funding_root_column + 1
+
+    liability_total = _add_account_tree(
+        liabilities,
+        root_column=funding_root_column,
+        column_step=-1,
+        nodes=nodes,
+        links=link_values,
+    )
+    equity_total = _add_account_tree(
+        equity,
+        root_column=funding_root_column,
+        column_step=-1,
+        nodes=nodes,
+        links=link_values,
+    )
+    asset_total = _add_account_tree(
+        assets,
+        root_column=asset_root_column,
+        column_step=1,
+        nodes=nodes,
+        links=link_values,
+    )
+
+    shortfall, surplus = _connect_signed_balances(
+        (
+            (_account_id(liabilities.account), liability_total),
+            (_account_id(equity.account), equity_total),
+            (_account_id(assets.account), asset_total),
+        ),
+        link_values,
+        residual_source_id="balance-shortfall",
+        residual_sink_id="balance-surplus",
+    )
+    if shortfall:
+        nodes["balance-shortfall"] = SankeyNode(
+            "balance-shortfall",
+            None,
+            "result",
+            "balance_shortfall",
+            funding_root_column,
+            None,
+            shortfall,
+        )
+    if surplus:
+        nodes["balance-surplus"] = SankeyNode(
+            "balance-surplus",
+            None,
+            "result",
+            "balance_surplus",
+            asset_root_column,
+            None,
+            surplus,
         )
 
     return SankeyData(

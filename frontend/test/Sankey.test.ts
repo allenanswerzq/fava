@@ -47,6 +47,18 @@ test("inspect a dense Sankey branch without expanding the overview", async () =>
   }).unwrap();
   const target = document.querySelector("article");
   ok(target);
+  target.getBoundingClientRect = () =>
+    ({
+      left: 100,
+      top: 50,
+      right: 320,
+      bottom: 410,
+      width: 220,
+      height: 360,
+      x: 100,
+      y: 50,
+      toJSON: () => ({}),
+    }) satisfies DOMRect;
   const tooltip = new Tooltip();
   tooltip.init(target);
   const component = mount(Sankey, {
@@ -84,9 +96,10 @@ test("inspect a dense Sankey branch without expanding the overview", async () =>
   equal(focus.getAttribute("aria-label"), "Details for Expenses");
   ok(target.querySelector("svg.connector path"));
   equal(target.querySelector(".overview.dimmed"), null);
-  const heading = focus.querySelector("h3");
-  ok(heading);
-  equal(heading.textContent.trim(), "Details for Expenses");
+  equal(focus.querySelector("h3"), null);
+  const account = focus.querySelector("p.account");
+  ok(account);
+  equal(account.textContent.trim(), "Expenses");
   const focused_svg = focus.querySelector("svg");
   ok(focused_svg);
   equal(Number(focused_svg.getAttribute("height")), 528);
@@ -109,8 +122,15 @@ test("inspect a dense Sankey branch without expanding the overview", async () =>
   const first_link_target = link_targets[0];
   ok(first_link_target);
   first_link_target.dispatchEvent(new MouseEvent("mouseenter"));
+  first_link_target.dispatchEvent(
+    new MouseEvent("mousemove", { clientX: 160, clientY: 90 }),
+  );
   const tooltip_element = target.querySelector(".tooltip");
   ok(tooltip_element);
+  equal(
+    tooltip_element.getAttribute("style"),
+    "opacity: 1; left: 60px; top: 40px;",
+  );
   equal(tooltip_element.textContent.includes("→ Expenses"), true);
   const root = focus.querySelector<SVGAElement>('a[aria-label="Expenses"]');
   ok(root);

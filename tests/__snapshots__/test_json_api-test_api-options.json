@@ -54,8 +54,6 @@
     "invert-income-liabilities-equity": "False",
     "language": "None",
     "locale": "None",
-    "sankey-expense-depth": "2",
-    "sankey-income-depth": "2",
     "show-accounts-with-zero-balance": "False",
     "show-accounts-with-zero-transactions": "True",
     "show-closed-accounts": "False",

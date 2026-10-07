@@ -737,6 +737,16 @@ def get_income_statement() -> TreeReport:
 
 
 @api_endpoint
+def get_balance_sheet_sankey() -> SankeyData:
+    """Get Sankey data for the filtered balance sheet."""
+    g.ledger.changed()
+    return g.ledger.charts.balance_sheet_sankey(
+        g.filtered,
+        g.conversion,
+    )
+
+
+@api_endpoint
 def get_income_statement_sankey() -> SankeyData:
     """Get Sankey data for the filtered income statement."""
     g.ledger.changed()

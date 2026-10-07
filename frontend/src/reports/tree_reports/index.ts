@@ -1,5 +1,6 @@
 import {
   get_balance_sheet,
+  get_balance_sheet_sankey,
   get_income_statement,
   get_income_statement_sankey,
   get_trial_balance,
@@ -55,8 +56,19 @@ export const balance_sheet = new Route(
   "balance_sheet",
   BalanceSheet,
   async (url) => {
-    const report = await get_balance_sheet(get_url_filters(url));
+    const filters = get_url_filters(url);
+    const report = await get_balance_sheet(filters);
     report.charts.push(...report.trees.map(ParsedHierarchyChart.from_node));
+    report.charts.push(
+      new ParsedSankeyChart(
+        _("Sankey"),
+        async () => get_balance_sheet_sankey(filters),
+        {
+          balance_shortfall: _("Balance Shortfall"),
+          balance_surplus: _("Balance Surplus"),
+        },
+      ),
+    );
     return report;
   },
   () => _("Balance Sheet"),

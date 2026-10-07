@@ -1,0 +1,441 @@
+{
+  "links": [
+    {
+      "source": "account:Assets",
+      "target": "account:Assets:Testing",
+      "value": { "USD": "100" }
+    },
+    {
+      "source": "account:Assets",
+      "target": "account:Assets:US",
+      "value": { "IRAUSD": "7200.00", "USD": "94220.27840" }
+    },
+    {
+      "source": "account:Assets",
+      "target": "account:Equity",
+      "value": { "VACHR": "82" }
+    },
+    {
+      "source": "account:Assets:Testing",
+      "target": "account:Assets:Testing:MultipleCommodities",
+      "value": { "USD": "100" }
+    },
+    {
+      "source": "account:Assets:US",
+      "target": "account:Assets",
+      "value": { "VACHR": "82" }
+    },
+    {
+      "source": "account:Assets:US",
+      "target": "account:Assets:US:BofA",
+      "value": { "USD": "1632.79" }
+    },
+    {
+      "source": "account:Assets:US",
+      "target": "account:Assets:US:ETrade",
+      "value": { "USD": "23137.54" }
+    },
+    {
+      "source": "account:Assets:US",
+      "target": "account:Assets:US:Federal",
+      "value": { "IRAUSD": "7200.00" }
+    },
+    {
+      "source": "account:Assets:US",
+      "target": "account:Assets:US:Vanguard",
+      "value": { "USD": "69449.94840" }
+    },
+    {
+      "source": "account:Assets:US:BayBook",
+      "target": "account:Assets:US",
+      "value": { "VACHR": "82" }
+    },
+    {
+      "source": "account:Assets:US:BayBook:Vacation",
+      "target": "account:Assets:US:BayBook",
+      "value": { "VACHR": "82" }
+    },
+    {
+      "source": "account:Assets:US:BofA",
+      "target": "account:Assets:US:BofA:Checking",
+      "value": { "USD": "1632.79" }
+    },
+    {
+      "source": "account:Assets:US:ETrade",
+      "target": "account:Assets:US:ETrade:Cash",
+      "value": { "USD": "641.76" }
+    },
+    {
+      "source": "account:Assets:US:ETrade",
+      "target": "account:Assets:US:ETrade:GLD",
+      "value": { "USD": "4899.98" }
+    },
+    {
+      "source": "account:Assets:US:ETrade",
+      "target": "account:Assets:US:ETrade:ITOT",
+      "value": { "USD": "4972.52" }
+    },
+    {
+      "source": "account:Assets:US:ETrade",
+      "target": "account:Assets:US:ETrade:VEA",
+      "value": { "USD": "7297.47" }
+    },
+    {
+      "source": "account:Assets:US:ETrade",
+      "target": "account:Assets:US:ETrade:VHT",
+      "value": { "USD": "5325.81" }
+    },
+    {
+      "source": "account:Assets:US:Federal",
+      "target": "account:Assets:US:Federal:PreTax401k",
+      "value": { "IRAUSD": "7200.00" }
+    },
+    {
+      "source": "account:Assets:US:Vanguard",
+      "target": "account:Assets:US:Vanguard:Cash",
+      "value": { "USD": "0.02" }
+    },
+    {
+      "source": "account:Assets:US:Vanguard",
+      "target": "account:Assets:US:Vanguard:RGAGX",
+      "value": { "USD": "41670.00757" }
+    },
+    {
+      "source": "account:Assets:US:Vanguard",
+      "target": "account:Assets:US:Vanguard:VBMPX",
+      "value": { "USD": "27779.92083" }
+    },
+    {
+      "source": "account:Equity",
+      "target": "account:Assets",
+      "value": { "IRAUSD": "7200.00", "USD": "91384.62840" }
+    },
+    {
+      "source": "account:Equity",
+      "target": "account:Equity:Conversions",
+      "value": { "USD": "0.05160" }
+    },
+    {
+      "source": "account:Equity",
+      "target": "account:Equity:Earnings",
+      "value": { "VACHR": "82" }
+    },
+    {
+      "source": "account:Equity:Conversions",
+      "target": "account:Equity:Conversions:Current",
+      "value": { "USD": "0.05160" }
+    },
+    {
+      "source": "account:Equity:Earnings",
+      "target": "account:Equity",
+      "value": { "IRAUSD": "7200.00", "USD": "87831.50000" }
+    },
+    {
+      "source": "account:Equity:Earnings",
+      "target": "account:Equity:Earnings:Current",
+      "value": { "VACHR": "82" }
+    },
+    {
+      "source": "account:Equity:Earnings:Current",
+      "target": "account:Equity:Earnings",
+      "value": { "IRAUSD": "7200.00", "USD": "87831.50" }
+    },
+    {
+      "source": "account:Equity:Opening-Balances",
+      "target": "account:Equity",
+      "value": { "USD": "3553.18" }
+    },
+    {
+      "source": "account:Liabilities",
+      "target": "account:Assets",
+      "value": { "USD": "2935.65" }
+    },
+    {
+      "source": "account:Liabilities:US",
+      "target": "account:Liabilities",
+      "value": { "USD": "2935.65" }
+    },
+    {
+      "source": "account:Liabilities:US:Chase",
+      "target": "account:Liabilities:US",
+      "value": { "USD": "2935.65" }
+    },
+    {
+      "source": "account:Liabilities:US:Chase:Slate",
+      "target": "account:Liabilities:US:Chase",
+      "value": { "USD": "2935.65" }
+    }
+  ],
+  "nodes": [
+    {
+      "account": "Assets",
+      "balance": { "IRAUSD": "7200.00", "USD": "94320.27840", "VACHR": "82" },
+      "column": 4,
+      "id": "account:Assets",
+      "kind": "account",
+      "level": 0,
+      "role": null
+    },
+    {
+      "account": "Assets:Testing",
+      "balance": { "USD": "100" },
+      "column": 5,
+      "id": "account:Assets:Testing",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Assets:Testing:MultipleCommodities",
+      "balance": { "USD": "100" },
+      "column": 6,
+      "id": "account:Assets:Testing:MultipleCommodities",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Assets:US",
+      "balance": { "IRAUSD": "7200.00", "USD": "94220.27840", "VACHR": "82" },
+      "column": 5,
+      "id": "account:Assets:US",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Assets:US:BayBook",
+      "balance": { "VACHR": "82" },
+      "column": 6,
+      "id": "account:Assets:US:BayBook",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Assets:US:BayBook:Vacation",
+      "balance": { "VACHR": "82" },
+      "column": 7,
+      "id": "account:Assets:US:BayBook:Vacation",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:BofA",
+      "balance": { "USD": "1632.79" },
+      "column": 6,
+      "id": "account:Assets:US:BofA",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Assets:US:BofA:Checking",
+      "balance": { "USD": "1632.79" },
+      "column": 7,
+      "id": "account:Assets:US:BofA:Checking",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:ETrade",
+      "balance": { "USD": "23137.54" },
+      "column": 6,
+      "id": "account:Assets:US:ETrade",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Assets:US:ETrade:Cash",
+      "balance": { "USD": "641.76" },
+      "column": 7,
+      "id": "account:Assets:US:ETrade:Cash",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:ETrade:GLD",
+      "balance": { "USD": "4899.98" },
+      "column": 7,
+      "id": "account:Assets:US:ETrade:GLD",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:ETrade:ITOT",
+      "balance": { "USD": "4972.52" },
+      "column": 7,
+      "id": "account:Assets:US:ETrade:ITOT",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:ETrade:VEA",
+      "balance": { "USD": "7297.47" },
+      "column": 7,
+      "id": "account:Assets:US:ETrade:VEA",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:ETrade:VHT",
+      "balance": { "USD": "5325.81" },
+      "column": 7,
+      "id": "account:Assets:US:ETrade:VHT",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:Federal",
+      "balance": { "IRAUSD": "7200.00" },
+      "column": 6,
+      "id": "account:Assets:US:Federal",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Assets:US:Federal:PreTax401k",
+      "balance": { "IRAUSD": "7200.00" },
+      "column": 7,
+      "id": "account:Assets:US:Federal:PreTax401k",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:Vanguard",
+      "balance": { "USD": "69449.94840" },
+      "column": 6,
+      "id": "account:Assets:US:Vanguard",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Assets:US:Vanguard:Cash",
+      "balance": { "USD": "0.02" },
+      "column": 7,
+      "id": "account:Assets:US:Vanguard:Cash",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:Vanguard:RGAGX",
+      "balance": { "USD": "41670.00757" },
+      "column": 7,
+      "id": "account:Assets:US:Vanguard:RGAGX",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Assets:US:Vanguard:VBMPX",
+      "balance": { "USD": "27779.92083" },
+      "column": 7,
+      "id": "account:Assets:US:Vanguard:VBMPX",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    },
+    {
+      "account": "Equity",
+      "balance": { "IRAUSD": "7200.00", "USD": "91384.62840", "VACHR": "82" },
+      "column": 3,
+      "id": "account:Equity",
+      "kind": "account",
+      "level": 0,
+      "role": null
+    },
+    {
+      "account": "Equity:Conversions",
+      "balance": { "USD": "0.05160" },
+      "column": 2,
+      "id": "account:Equity:Conversions",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Equity:Conversions:Current",
+      "balance": { "USD": "0.05160" },
+      "column": 1,
+      "id": "account:Equity:Conversions:Current",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Equity:Earnings",
+      "balance": { "IRAUSD": "7200.00", "USD": "87831.50000", "VACHR": "82" },
+      "column": 2,
+      "id": "account:Equity:Earnings",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Equity:Earnings:Current",
+      "balance": { "IRAUSD": "7200.00", "USD": "87831.50", "VACHR": "82" },
+      "column": 1,
+      "id": "account:Equity:Earnings:Current",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Equity:Opening-Balances",
+      "balance": { "USD": "3553.18" },
+      "column": 2,
+      "id": "account:Equity:Opening-Balances",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Liabilities",
+      "balance": { "USD": "2935.65" },
+      "column": 3,
+      "id": "account:Liabilities",
+      "kind": "account",
+      "level": 0,
+      "role": null
+    },
+    {
+      "account": "Liabilities:US",
+      "balance": { "USD": "2935.65" },
+      "column": 2,
+      "id": "account:Liabilities:US",
+      "kind": "account",
+      "level": 1,
+      "role": null
+    },
+    {
+      "account": "Liabilities:US:Chase",
+      "balance": { "USD": "2935.65" },
+      "column": 1,
+      "id": "account:Liabilities:US:Chase",
+      "kind": "account",
+      "level": 2,
+      "role": null
+    },
+    {
+      "account": "Liabilities:US:Chase:Slate",
+      "balance": { "USD": "2935.65" },
+      "column": 0,
+      "id": "account:Liabilities:US:Chase:Slate",
+      "kind": "account",
+      "level": 3,
+      "role": null
+    }
+  ]
+}

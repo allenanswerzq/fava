@@ -307,16 +307,7 @@
       style:height={`${focus_position.height.toString()}px`}
     >
       <div class="focus-header">
-        <div>
-          <h3>
-            {format(_("Details for %(account)s"), {
-              account: label(focused_node),
-            })}
-          </h3>
-          {#if focused_node.account}
-            <p class="account">{focused_node.account}</p>
-          {/if}
-        </div>
+        <p class="account">{focused_node.account ?? label(focused_node)}</p>
         <button
           type="button"
           class="close"
@@ -398,13 +389,8 @@
     padding: 0.4em 0.6em;
   }
 
-  h3 {
-    margin: 0;
-    font-size: 0.95em;
-  }
-
   .account {
-    margin: 0.1em 0 0;
+    margin: 0;
     color: var(--text-color-muted);
     font-size: 0.85em;
   }
