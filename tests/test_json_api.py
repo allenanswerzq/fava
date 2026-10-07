@@ -580,9 +580,12 @@ def test_api_imports(
     response = test_client.get("/import/api/imports")
     data = assert_api_success(response)
     assert data
-    snapshot(data, json=True)
-
     assert isinstance(data, list)
+    snapshot(
+        [{**file, "name": file["name"].replace("\\", "/")} for file in data],
+        json=True,
+    )
+
     importable = next(f for f in data if f["importers"])
     assert importable
 
