@@ -70,6 +70,7 @@ setup_logging()
 
 CLIENT_SIDE_REPORTS = [
     "balance_sheet",
+    "budgets",
     "commodities",
     "documents",
     "editor",

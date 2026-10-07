@@ -1,0 +1,80 @@
+option "title" "Budget and Project Plans"
+option "operating_currency" "USD"
+plugin "beancount.plugins.auto_accounts"
+
+2026-01-01 custom "budget" Expenses:Food:Groceries "monthly" 650 USD
+2026-01-01 custom "budget" Expenses:Food:Restaurants "monthly" 250 USD
+2026-01-01 custom "budget" Expenses:Transport "monthly" 180 USD
+
+2026-01-01 custom "budget-plan" "kitchen" Expenses:Projects:Kitchen 20000 USD
+  name: "Kitchen remodel"
+  end: 2026-12-31
+
+2026-01-01 custom "budget-plan" "kitchen-cabinets" Expenses:Projects:Kitchen:Cabinets 8000 USD
+  parent: "kitchen"
+  name: "Cabinets"
+
+2026-03-01 custom "budget-plan" "kitchen-appliances" Expenses:Projects:Kitchen:Appliances 5000 USD
+  parent: "kitchen"
+  name: "Appliances"
+  end: 2026-10-31
+
+2026-11-01 custom "budget-plan" "holiday" Expenses:Projects:Holiday 3500 USD
+  name: "Winter holiday"
+  end: 2027-02-28
+
+2026-01-01 custom "budget-plan" "tax-prep" Expenses:Projects:TaxPrep 600 USD
+  name: "Tax preparation"
+  end: 2026-03-31
+
+2026-03-05 * "Grocery store"
+  Assets:Checking                  -142.38 USD
+  Expenses:Food:Groceries          142.38 USD
+
+2026-03-08 * "Dinner"
+  Assets:Checking                   -68.20 USD
+  Expenses:Food:Restaurants          68.20 USD
+
+2026-03-12 * "Cabinet deposit"
+  Assets:Checking                 -2400.00 USD
+  Expenses:Projects:Kitchen:Cabinets 2400.00 USD
+
+2026-04-02 * "Building permit"
+  Assets:Checking                  -350.00 USD
+  Expenses:Projects:Kitchen         350.00 USD
+
+2026-04-18 * "Range and refrigerator"
+  Assets:Checking                 -1850.00 USD
+  Expenses:Projects:Kitchen:Appliances 1850.00 USD
+
+2026-05-01 * "Grocery refund"
+  Assets:Checking                    25.00 USD
+  Expenses:Food:Groceries           -25.00 USD
+
+2026-05-03 * "Unbudgeted books"
+  Assets:Checking                   -45.00 USD
+  Expenses:Books                     45.00 USD
+
+2026-02-10 * "Tax preparation"
+  Assets:Checking                  -420.00 USD
+  Expenses:Projects:TaxPrep         420.00 USD
+
+2026-10-02 * "October groceries"
+  Assets:Checking                  -138.00 USD
+  Expenses:Food:Groceries           138.00 USD
+
+2026-10-03 * "Dinner with friends"
+  Assets:Checking                   -62.00 USD
+  Expenses:Food:Restaurants          62.00 USD
+
+2026-10-04 * "Transit pass"
+  Assets:Checking                   -45.00 USD
+  Expenses:Transport                 45.00 USD
+
+2026-10-05 * "Returned groceries"
+  Assets:Checking                    18.00 USD
+  Expenses:Food:Groceries           -18.00 USD
+
+2026-10-06 * "Programming books"
+  Assets:Checking                   -35.00 USD
+  Expenses:Books                     35.00 USD

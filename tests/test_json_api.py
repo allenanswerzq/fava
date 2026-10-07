@@ -193,6 +193,59 @@ def test_api_insurance(app_in_tmp_dir: Flask) -> None:
     }
 
 
+def test_api_budgets(app_in_tmp_dir: Flask) -> None:
+    ledger = app_in_tmp_dir.config["LEDGERS"]["edit-example"]
+    path = Path(ledger.beancount_file_path)
+    path.write_text(
+        path.read_text("utf-8")
+        + """
+
+2026-01-01 custom "budget" Expenses:BudgetTest:Food "monthly" 500 USD
+
+2026-01-01 custom "budget-plan" "move" Expenses:BudgetTest 2000 USD
+  name: "Move house"
+  end: 2026-12-31
+
+2026-02-01 custom "budget-plan" "move-food" Expenses:BudgetTest:Food 300 USD
+  parent: "move"
+  name: "Moving-day food"
+
+2026-03-10 * "Budget test purchase"
+  Liabilities:BudgetTest  -125 USD
+  Expenses:BudgetTest:Food 125 USD
+
+2026-03-12 * "Unbudgeted purchase"
+  Liabilities:BudgetTest  -40 USD
+  Expenses:Books 40 USD
+""",
+        "utf-8",
+    )
+    ledger.load_file()
+
+    response = app_in_tmp_dir.test_client().get(
+        "/edit-example/api/budgets?time=2026-03"
+    )
+    data = assert_api_success(response)
+
+    assert isinstance(data, dict)
+    assert data["date_range"] == {
+        "begin": "2026-03-01",
+        "end": "2026-04-01",
+    }
+    expenses = data["accounts"][0]
+    food = expenses["children"][0]["children"][0]
+    assert expenses["actual_total"] == {"USD": "125"}
+    assert float(food["budget_total"]["USD"]) == pytest.approx(500)
+    assert food["actual_total"] == {"USD": "125"}
+    assert data["unbudgeted"]["actual_total"] == {"USD": "40"}
+
+    plan = data["plans"][0]
+    assert plan["budget"] == {"USD": "2000"}
+    assert plan["actual_total"] == {"USD": "125"}
+    assert plan["allocated"] == {"USD": "300"}
+    assert plan["unallocated_actual"] == {}
+
+
 def test_api_add_document_and_move_and_delete(
     app: Flask,
     test_client: FlaskClient,

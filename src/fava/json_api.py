@@ -51,7 +51,9 @@ from fava.internal_api import get_errors
 from fava.internal_api import get_ledger_data
 from fava.serialisation import deserialise
 from fava.serialisation import serialise
+from fava.util.date import DateRange
 from fava.util.date import local_today
+from fava.util.date import month_offset
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -63,6 +65,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from flask.wrappers import Response
     from werkzeug.datastructures import FileStorage
 
+    from fava.core.budgets import BudgetAccountNode
+    from fava.core.budgets import BudgetPlanNode
     from fava.core.ingest import FileImporters
     from fava.core.insurance import InsurancePolicy
     from fava.core.insurance import InsuranceStatus
@@ -72,7 +76,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from fava.core.sankey import SankeyData
     from fava.core.tree import SerialisedTreeNode
     from fava.internal_api import ChartData
-    from fava.util.date import DateRange
 
 
 json_api = Blueprint("json_api", __name__)
@@ -611,6 +614,43 @@ def get_events() -> Sequence[object]:
     """Get all (filtered) events."""
     g.ledger.changed()
     return [serialise(e) for e in g.filtered.entries if isinstance(e, Event)]
+
+
+class BudgetReportData(Struct, frozen=True):
+    """Recurring budgets and finite plans prepared for the frontend."""
+
+    date_range: DateRange
+    progress: float
+    accounts: Sequence[BudgetAccountNode]
+    unbudgeted: BudgetAccountNode | None
+    plans: Sequence[BudgetPlanNode]
+
+
+@api_endpoint
+def get_budgets() -> BudgetReportData:
+    """Get the account-budget and finite-plan report."""
+    g.ledger.changed()
+    today = local_today()
+    date_range = g.filtered.date_range
+    if date_range is None:
+        begin = today.replace(day=1)
+        date_range = DateRange(begin, month_offset(begin, 1))
+
+    account_nodes, unbudgeted = g.ledger.budgets.account_report(
+        g.filtered,
+        g.conv,
+        date_range,
+    )
+    total_days = (date_range.end - date_range.begin).days
+    elapsed_days = (today - date_range.begin).days + 1
+    progress = min(1.0, max(0.0, elapsed_days / total_days))
+    return BudgetReportData(
+        date_range=date_range,
+        progress=progress,
+        accounts=account_nodes,
+        unbudgeted=unbudgeted,
+        plans=g.ledger.budgets.plan_report(g.conv),
+    )
 
 
 class InsuranceDocumentData(Struct, frozen=True):

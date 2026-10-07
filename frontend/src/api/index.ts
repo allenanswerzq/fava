@@ -26,6 +26,7 @@ import { base_url } from "../stores/index.ts";
 import { set_mtime } from "../stores/mtime.ts";
 import {
   account_report_validator,
+  budget_report_validator,
   commodities_validator,
   context_validator,
   error_validator,
@@ -55,6 +56,7 @@ type DeleteEndpoint = "document" | "source_slice";
 type GetEndpoint =
   | "balance_sheet"
   | "balance_sheet_sankey"
+  | "budgets"
   | "account_report"
   | "changed"
   | "commodities"
@@ -248,6 +250,11 @@ export const get_balance_sheet = define_endpoint(
 export const get_balance_sheet_sankey = define_endpoint(
   "balance_sheet_sankey",
   sankey_validator,
+  filters_conversion_interval,
+);
+export const get_budgets = define_endpoint(
+  "budgets",
+  budget_report_validator,
   filters_conversion_interval,
 );
 export const get_changed = define_paramless_endpoint("changed", boolean);

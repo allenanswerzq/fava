@@ -24,7 +24,33 @@ Fava displays budgets in both charts and reports. You can find a visualization
 of the global budget in the `Net Profit` and `Expenses` charts for the Income
 Statement report.
 
-The Income Statement report is a good starting point for getting access to the
-full budget information in Fava. The `Changes` charts visualize the data. The
-`Changes (monthly)` and `Balances (monthly)` reports show, respectively, the
-monthly and cumulative (over the selected period) budgets.
+The Budget page compares these amounts with postings automatically calculated
+for the selected time range. Refunds and other negative expense postings reduce
+the actual amount. If multiple currencies remain after the selected conversion,
+they are shown separately.
+
+## Finite plans and projects
+
+For a task with a fixed start, end, and total cap, use a `budget-plan`
+directive. The directive date is the start date and a root plan requires `end`
+metadata:
+
+```beancount
+2026-01-01 custom "budget-plan" "kitchen" Expenses:Projects:Kitchen 20000 USD
+  name: "Kitchen remodel"
+  end: 2026-06-30
+
+2026-01-01 custom "budget-plan" "kitchen-cabinets" Expenses:Projects:Kitchen:Cabinets 8000 USD
+  parent: "kitchen"
+  name: "Cabinets"
+```
+
+Child plans must use an account below their parent's account. They inherit the
+parent's end date unless they specify an earlier one. A parent's amount is the
+cap for the complete project; child amounts are allocations within that cap and
+are not added to it.
+
+Actual spending is computed from postings to the plan account and its children.
+The Plans view shows both unallocated budget and spending recorded directly
+outside the declared child plans, so a project does not need to be fully broken
+down before it can be tracked.

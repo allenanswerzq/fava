@@ -3,13 +3,14 @@ import { charts_validator } from "../charts/index.ts";
 import { Amount } from "../entries/amount.ts";
 import { entryValidator } from "../entries/index.ts";
 import { FiscalYearEnd } from "../lib/interval.ts";
-import type { ValidationT } from "../lib/validation.ts";
+import type { ValidationT, Validator } from "../lib/validation.ts";
 import {
   array,
   boolean,
   constants,
   date,
   decimal,
+  lazy,
   number,
   object,
   optional,
@@ -133,6 +134,72 @@ export const importable_files_validator = array(
 );
 
 const date_range = object({ begin: date, end: date });
+
+export type BudgetInventory = Record<string, number>;
+
+export interface BudgetAccountNode {
+  readonly name: string;
+  readonly account: string;
+  readonly budget: BudgetInventory;
+  readonly budget_total: BudgetInventory;
+  readonly actual: BudgetInventory;
+  readonly actual_total: BudgetInventory;
+  readonly children: BudgetAccountNode[];
+}
+
+const budget_account_node: Validator<BudgetAccountNode> = object({
+  name: string,
+  account: string,
+  budget: record(decimal),
+  budget_total: record(decimal),
+  actual: record(decimal),
+  actual_total: record(decimal),
+  children: array(lazy<BudgetAccountNode>(() => budget_account_node)),
+});
+
+export type BudgetPlanStatus = "active" | "upcoming" | "ended";
+
+export interface BudgetPlanNode {
+  readonly plan_id: string;
+  readonly name: string;
+  readonly account: string;
+  readonly date_start: Date;
+  readonly date_end: Date;
+  readonly status: BudgetPlanStatus;
+  readonly progress: number;
+  readonly budget: BudgetInventory;
+  readonly actual: BudgetInventory;
+  readonly actual_total: BudgetInventory;
+  readonly allocated: BudgetInventory;
+  readonly unallocated_actual: BudgetInventory;
+  readonly children: BudgetPlanNode[];
+}
+
+const budget_plan_node: Validator<BudgetPlanNode> = object({
+  plan_id: string,
+  name: string,
+  account: string,
+  date_start: date,
+  date_end: date,
+  status: constants("active", "upcoming", "ended"),
+  progress: number,
+  budget: record(decimal),
+  actual: record(decimal),
+  actual_total: record(decimal),
+  allocated: record(decimal),
+  unallocated_actual: record(decimal),
+  children: array(lazy<BudgetPlanNode>(() => budget_plan_node)),
+});
+
+export const budget_report_validator = object({
+  date_range,
+  progress: number,
+  accounts: array(budget_account_node),
+  unbudgeted: optional(budget_account_node),
+  plans: array(budget_plan_node),
+});
+
+export type BudgetReport = ValidationT<typeof budget_report_validator>;
 
 export const commodities_validator = array(
   object({ base: string, quote: string, prices: array(tuple(date, decimal)) }),

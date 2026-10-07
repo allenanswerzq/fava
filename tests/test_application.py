@@ -71,6 +71,9 @@ def test_client_side_reports(test_client: FlaskClient) -> None:
     response = test_client.get("/long-example/insurance/")
     assert documents_html == assert_success(response)
 
+    response = test_client.get("/long-example/budgets/")
+    assert documents_html == assert_success(response)
+
 
 def test_redirect(test_client: FlaskClient) -> None:
     """Redirect from root."""

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from fava.core.budgets import calculate_budget
 from fava.core.budgets import calculate_budget_children
+from fava.core.budgets import parse_budget_plans
 from fava.core.budgets import parse_budgets
 from fava.util.date import END_OF_YEAR
 
@@ -171,3 +172,38 @@ def test_budgets_children_sibling_with_shared_prefix(
         date(2017, 1, 2),
     )
     assert budget["USD"] == Decimal("100.00")
+
+
+def test_budget_plans(load_doc_custom_entries: list[Custom]) -> None:
+    """
+    2026-01-01 custom "budget-plan" "k" Expenses:Kitchen 20000 USD
+      name: "Kitchen remodel"
+      end: 2026-06-30
+
+    2026-02-01 custom "budget-plan" "c" Expenses:Kitchen:Cabinets 8000 USD
+      parent: "k"
+      name: "Cabinets"
+    """
+    plans, errors = parse_budget_plans(load_doc_custom_entries)
+
+    assert not errors
+    assert len(plans) == 2
+    root, child = plans
+    assert root.plan_id == "k"
+    assert root.date_end == date(2026, 6, 30)
+    assert child.parent_id == root.plan_id
+    assert child.date_end == root.date_end
+
+
+def test_budget_plan_validation(load_doc_custom_entries: list[Custom]) -> None:
+    """
+    2026-01-01 custom "budget-plan" "missing-end" Expenses:Projects 100 USD
+    2026-01-01 custom "budget-plan" "orphan" Expenses:Projects:Other 50 USD
+      parent: "unknown"
+    """
+    plans, errors = parse_budget_plans(load_doc_custom_entries)
+
+    assert not plans
+    assert len(errors) == 2
+    assert "require `end`" in errors[0].message
+    assert "Unknown parent" in errors[1].message
