@@ -43,6 +43,7 @@ from fava.core.file import get_entry_slice
 from fava.core.filters import FilterError
 from fava.core.group_entries import group_entries_by_type
 from fava.core.ingest import filepath_in_primary_imports_folder
+from fava.core.inventory import _Amount
 from fava.core.misc import align
 from fava.helpers import FavaAPIError
 from fava.internal_api import ChartApi
@@ -50,6 +51,7 @@ from fava.internal_api import get_errors
 from fava.internal_api import get_ledger_data
 from fava.serialisation import deserialise
 from fava.serialisation import serialise
+from fava.util.date import local_today
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -62,6 +64,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from werkzeug.datastructures import FileStorage
 
     from fava.core.ingest import FileImporters
+    from fava.core.insurance import InsurancePolicy
+    from fava.core.insurance import InsuranceStatus
     from fava.core.inventory import SimpleCounterInventory
     from fava.core.query import QueryResultTable
     from fava.core.query import QueryResultText
@@ -607,6 +611,80 @@ def get_events() -> Sequence[object]:
     """Get all (filtered) events."""
     g.ledger.changed()
     return [serialise(e) for e in g.filtered.entries if isinstance(e, Event)]
+
+
+class InsuranceDocumentData(Struct, frozen=True):
+    """A policy document prepared for the frontend."""
+
+    key: str
+    filename: str
+
+
+class InsurancePolicyData(Struct, frozen=True):
+    """An insurance policy prepared for the frontend."""
+
+    policy_id: str
+    entry_hash: str
+    insured: str
+    category: str
+    product: str
+    purchased: date
+    effective: date
+    status: InsuranceStatus
+    account: str | None = None
+    documents: tuple[InsuranceDocumentData, ...] = ()
+    issuer: str | None = None
+    subtype: str | None = None
+    renewal: date | None = None
+    expiration: date | None = None
+    cancellation: date | None = None
+    premium: _Amount | None = None
+    coverage: _Amount | None = None
+    deductible: _Amount | None = None
+    frequency: str | None = None
+    note: str | None = None
+
+    @classmethod
+    def from_policy(
+        cls, policy: InsurancePolicy, day: date
+    ) -> InsurancePolicyData:
+        """Build frontend data for a policy."""
+        return cls(
+            policy_id=policy.policy_id,
+            entry_hash=policy.entry_hash,
+            insured=policy.insured,
+            category=policy.category,
+            product=policy.product,
+            purchased=policy.purchased,
+            effective=policy.effective,
+            status=policy.status_on(day),
+            account=policy.account,
+            documents=tuple(
+                InsuranceDocumentData(document.key, document.filename)
+                for document in policy.documents
+            ),
+            issuer=policy.issuer,
+            subtype=policy.subtype,
+            renewal=policy.renewal,
+            expiration=policy.expiration,
+            cancellation=policy.cancellation,
+            premium=_Amount.from_amount(policy.premium),
+            coverage=_Amount.from_amount(policy.coverage),
+            deductible=_Amount.from_amount(policy.deductible),
+            frequency=policy.frequency,
+            note=policy.note,
+        )
+
+
+@api_endpoint
+def get_insurance() -> Sequence[InsurancePolicyData]:
+    """Get all insurance policies."""
+    g.ledger.changed()
+    today = local_today()
+    return [
+        InsurancePolicyData.from_policy(policy, today)
+        for policy in g.ledger.insurance.policies
+    ]
 
 
 @api_endpoint

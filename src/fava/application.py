@@ -77,6 +77,7 @@ CLIENT_SIDE_REPORTS = [
     "events",
     "holdings",
     "import",
+    "insurance",
     "journal",
     "income_statement",
     "options",

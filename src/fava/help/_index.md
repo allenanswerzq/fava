@@ -10,6 +10,7 @@ pages for the following topics:
 - [Extensions](./extensions) - how Fava can be extended.
 - [Conversion](./conversion) - how to convert between currencies.
 - [Import](./import) - the import system.
+- [Insurance](./insurance) - tracking policies and coverage periods.
 - [Options](./options) - the available options.
 
 Fava comes with keyboard shortcuts - press <kbd>?</kbd> on any page to see the

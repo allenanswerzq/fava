@@ -40,6 +40,7 @@ from fava.core.filters import AdvancedFilter
 from fava.core.filters import TimeFilter
 from fava.core.group_entries import group_entries_by_type
 from fava.core.ingest import IngestModule
+from fava.core.insurance import InsuranceModule
 from fava.core.inventory import CounterInventory
 from fava.core.misc import FavaMisc
 from fava.core.number import DecimalFormatModule
@@ -312,6 +313,7 @@ class FavaLedger:
         "get_entry",
         "get_filtered",
         "ingest",
+        "insurance",
         "load_errors",
         "misc",
         "options",
@@ -368,6 +370,9 @@ class FavaLedger:
     #: A :class:`.IngestModule` instance.
     ingest: IngestModule
 
+    #: An :class:`.InsuranceModule` instance.
+    insurance: InsuranceModule
+
     #: A :class:`.FavaMisc` instance.
     misc: FavaMisc
 
@@ -396,6 +401,7 @@ class FavaLedger:
         self.file = FileModule(self)
         self.format_decimal = DecimalFormatModule(self)
         self.ingest = IngestModule(self)
+        self.insurance = InsuranceModule(self)
         self.misc = FavaMisc(self)
         self.query_shell = QueryShell(self)
 
@@ -436,6 +442,7 @@ class FavaLedger:
         self.misc.load_file()
         self.query_shell.load_file()
         self.ingest.load_file()
+        self.insurance.load_file()
 
         self.extensions.after_load_file()
 
@@ -471,6 +478,7 @@ class FavaLedger:
             *self.extensions.errors,
             *self.misc.errors,
             *self.ingest.errors,
+            *self.insurance.errors,
         ]
 
     @property

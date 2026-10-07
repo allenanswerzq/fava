@@ -1,0 +1,127 @@
+;; Insurance report example
+;;
+;; The custom directive date is the policy purchase date. Each directive uses
+;; one stable policy ID and describes the insured person, product, coverage
+;; dates, and optional financial details as metadata.
+
+option "title" "Insurance Example"
+option "operating_currency" "USD"
+option "documents" "insurance-documents"
+
+2020-01-01 open Expenses:Insurance
+
+
+;; Active policies
+
+2023-03-15 custom "insurance" "alice-life-2023" Expenses:Insurance
+  insured: "Alice"
+  category: "life"
+  subtype: "term life"
+  product: "Family Protection"
+  issuer: "Northstar Life"
+  effective: 2023-04-01
+  renewal: 2027-04-01
+  expiration: 2038-04-01
+  premium: 42 USD
+  coverage: 500000 USD
+  frequency: "monthly"
+  note: "Twenty-year term policy"
+
+2024-01-12 custom "insurance" "alice-health-2024" Expenses:Insurance
+  insured: "Alice"
+  category: "medical"
+  subtype: "family health"
+  product: "Health Plus"
+  issuer: "Example Health"
+  effective: 2024-02-01
+  renewal: 2027-02-01
+  expiration: 2030-02-01
+  premium: 680 USD
+  coverage: 1000000 USD
+  deductible: 1500 USD
+  frequency: "monthly"
+  note: "Alice and dependants"
+
+2025-05-20 custom "insurance" "bob-home-2025" Expenses:Insurance
+  insured: "Bob"
+  category: "property"
+  subtype: "homeowners"
+  product: "Home Secure"
+  issuer: "Harbor Mutual"
+  effective: 2025-06-01
+  renewal: 2027-06-01
+  expiration: 2030-06-01
+  premium: 1850 USD
+  coverage: 750000 USD
+  deductible: 2500 USD
+  frequency: "yearly"
+
+2026-02-10 custom "insurance" "charlie-travel-2026" Expenses:Insurance
+  insured: "Charlie"
+  category: "travel"
+  product: "Worldwide Annual"
+  issuer: "Atlas Cover"
+  effective: 2026-02-10
+  renewal: 2027-02-10
+  expiration: 2027-02-10
+  premium: 210 EUR
+  coverage: 100000 EUR
+  deductible: 100 EUR
+  frequency: "yearly"
+
+
+;; Upcoming policies
+
+2026-09-01 custom "insurance" "charlie-dental-2027" Expenses:Insurance
+  insured: "Charlie"
+  category: "medical"
+  subtype: "dental"
+  product: "Dental Care"
+  issuer: "Example Health"
+  effective: 2027-01-01
+  expiration: 2028-01-01
+  premium: 34 USD
+  coverage: 3000 USD
+  deductible: 50 USD
+  frequency: "monthly"
+  note: "Waiting for coverage to begin"
+
+2027-04-01 custom "insurance" "dana-accident-2027" Expenses:Insurance
+  insured: "Dana"
+  category: "accident"
+  product: "Personal Accident"
+  issuer: "Northstar Life"
+  effective: 2027-05-01
+  expiration: 2032-05-01
+  premium: 18 USD
+  coverage: 150000 USD
+  frequency: "monthly"
+
+
+;; Ended policies
+
+2021-07-01 custom "insurance" "bob-travel-2021" Expenses:Insurance
+  insured: "Bob"
+  category: "travel"
+  product: "Extended Journey"
+  issuer: "Atlas Cover"
+  effective: 2021-07-01
+  expiration: 2024-08-10
+  premium: 160 USD
+  coverage: 75000 USD
+  deductible: 250 USD
+  frequency: "yearly"
+
+2022-01-15 custom "insurance" "bob-auto-2022" Expenses:Insurance
+  insured: "Bob"
+  category: "vehicle"
+  subtype: "comprehensive auto"
+  product: "Road Complete"
+  issuer: "Harbor Mutual"
+  effective: 2022-01-15
+  cancellation: 2025-06-30
+  premium: 128 USD
+  coverage: 100000 USD
+  deductible: 500 USD
+  frequency: "monthly"
+  note: "Cancelled after the vehicle was sold"

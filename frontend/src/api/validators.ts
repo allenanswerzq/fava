@@ -1,5 +1,6 @@
 import { account_hierarchy_validator } from "../charts/hierarchy.ts";
 import { charts_validator } from "../charts/index.ts";
+import { Amount } from "../entries/amount.ts";
 import { entryValidator } from "../entries/index.ts";
 import { FiscalYearEnd } from "../lib/interval.ts";
 import type { ValidationT } from "../lib/validation.ts";
@@ -187,3 +188,36 @@ export const options_validator = object({
   fava_options: record(string),
   beancount_options: record(string),
 });
+
+export const insurance_status_validator = constants(
+  "not_started",
+  "waiting",
+  "active",
+  "expired",
+  "cancelled",
+);
+
+export const insurance_policy_validator = object({
+  policy_id: string,
+  entry_hash: string,
+  insured: string,
+  category: string,
+  product: string,
+  purchased: date,
+  effective: date,
+  status: insurance_status_validator,
+  account: optional(string),
+  documents: array(object({ key: string, filename: string })),
+  issuer: optional(string),
+  subtype: optional(string),
+  renewal: optional(date),
+  expiration: optional(date),
+  cancellation: optional(date),
+  premium: optional(Amount.validator),
+  coverage: optional(Amount.validator),
+  deductible: optional(Amount.validator),
+  frequency: optional(string),
+  note: optional(string),
+});
+
+export type InsurancePolicy = ValidationT<typeof insurance_policy_validator>;

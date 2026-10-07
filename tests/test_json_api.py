@@ -133,6 +133,66 @@ def test_api_changed(test_client: FlaskClient) -> None:
     assert_api_success(response, data=False)
 
 
+def test_api_insurance(app_in_tmp_dir: Flask) -> None:
+    ledger = app_in_tmp_dir.config["LEDGERS"]["edit-example"]
+    path = Path(ledger.beancount_file_path)
+    path.write_text(
+        path.read_text("utf-8")
+        + """
+
+2023-12-31 open Expenses:Insurance
+
+2024-01-01 custom "insurance" "alice-health" Expenses:Insurance
+  insured: "Alice"
+  category: "medical"
+  subtype: "supplemental"
+  product: "Health Plus"
+  issuer: "Example Insurance"
+  effective: 2024-02-01
+  renewal: 2027-01-01
+  expiration: 2099-02-01
+  premium: 1200 USD
+  coverage: 100000 USD
+  deductible: 500 USD
+  frequency: "yearly"
+  note: "Family policy"
+  document: "alice-health-policy.pdf"
+""",
+        "utf-8",
+    )
+    ledger.load_file()
+
+    response = app_in_tmp_dir.test_client().get("/edit-example/api/insurance")
+    data = assert_api_success(response)
+
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0] == {
+        "account": "Expenses:Insurance",
+        "cancellation": None,
+        "category": "medical",
+        "coverage": {"currency": "USD", "number": "100000"},
+        "deductible": {"currency": "USD", "number": "500"},
+        "documents": [
+            {"filename": "alice-health-policy.pdf", "key": "document"}
+        ],
+        "effective": "2024-02-01",
+        "entry_hash": data[0]["entry_hash"],
+        "expiration": "2099-02-01",
+        "frequency": "yearly",
+        "insured": "Alice",
+        "issuer": "Example Insurance",
+        "note": "Family policy",
+        "policy_id": "alice-health",
+        "premium": {"currency": "USD", "number": "1200"},
+        "product": "Health Plus",
+        "purchased": "2024-01-01",
+        "renewal": "2027-01-01",
+        "status": "active",
+        "subtype": "supplemental",
+    }
+
+
 def test_api_add_document_and_move_and_delete(
     app: Flask,
     test_client: FlaskClient,

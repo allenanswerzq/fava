@@ -30,6 +30,7 @@ HELP_PAGES = {
     "budgets": "Budgets",
     "conversion": "Conversion",
     "import": "Import",
+    "insurance": "Insurance",
     "options": "Options",
     "beancount_syntax": "Beancount Syntax",
     "features": "Features",

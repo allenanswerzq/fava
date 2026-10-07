@@ -30,6 +30,7 @@ import {
   context_validator,
   error_validator,
   importable_files_validator,
+  insurance_policy_validator,
   ledgerDataValidator,
   options_validator,
   type SourceFile,
@@ -66,6 +67,7 @@ type GetEndpoint =
   | "imports"
   | "income_statement"
   | "income_statement_sankey"
+  | "insurance"
   | "journal_page"
   | "trial_balance"
   | "ledger_data"
@@ -293,6 +295,10 @@ export const get_income_statement_sankey = define_endpoint(
   "income_statement_sankey",
   sankey_validator,
   filters_conversion_interval,
+);
+export const get_insurance = define_paramless_endpoint(
+  "insurance",
+  array(insurance_policy_validator),
 );
 export const get_journal_page = define_endpoint(
   "journal_page",
