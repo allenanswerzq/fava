@@ -65,7 +65,6 @@
   let graph_key = $derived(JSON.stringify({ graph, max_nodes_per_column }));
   let focused_graph_key = $state("");
   let focused_node_id: string | null = $state(null);
-  let focus_mirrored = $state(false);
   let chart_container: HTMLDivElement | undefined = $state();
   let close_button: HTMLButtonElement | undefined = $state();
   let focus_trigger: SVGElement | undefined;
@@ -82,7 +81,6 @@
     if (graph_key !== focused_graph_key) {
       focused_graph_key = graph_key;
       focused_node_id = null;
-      focus_mirrored = false;
       focus_trigger = undefined;
     }
   });
@@ -110,22 +108,6 @@
       ? null
       : sankey_focused_graph(graph, focused_node_id),
   );
-  let displayed_focused_graph = $derived.by(() => {
-    if (focused_graph == null || !focus_mirrored) {
-      return focused_graph;
-    }
-    const focused_max_column = Math.max(
-      0,
-      ...focused_graph.nodes.map(({ column }) => column),
-    );
-    return {
-      ...focused_graph,
-      nodes: focused_graph.nodes.map((focused_node) => ({
-        ...focused_node,
-        column: focused_max_column - focused_node.column,
-      })),
-    };
-  });
   let hidden_focused_labels = $derived(
     new Set(focused_node_id == null ? [] : [focused_node_id]),
   );
@@ -234,14 +216,12 @@
         end_y: top + overlay_height / 2,
       },
     };
-    focus_mirrored = direction !== preferred_direction;
     focus_trigger = anchor.trigger;
     focused_node_id = node.id;
   }
 
   function close_focus(): void {
     focused_node_id = null;
-    focus_mirrored = false;
     const trigger = focus_trigger;
     focus_trigger = undefined;
     void tick().then(() => {
@@ -281,7 +261,7 @@
     />
   </div>
 
-  {#if focused_node && displayed_focused_graph}
+  {#if focused_node && focused_graph}
     <button
       type="button"
       class="backdrop"
@@ -318,7 +298,7 @@
       </div>
       <div class="focus-chart">
         <SankeyDiagram
-          graph={displayed_focused_graph}
+          graph={focused_graph}
           width={Math.max(1, focus_position.width - 2)}
           height={focus_position.diagram_height}
           {node_label}

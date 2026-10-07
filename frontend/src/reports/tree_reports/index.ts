@@ -37,7 +37,7 @@ export const income_statement = new Route(
         ParsedHierarchyChart.from_node(expenses),
       );
     }
-    report.charts.push(
+    report.charts.unshift(
       new ParsedSankeyChart(
         _("Sankey"),
         async () => get_income_statement_sankey(filters),
@@ -59,7 +59,7 @@ export const balance_sheet = new Route(
     const filters = get_url_filters(url);
     const report = await get_balance_sheet(filters);
     report.charts.push(...report.trees.map(ParsedHierarchyChart.from_node));
-    report.charts.push(
+    report.charts.unshift(
       new ParsedSankeyChart(
         _("Sankey"),
         async () => get_balance_sheet_sankey(filters),

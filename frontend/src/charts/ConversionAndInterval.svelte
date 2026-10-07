@@ -11,6 +11,12 @@
   import { fiscal_year_end } from "../stores/fava_options.ts";
   import { conversion, interval } from "../stores/url.ts";
 
+  interface Props {
+    show_interval?: boolean;
+  }
+
+  let { show_interval = true }: Props = $props();
+
   let interval_options = $derived($fiscal_year_end.available_intervals);
 
   const conversion_description = (option: string) => {
@@ -42,16 +48,19 @@
   multiple_select={is_currency_conversion}
 />
 
-<SelectCombobox
-  bind:value={
-    () => $interval,
-    (value: string) => {
-      router.set_search_param(
-        "interval",
-        value === DEFAULT_INTERVAL ? "" : value,
-      );
+{#if show_interval}
+  <SelectCombobox
+    bind:value={
+      () => $interval,
+      (value: string) => {
+        router.set_search_param(
+          "interval",
+          value === DEFAULT_INTERVAL ? "" : value,
+        );
+      }
     }
-  }
-  options={interval_options}
-  description={(o: string) => interval_label(get_interval(o, $fiscal_year_end))}
-/>
+    options={interval_options}
+    description={(o: string) =>
+      interval_label(get_interval(o, $fiscal_year_end))}
+  />
+{/if}

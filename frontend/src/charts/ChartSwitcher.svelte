@@ -18,6 +18,9 @@
   let active_chart = $derived(
     charts.find((c) => c.label === $last_active_chart_name) ?? charts[0],
   );
+  let active_context_chart = $derived(
+    active_chart?.with_context($chart_context),
+  );
 
   // Get the shortcut key for jumping to the previous chart.
   let shortcutPrevious = $derived((index: number): KeySpec | undefined => {
@@ -35,9 +38,11 @@
   });
 </script>
 
-{#if active_chart}
-  <Chart chart={active_chart.with_context($chart_context)}>
-    <ConversionAndInterval />
+{#if active_chart && active_context_chart}
+  <Chart chart={active_context_chart}>
+    <ConversionAndInterval
+      show_interval={active_context_chart.type !== "sankey"}
+    />
   </Chart>
   <div hidden={!$show_charts}>
     {#each charts as chart, index (chart.label)}

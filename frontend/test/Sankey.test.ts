@@ -141,8 +141,10 @@ test("inspect a dense Sankey branch without expanding the overview", async () =>
   const first_leaf_rect = first_leaf?.querySelector("rect.node");
   ok(root_rect);
   ok(first_leaf_rect);
+  // Moving the overlay to the other side of its trigger must not mirror the
+  // focused graph. Preserve the same semantic columns as the overview.
   ok(
-    Number(root_rect.getAttribute("x")) <
+    Number(root_rect.getAttribute("x")) >
       Number(first_leaf_rect.getAttribute("x")),
   );
   const root_group = root.parentElement;

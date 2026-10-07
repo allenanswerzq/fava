@@ -93,5 +93,30 @@
     "basename": "receipt.pdf",
     "importers": [],
     "name": "TEST_DATA_DIR/receipt.pdf"
+  },
+  {
+    "basename": "balance-contra.beancount",
+    "importers": [],
+    "name": "TEST_DATA_DIR/sankey/balance-contra.beancount"
+  },
+  {
+    "basename": "balance-normal.beancount",
+    "importers": [],
+    "name": "TEST_DATA_DIR/sankey/balance-normal.beancount"
+  },
+  {
+    "basename": "income-dense.beancount",
+    "importers": [],
+    "name": "TEST_DATA_DIR/sankey/income-dense.beancount"
+  },
+  {
+    "basename": "income-loss-contra.beancount",
+    "importers": [],
+    "name": "TEST_DATA_DIR/sankey/income-loss-contra.beancount"
+  },
+  {
+    "basename": "income-profit.beancount",
+    "importers": [],
+    "name": "TEST_DATA_DIR/sankey/income-profit.beancount"
   }
 ]
