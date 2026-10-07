@@ -12,10 +12,16 @@
   let insured = $state("all");
 
   const matches = (policy: InsurancePolicy): boolean => {
-    if (status !== "all" && policy.status !== status) return false;
-    if (insured !== "all" && policy.insured !== insured) return false;
+    if (status !== "all" && policy.status !== status) {
+      return false;
+    }
+    if (insured !== "all" && policy.insured !== insured) {
+      return false;
+    }
     const query = search.trim().toLocaleLowerCase();
-    if (!query) return true;
+    if (!query) {
+      return true;
+    }
     return [
       policy.policy_id,
       policy.insured,

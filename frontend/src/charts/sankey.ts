@@ -84,10 +84,8 @@ export interface SankeyLayoutNode extends SankeyGraphNode {
 }
 
 /** A link with resolved nodes and vertical attachment points. */
-export interface SankeyLayoutLink extends Omit<
-  SankeyGraphLink,
-  "source" | "target"
-> {
+export interface SankeyLayoutLink
+  extends Omit<SankeyGraphLink, "source" | "target"> {
   source: SankeyLayoutNode;
   target: SankeyLayoutNode;
   width: number;

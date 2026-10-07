@@ -238,3 +238,95 @@ def test_reject_insurance_renewal_outside_coverage(
     assert len(errors) == 2
     assert "effective date" in errors[0].message
     assert "expiration date" in errors[1].message
+
+
+def test_reject_invalid_insurance_field_types(
+    load_doc_custom_entries: list[Custom],
+) -> None:
+    """
+    2024-01-01 custom "insurance" "bad-issuer"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      issuer: 123
+    2024-01-01 custom "insurance" "bad-effective"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: "tomorrow"
+    2024-01-01 custom "insurance" "bad-renewal"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      renewal: "next year"
+    2024-01-01 custom "insurance" "bad-premium"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      premium: "expensive"
+    2024-01-01 custom "insurance" "too-many" Expenses:Insurance "extra"
+    2024-01-01 custom "insurance" 1 USD
+    2024-01-01 custom "insurance" " "
+    2024-01-01 custom "insurance" "bad-document"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      document: 123
+    """
+    policies, errors = parse_insurance_policies(load_doc_custom_entries)
+
+    assert not policies
+    messages = "\n".join(error.message for error in errors)
+    assert "Metadata `issuer` must be a non-empty string" in messages
+    assert "Metadata `effective` must be a date" in messages
+    assert "Metadata `renewal` must be a date" in messages
+    assert "Metadata `premium` must be an amount" in messages
+    assert "require a policy ID" in messages
+    assert "policy ID must be a string" in messages
+    assert "Policy ID must not be empty" in messages
+    assert "Metadata `document` must be a non-empty string" in messages
+
+
+def test_reject_invalid_insurance_date_order(
+    load_doc_custom_entries: list[Custom],
+) -> None:
+    """
+    2024-01-01 custom "insurance" "expiration"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      expiration: 2024-02-01
+    2024-01-01 custom "insurance" "cancellation-before-purchase"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      cancellation: 2023-12-31
+    2024-01-01 custom "insurance" "cancellation-after-expiration"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      expiration: 2024-12-01
+      cancellation: 2025-01-01
+    2024-01-01 custom "insurance" "renewal-after-cancellation"
+      insured: "Alice"
+      category: "medical"
+      product: "Health"
+      effective: 2024-02-01
+      renewal: 2024-12-01
+      cancellation: 2024-11-01
+    """
+    policies, errors = parse_insurance_policies(load_doc_custom_entries)
+
+    assert not policies
+    messages = "\n".join(error.message for error in errors)
+    assert "Expiration date must be after" in messages
+    assert "Cancellation date must not precede" in messages
+    assert "Cancellation date must not follow" in messages
+    assert "Renewal date must not follow the cancellation" in messages

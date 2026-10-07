@@ -216,8 +216,8 @@
   dl {
     width: max-content;
     min-width: 260px;
-    margin-top: 0.5rem;
     padding: 0.75rem;
+    margin-top: 0.5rem;
     background: var(--background);
     border: 1px solid var(--border);
     box-shadow: var(--box-shadow-button);

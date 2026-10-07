@@ -45,7 +45,9 @@
   let group_index = $derived.by(() => {
     let current = -1;
     return ordered.map((_policy, index) => {
-      if (group_starts.has(index)) current += 1;
+      if (group_starts.has(index)) {
+        current += 1;
+      }
       return current;
     });
   });
@@ -233,15 +235,15 @@
   }
 
   .hit-area {
+    pointer-events: stroke;
     stroke: transparent;
     stroke-width: 30px;
-    pointer-events: stroke;
   }
 
   .guide {
+    opacity: 0.55;
     stroke: var(--border);
     stroke-width: 1px;
-    opacity: 0.55;
   }
 
   .waiting {
@@ -251,8 +253,8 @@
   }
 
   .coverage {
-    stroke-linecap: round;
     stroke-width: 7px;
+    stroke-linecap: round;
   }
 
   .coverage.ended {
@@ -285,8 +287,8 @@
 
   .today {
     stroke: var(--link-color);
-    stroke-dasharray: 3 3;
     stroke-width: 1.5px;
+    stroke-dasharray: 3 3;
   }
 
   .today-label {

@@ -10,54 +10,54 @@ msgstr ""
 msgid "Loading chart..."
 msgstr ""
 
-#: frontend/src/charts/ChartSwitcher.svelte:26
+#: frontend/src/charts/ChartSwitcher.svelte:29
 #: frontend/src/reports/import/Extract.svelte:100
 msgid "Previous"
 msgstr ""
 
-#: frontend/src/charts/ChartSwitcher.svelte:33
+#: frontend/src/charts/ChartSwitcher.svelte:36
 #: frontend/src/reports/import/Extract.svelte:105
 msgid "Next"
 msgstr ""
 
-#: frontend/src/charts/ConversionAndInterval.svelte:19
+#: frontend/src/charts/ConversionAndInterval.svelte:25
 msgid "At Cost"
 msgstr ""
 
-#: frontend/src/charts/ConversionAndInterval.svelte:21
+#: frontend/src/charts/ConversionAndInterval.svelte:27
 msgid "At Market Value"
 msgstr ""
 
-#: frontend/src/charts/ConversionAndInterval.svelte:23
+#: frontend/src/charts/ConversionAndInterval.svelte:29
 #: frontend/src/reports/journal/JournalHeaders.svelte:53
 msgid "Units"
 msgstr ""
 
-#: frontend/src/charts/ConversionAndInterval.svelte:25
+#: frontend/src/charts/ConversionAndInterval.svelte:31
 #, python-format
 msgid "Converted to %(currency)s"
 msgstr ""
 
 #: frontend/src/charts/HierarchyContainer.svelte:33
-#: frontend/src/charts/SankeyDiagram.svelte:231
+#: frontend/src/charts/SankeyDiagram.svelte:226
 msgid "Chart is empty."
 msgstr ""
 
-#: frontend/src/charts/Sankey.svelte:289 frontend/src/charts/Sankey.svelte:315
+#: frontend/src/charts/Sankey.svelte:269 frontend/src/charts/Sankey.svelte:295
 msgid "Close details"
 msgstr ""
 
-#: frontend/src/charts/Sankey.svelte:301
+#: frontend/src/charts/Sankey.svelte:281
 #, python-format
 msgid "Details for %(account)s"
 msgstr ""
 
-#: frontend/src/charts/SankeyDiagram.svelte:225
+#: frontend/src/charts/SankeyDiagram.svelte:220
 #, python-format
 msgid "Sankey diagram for %(currency)s"
 msgstr ""
 
-#: frontend/src/charts/SankeyDiagram.svelte:330
+#: frontend/src/charts/SankeyDiagram.svelte:314
 #, python-format
 msgid "Inspect %(account)s"
 msgstr ""
@@ -102,8 +102,10 @@ msgstr ""
 #: frontend/src/entry-forms/AccountInput.svelte:39
 #: frontend/src/modals/DocumentUpload.svelte:192
 #: frontend/src/modals/EntryContextBalances.svelte:31
+#: frontend/src/reports/budgets/AccountBudgets.svelte:106
 #: frontend/src/reports/holdings/Holdings.svelte:25
 #: frontend/src/reports/holdings/Holdings.svelte:29
+#: frontend/src/reports/insurance/InsuranceTable.svelte:104
 #: frontend/src/reports/statistics/UpdateActivity.svelte:32
 #: frontend/src/sidebar/FilterForm.svelte:52
 msgid "Account"
@@ -148,6 +150,7 @@ msgstr ""
 
 #: frontend/src/entry-forms/Note.svelte:27
 #: frontend/src/modals/AddEntry.svelte:21
+#: frontend/src/reports/insurance/InsuranceTable.svelte:156
 msgid "Note"
 msgstr ""
 
@@ -239,7 +242,7 @@ msgid "Location"
 msgstr ""
 
 #: frontend/src/modals/Export.svelte:13
-#: frontend/src/sidebar/AsideContents.svelte:78
+#: frontend/src/sidebar/AsideContents.svelte:79
 msgid "Export"
 msgstr ""
 
@@ -263,13 +266,177 @@ msgstr ""
 
 #: frontend/src/reports/accounts/AccountReport.svelte:64
 #: frontend/src/reports/accounts/AccountReport.svelte:67
-#: src/fava/json_api.py:829
+#: src/fava/json_api.py:947
 msgid "Changes"
 msgstr ""
 
 #: frontend/src/reports/accounts/AccountReport.svelte:73
 #: frontend/src/reports/accounts/AccountReport.svelte:76
 msgid "Balances"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:90
+msgid "Search accounts"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:91
+msgid "Account…"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:94
+msgid "Budget period"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:108
+#: frontend/src/reports/budgets/BudgetPlans.svelte:161
+#: frontend/src/reports/budgets/PlanTimeline.svelte:73
+#: frontend/src/reports/budgets/index.ts:14
+msgid "Budget"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:113
+msgid "Actual"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:118
+msgid "Remaining"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:122
+msgid "Progress"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:138
+#: frontend/src/reports/budgets/BudgetPlans.svelte:191
+#: frontend/src/reports/budgets/BudgetPlans.svelte:243
+msgid "Toggle children"
+msgstr ""
+
+#: frontend/src/reports/budgets/AccountBudgets.svelte:190
+msgid "No account budgets match the current filters."
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:113
+msgid "Spending early"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:114
+#: frontend/src/reports/budgets/BudgetPlans.svelte:143
+msgid "Upcoming"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:118
+msgid "Over budget"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:119
+#: frontend/src/reports/budgets/BudgetPlans.svelte:144
+msgid "Ended"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:122
+#: frontend/src/reports/budgets/BudgetPlans.svelte:142
+#: frontend/src/reports/insurance/Insurance.svelte:65
+#: frontend/src/reports/insurance/InsuranceTable.svelte:42
+msgid "Active"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:125
+msgid "Spending fast"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:126
+msgid "On track"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:132
+msgid "Search plans"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:136
+msgid "Plan or account…"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:140
+#: frontend/src/reports/insurance/Insurance.svelte:62
+#: frontend/src/reports/insurance/InsuranceTable.svelte:24
+msgid "Status"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:145
+#: frontend/src/reports/insurance/Insurance.svelte:55
+#: frontend/src/reports/insurance/Insurance.svelte:64
+msgid "All"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:152
+msgid "Schedule and spending pace"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:158
+msgid "Plan"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:159
+msgid "Pace"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:166
+#: frontend/src/reports/budgets/PlanTimeline.svelte:74
+msgid "Spent"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:171
+msgid "Left"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:175
+msgid "Used"
+msgstr ""
+
+#: frontend/src/reports/budgets/BudgetPlans.svelte:291
+msgid "No plans match the current filters."
+msgstr ""
+
+#: frontend/src/reports/budgets/Budgets.svelte:14
+msgid "Budget view"
+msgstr ""
+
+#: frontend/src/reports/budgets/Budgets.svelte:18
+msgid "Account budgets"
+msgstr ""
+
+#: frontend/src/reports/budgets/Budgets.svelte:23
+msgid "Plans"
+msgstr ""
+
+#: frontend/src/reports/budgets/PlanTimeline.svelte:71
+msgid "Dates"
+msgstr ""
+
+#: frontend/src/reports/budgets/PlanTimeline.svelte:75
+msgid "Time elapsed"
+msgstr ""
+
+#: frontend/src/reports/budgets/PlanTimeline.svelte:77
+msgid "Budget used"
+msgstr ""
+
+#: frontend/src/reports/budgets/PlanTimeline.svelte:95
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:128
+msgid "Today"
+msgstr ""
+
+#: frontend/src/reports/budgets/PlanTimeline.svelte:169
+msgid "Plan window"
+msgstr ""
+
+#: frontend/src/reports/budgets/PlanTimeline.svelte:170
+msgid "On pace"
+msgstr ""
+
+#: frontend/src/reports/budgets/PlanTimeline.svelte:171
+msgid "Spending ahead"
 msgstr ""
 
 #: frontend/src/reports/commodities/CommodityTable.svelte:18
@@ -304,6 +471,7 @@ msgid "Name"
 msgstr ""
 
 #: frontend/src/reports/documents/index.ts:19
+#: frontend/src/reports/insurance/InsuranceTable.svelte:136
 #: frontend/src/sidebar/AsideContents.svelte:50
 msgid "Documents"
 msgstr ""
@@ -335,12 +503,12 @@ msgstr ""
 
 #: frontend/src/reports/editor/EditorMenu.svelte:81
 #: frontend/src/reports/options/index.ts:15
-#: frontend/src/sidebar/AsideContents.svelte:80
+#: frontend/src/sidebar/AsideContents.svelte:81
 msgid "Options"
 msgstr ""
 
 #: frontend/src/reports/editor/index.ts:33
-#: frontend/src/sidebar/AsideContents.svelte:60
+#: frontend/src/sidebar/AsideContents.svelte:61
 msgid "Editor"
 msgstr ""
 
@@ -359,7 +527,7 @@ msgid "No errors."
 msgstr ""
 
 #: frontend/src/reports/errors/index.ts:6
-#: frontend/src/sidebar/AsideContents.svelte:73
+#: frontend/src/sidebar/AsideContents.svelte:74
 msgid "Errors"
 msgstr ""
 
@@ -387,7 +555,7 @@ msgid "Help pages"
 msgstr ""
 
 #: frontend/src/reports/help/index.ts:35
-#: frontend/src/sidebar/AsideContents.svelte:81
+#: frontend/src/sidebar/AsideContents.svelte:82
 msgid "Help"
 msgstr ""
 
@@ -421,7 +589,7 @@ msgstr ""
 
 #: frontend/src/reports/import/Extract.svelte:58
 #: frontend/src/reports/import/index.ts:70
-#: frontend/src/sidebar/AsideContents.svelte:77
+#: frontend/src/sidebar/AsideContents.svelte:78
 msgid "Import"
 msgstr ""
 
@@ -463,6 +631,155 @@ msgstr ""
 
 #: frontend/src/reports/import/ImportFileUpload.svelte:34
 msgid "Upload files for import"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:45
+msgid "Search policies"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:49
+msgid "Person, product, issuer…"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:53
+#: frontend/src/reports/insurance/InsuranceTable.svelte:21
+msgid "Insured"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:66
+#: frontend/src/reports/insurance/InsuranceTable.svelte:41
+msgid "Waiting"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:67
+#: frontend/src/reports/insurance/InsuranceTable.svelte:40
+msgid "Not started"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:68
+#: frontend/src/reports/insurance/InsuranceTable.svelte:43
+msgid "Expired"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:69
+#: frontend/src/reports/insurance/InsuranceTable.svelte:44
+msgid "Cancelled"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:76
+msgid "Coverage timeline"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:80
+msgid "Policy details"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:84
+msgid "No policies match the current filters."
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:88
+msgid "No insurance policies"
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:90
+msgid ""
+"Add custom insurance directives to your Beancount file to track coverage "
+"here."
+msgstr ""
+
+#: frontend/src/reports/insurance/Insurance.svelte:94
+msgid "View insurance syntax"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:22
+msgid "Product"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:23
+msgid "Category"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:25
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:110
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:217
+msgid "Effective"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:55
+msgid "Coverage"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:56
+msgid "Premium"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:57
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:111
+msgid "Ends"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:58
+msgid "Details"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:90
+msgid "View"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:93
+msgid "Policy ID"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:98
+msgid "Issuer"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:113
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:109
+msgid "Purchased"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:118
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:218
+msgid "Renewal"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:124
+msgid "Frequency"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:130
+msgid "Deductible"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTable.svelte:148
+msgid "Drop a file on this row to attach it."
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:111
+msgid "No scheduled end"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:215
+msgid "Purchase"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:216
+msgid "Waiting period"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:219
+msgid "Expiration"
+msgstr ""
+
+#: frontend/src/reports/insurance/InsuranceTimeline.svelte:220
+msgid "Cancellation"
+msgstr ""
+
+#: frontend/src/reports/insurance/index.ts:15
+#: frontend/src/sidebar/AsideContents.svelte:57
+msgid "Insurance"
 msgstr ""
 
 #: frontend/src/reports/journal/JournalFilters.svelte:8
@@ -591,7 +908,7 @@ msgid "Last Entry"
 msgstr ""
 
 #: frontend/src/reports/statistics/index.ts:37
-#: frontend/src/sidebar/AsideContents.svelte:57
+#: frontend/src/sidebar/AsideContents.svelte:58
 msgid "Statistics"
 msgstr ""
 
@@ -601,8 +918,8 @@ msgid "Sankey"
 msgstr ""
 
 #: frontend/src/reports/tree_reports/index.ts:45
-#: frontend/src/stores/accounts.ts:113 src/fava/json_api.py:710
-#: src/fava/json_api.py:728
+#: frontend/src/stores/accounts.ts:113 src/fava/json_api.py:828
+#: src/fava/json_api.py:846
 msgid "Net Profit"
 msgstr ""
 
@@ -637,11 +954,11 @@ msgstr ""
 msgid "Go to account"
 msgstr ""
 
-#: frontend/src/sidebar/AsideContents.svelte:64
+#: frontend/src/sidebar/AsideContents.svelte:65
 msgid "Add Journal Entry"
 msgstr ""
 
-#: frontend/src/sidebar/AsideContents.svelte:85
+#: frontend/src/sidebar/AsideContents.svelte:86
 msgid "Show keyboard shortcuts"
 msgstr ""
 
@@ -719,11 +1036,11 @@ msgstr ""
 msgid "Net Worth"
 msgstr ""
 
-#: src/fava/json_api.py:716
+#: src/fava/json_api.py:834
 msgid "Income"
 msgstr ""
 
-#: src/fava/json_api.py:722
+#: src/fava/json_api.py:840
 msgid "Expenses"
 msgstr ""
 

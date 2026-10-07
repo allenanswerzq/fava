@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from fava.core import FavaLedger
+from fava.core.sankey import _add_link
+from fava.core.sankey import _sankey_balance
 
 if TYPE_CHECKING:
     from fava.core.inventory import SimpleCounterInventory
@@ -122,3 +124,13 @@ def test_dense_income_example() -> None:
         and node.account.startswith("Expenses:Living:Category")
     ]
     assert len(living_children) == 16
+
+
+def test_sankey_ignores_zero_widths() -> None:
+    assert _sankey_balance({"USD": Decimal(0), "EUR": Decimal(-2)}) == {
+        "EUR": Decimal(2)
+    }
+
+    links: dict[tuple[str, str], SimpleCounterInventory] = {}
+    _add_link(links, "source", "target", "USD", Decimal(0))
+    assert not links

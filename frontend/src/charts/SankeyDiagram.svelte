@@ -343,10 +343,10 @@
   }
 
   .flow {
+    pointer-events: none;
     opacity: 0.32;
     fill: none;
     stroke-linecap: butt;
-    pointer-events: none;
     transition: opacity 100ms ease;
   }
 
@@ -355,9 +355,9 @@
   }
 
   .flow-target {
+    pointer-events: stroke;
     fill: none;
     stroke: transparent;
-    pointer-events: stroke;
   }
 
   .node {

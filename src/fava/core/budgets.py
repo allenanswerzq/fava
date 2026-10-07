@@ -7,6 +7,7 @@ from collections import Counter
 from collections import defaultdict
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import cast
 from typing import TYPE_CHECKING
 
 import msgspec
@@ -702,16 +703,14 @@ def build_account_budget_report(
     unbudgeted_visible: set[str] = {expense_account}
     for account in unbudgeted_accounts:
         for ancestor in _account_ancestors(account):
-            if account_tester(expense_account, with_children=True)(ancestor):
-                unbudgeted_visible.add(ancestor)
+            unbudgeted_visible.add(ancestor)
 
     unbudgeted_children: dict[str, list[str]] = defaultdict(list)
     for account in unbudgeted_visible:
         if account == expense_account:
             continue
-        parent = account_parent(account)
-        if parent in unbudgeted_visible:
-            unbudgeted_children[parent].append(account)
+        parent = cast("str", account_parent(account))
+        unbudgeted_children[parent].append(account)
 
     def unbudgeted_node(account: str) -> BudgetAccountNode:
         own_actual = conversion.apply(

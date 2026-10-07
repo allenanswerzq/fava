@@ -245,6 +245,16 @@ def test_api_budgets(app_in_tmp_dir: Flask) -> None:
     assert plan["allocated"] == {"USD": "300"}
     assert plan["unallocated_actual"] == {}
 
+    response = app_in_tmp_dir.test_client().get(
+        "/edit-example/api/budgets?time=2027-01"
+    )
+    data = assert_api_success(response)
+    assert isinstance(data, dict)
+    assert data["unbudgeted"] is None
+
+    response = app_in_tmp_dir.test_client().get("/edit-example/api/budgets")
+    assert_api_success(response)
+
 
 def test_api_add_document_and_move_and_delete(
     app: Flask,

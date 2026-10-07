@@ -319,18 +319,18 @@
 
   .backdrop {
     position: absolute;
-    z-index: 1;
     inset: 0;
+    z-index: 1;
     padding: 0;
+    cursor: default;
     background: transparent;
     border: 0;
-    cursor: default;
   }
 
   .connector {
     position: absolute;
-    z-index: 2;
     inset: 0;
+    z-index: 2;
     width: 100%;
     height: 100%;
     overflow: visible;
@@ -340,8 +340,8 @@
   .connector path {
     opacity: 0.8;
     fill: none;
-    stroke-linecap: round;
     stroke-width: 3px;
+    stroke-linecap: round;
   }
 
   .focus {
@@ -362,17 +362,17 @@
   .focus-header {
     display: flex;
     flex: none;
+    gap: 1em;
     align-items: start;
     justify-content: space-between;
-    gap: 1em;
     min-height: 34px;
     padding: 0.4em 0.6em;
   }
 
   .account {
     margin: 0;
-    color: var(--text-color-muted);
     font-size: 0.85em;
+    color: var(--text-color-muted);
   }
 
   .close {
