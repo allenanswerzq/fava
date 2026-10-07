@@ -1,0 +1,15 @@
+option "title" "Sankey Balance Sheet"
+option "operating_currency" "USD"
+
+2024-01-01 open Assets:Cash:Checking USD
+2024-01-01 open Assets:Investments:Brokerage USD
+2024-01-01 open Liabilities:Card:Visa USD
+2024-01-01 open Liabilities:Loan:Auto USD
+2024-01-01 open Equity:Opening:Capital USD
+
+2024-01-01 * "Opening balances"
+  Assets:Cash:Checking          4000 USD
+  Assets:Investments:Brokerage  6000 USD
+  Liabilities:Card:Visa        -1000 USD
+  Liabilities:Loan:Auto        -2000 USD
+  Equity:Opening:Capital       -7000 USD

@@ -155,11 +155,6 @@
     return node.column > max_column / 2;
   }
 
-  function arrow_path(link: SankeyLayoutLink): string {
-    const size = Math.max(1.5, Math.min(5, Math.sqrt(link.width)));
-    return `M${(-size).toString()},${(-size).toString()}L0,0L${(-size).toString()},${size.toString()}`;
-  }
-
   function inspect_from_keyboard(
     event: KeyboardEvent,
     node: SankeyGraphNode,
@@ -243,7 +238,6 @@
                 d={geometry.path}
                 stroke={$sunburst_scale(link.source.account ?? link.source.id)}
                 stroke-width={link.width}
-                data-direction={geometry.direction}
               />
               <path
                 class="flow-target"
@@ -253,16 +247,6 @@
                 {@attach tooltip.following(() => link_tooltip(link))}
               />
             </g>
-          {/each}
-        </g>
-        <g class="arrows" aria-hidden="true">
-          {#each layout.links as link (`${link.source.id}:${link.target.id}`)}
-            {@const geometry = sankey_link_geometry(link)}
-            <path
-              class:backward={geometry.direction === "backward"}
-              d={arrow_path(link)}
-              transform={`translate(${geometry.arrow.x.toString()},${geometry.arrow.y.toString()}) rotate(${geometry.arrow.angle.toString()})`}
-            />
           {/each}
         </g>
         <g class="nodes">
@@ -374,24 +358,6 @@
     fill: none;
     stroke: transparent;
     pointer-events: stroke;
-  }
-
-  .arrows path {
-    opacity: 0.45;
-    fill: none;
-    stroke: var(--text-color);
-    stroke-width: 1.25px;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .arrows path.backward {
-    opacity: 0.9;
-    stroke-width: 1.75px;
-  }
-
-  .arrows {
-    pointer-events: none;
   }
 
   .node {

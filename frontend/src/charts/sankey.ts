@@ -110,15 +110,9 @@ export interface SankeyLayoutOptions {
   max_column?: number;
 }
 
-/** Geometry for a link path and its directional arrow. */
+/** Geometry for a directed link path. */
 export interface SankeyLinkGeometry {
   path: string;
-  direction: "forward" | "backward";
-  arrow: {
-    x: number;
-    y: number;
-    angle: number;
-  };
 }
 
 export type SankeyDataSource = SankeyData | (() => Promise<SankeyData>);
@@ -368,12 +362,6 @@ export function sankey_default_expanded_nodes(
       break;
     }
     const children = hierarchy.children.get(node.id) ?? [];
-    if (
-      children.length === 1 &&
-      !hierarchy.children.has(children[0]?.id ?? "")
-    ) {
-      continue;
-    }
     const additions = new Map<number, number>();
     for (const child of children) {
       additions.set(child.column, (additions.get(child.column) ?? 0) + 1);
@@ -719,7 +707,7 @@ export function layout_sankey(
   return { currency: graph.currency, nodes, links };
 }
 
-/** Build a horizontal curve and arrow position for a directed link. */
+/** Build a horizontal curve for a directed link. */
 export function sankey_link_geometry(
   link: SankeyLayoutLink,
 ): SankeyLinkGeometry {
@@ -727,17 +715,8 @@ export function sankey_link_geometry(
   const source_x = forward ? link.source.x1 : link.source.x0;
   const target_x = forward ? link.target.x0 : link.target.x1;
   const middle_x = (source_x + target_x) / 2;
-  const middle_y = (link.y0 + link.y1) / 2;
-  const tangent_x = (target_x - source_x) * 0.75;
-  const tangent_y = (link.y1 - link.y0) * 1.5;
 
   return {
     path: `M${source_x.toString()},${link.y0.toString()}C${middle_x.toString()},${link.y0.toString()},${middle_x.toString()},${link.y1.toString()},${target_x.toString()},${link.y1.toString()}`,
-    direction: forward ? "forward" : "backward",
-    arrow: {
-      x: middle_x,
-      y: middle_y,
-      angle: (Math.atan2(tangent_y, tangent_x) * 180) / Math.PI,
-    },
   };
 }

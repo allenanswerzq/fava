@@ -1,0 +1,15 @@
+option "title" "Sankey Income Loss and Contra"
+option "operating_currency" "USD"
+
+2024-01-01 open Assets:Cash USD
+2024-01-01 open Income:Salary:Work USD
+2024-01-01 open Income:Salary:Reversal USD
+2024-01-01 open Expenses:Housing:Rent USD
+2024-01-01 open Expenses:Shopping:Refund USD
+
+2024-01-31 * "Income and expenses"
+  Assets:Cash                -500 USD
+  Income:Salary:Work        -2000 USD
+  Income:Salary:Reversal      300 USD
+  Expenses:Housing:Rent      2400 USD
+  Expenses:Shopping:Refund   -200 USD

@@ -353,8 +353,6 @@ test("layout a Sankey graph in fixed semantic columns", () => {
   ok(forward && backward);
   const forward_geometry = sankey_link_geometry(forward);
   const backward_geometry = sankey_link_geometry(backward);
-  equal(forward_geometry.direction, "forward");
-  equal(backward_geometry.direction, "backward");
   ok(forward_geometry.path.startsWith(`M${forward.source.x1.toString()},`));
   ok(
     forward_geometry.path.endsWith(
@@ -367,8 +365,6 @@ test("layout a Sankey graph in fixed semantic columns", () => {
       `,${backward.target.x1.toString()},${backward.y1.toString()}`,
     ),
   );
-  ok(Math.abs(forward_geometry.arrow.angle) < 90);
-  ok(Math.abs(backward_geometry.arrow.angle) > 90);
 });
 
 test("keep a dense Sankey column visible", () => {
@@ -416,7 +412,7 @@ test("keep a dense Sankey column visible", () => {
   ok(layout.links.every((link) => link.width > 0));
 });
 
-test("keep a terminal single-child Sankey branch collapsed by default", () => {
+test("expand a terminal single-child Sankey branch when it fits", () => {
   const graph: SankeyGraph = {
     currency: "USD",
     nodes: [
@@ -443,13 +439,13 @@ test("keep a terminal single-child Sankey branch collapsed by default", () => {
   };
 
   const expanded = sankey_default_expanded_nodes(graph);
-  deepEqual([...expanded], []);
+  deepEqual([...expanded], ["root"]);
   const view = sankey_graph_view(graph, expanded);
   deepEqual(
     view.graph.nodes.map(({ id }) => id),
-    ["root"],
+    ["root", "only-child"],
   );
-  equal(view.graph.nodes[0]?.fixedValue, 10);
+  equal(view.graph.nodes[0]?.fixedValue, undefined);
 });
 
 test("keep hierarchical Sankey branches together and order them by flow", () => {
@@ -544,6 +540,10 @@ test("keep hierarchical Sankey branches together and order them by flow", () => 
 
   deepEqual(ordered_ids(0), ["a-large", "a-small", "b-large", "b-small"]);
   deepEqual(ordered_ids(1), ["group-a", "group-b"]);
+
+  const fully_expanded = sankey_default_expanded_nodes(graph);
+  deepEqual([...fully_expanded], ["income", "group-a", "group-b"]);
+  equal(sankey_graph_view(graph, fully_expanded).graph.nodes.length, 7);
 
   const expanded = sankey_default_expanded_nodes(graph, 3);
   deepEqual([...expanded], ["income", "group-a"]);

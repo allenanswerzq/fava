@@ -1,0 +1,15 @@
+option "title" "Sankey Income Profit"
+option "operating_currency" "USD"
+
+2024-01-01 open Assets:Cash USD
+2024-01-01 open Income:Salary:Work USD
+2024-01-01 open Income:Investments:Dividends USD
+2024-01-01 open Expenses:Housing:Rent USD
+2024-01-01 open Expenses:Food:Groceries USD
+
+2024-01-31 * "Monthly activity"
+  Assets:Cash                    3000 USD
+  Income:Salary:Work            -5000 USD
+  Income:Investments:Dividends   -500 USD
+  Expenses:Housing:Rent          1800 USD
+  Expenses:Food:Groceries         700 USD

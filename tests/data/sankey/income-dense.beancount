@@ -1,0 +1,41 @@
+option "title" "Sankey Dense Income Statement"
+option "operating_currency" "USD"
+
+2024-01-01 open Assets:Cash USD
+2024-01-01 open Income:Salary:Main USD
+2024-01-01 open Expenses:Living:Category01 USD
+2024-01-01 open Expenses:Living:Category02 USD
+2024-01-01 open Expenses:Living:Category03 USD
+2024-01-01 open Expenses:Living:Category04 USD
+2024-01-01 open Expenses:Living:Category05 USD
+2024-01-01 open Expenses:Living:Category06 USD
+2024-01-01 open Expenses:Living:Category07 USD
+2024-01-01 open Expenses:Living:Category08 USD
+2024-01-01 open Expenses:Living:Category09 USD
+2024-01-01 open Expenses:Living:Category10 USD
+2024-01-01 open Expenses:Living:Category11 USD
+2024-01-01 open Expenses:Living:Category12 USD
+2024-01-01 open Expenses:Living:Category13 USD
+2024-01-01 open Expenses:Living:Category14 USD
+2024-01-01 open Expenses:Living:Category15 USD
+2024-01-01 open Expenses:Living:Category16 USD
+
+2024-01-31 * "Dense monthly activity"
+  Assets:Cash                    6000 USD
+  Income:Salary:Main           -10000 USD
+  Expenses:Living:Category01      250 USD
+  Expenses:Living:Category02      250 USD
+  Expenses:Living:Category03      250 USD
+  Expenses:Living:Category04      250 USD
+  Expenses:Living:Category05      250 USD
+  Expenses:Living:Category06      250 USD
+  Expenses:Living:Category07      250 USD
+  Expenses:Living:Category08      250 USD
+  Expenses:Living:Category09      250 USD
+  Expenses:Living:Category10      250 USD
+  Expenses:Living:Category11      250 USD
+  Expenses:Living:Category12      250 USD
+  Expenses:Living:Category13      250 USD
+  Expenses:Living:Category14      250 USD
+  Expenses:Living:Category15      250 USD
+  Expenses:Living:Category16      250 USD

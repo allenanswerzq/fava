@@ -1,0 +1,17 @@
+option "title" "Sankey Balance Sheet Contra Accounts"
+option "operating_currency" "USD"
+
+2024-01-01 open Assets:Cash USD
+2024-01-01 open Assets:Receivables:Gross USD
+2024-01-01 open Assets:Receivables:Allowance USD
+2024-01-01 open Liabilities:Loan USD
+2024-01-01 open Liabilities:Deposit USD
+2024-01-01 open Equity:Capital USD
+
+2024-01-01 * "Opening balances with contra accounts"
+  Assets:Cash                    5000 USD
+  Assets:Receivables:Gross      1000 USD
+  Assets:Receivables:Allowance  -200 USD
+  Liabilities:Loan             -2500 USD
+  Liabilities:Deposit            300 USD
+  Equity:Capital               -3600 USD

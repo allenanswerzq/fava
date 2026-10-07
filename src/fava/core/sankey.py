@@ -63,8 +63,7 @@ class SankeyLink(Struct, frozen=True):
     """A directed link with positive widths grouped by currency.
 
     ``source`` and ``target`` preserve the real accounting direction even when
-    it runs opposite to the nodes' semantic column order. The renderer should
-    use an arrow or chevron to make that direction explicit.
+    it runs opposite to the nodes' semantic column order.
     """
 
     source: str
