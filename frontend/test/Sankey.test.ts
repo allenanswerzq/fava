@@ -12,6 +12,112 @@ import { initialise_ledger_data } from "./helpers.ts";
 test.before(initialise_ledger_data);
 test.beforeEach(setup_jsdom);
 
+test("limit the overview to a configurable number of account levels", async () => {
+  const data = sankey_validator({
+    nodes: [
+      {
+        id: "deep",
+        account: "Income:Group:Category:Deep",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 3,
+        balance: { USD: "100" },
+      },
+      {
+        id: "category",
+        account: "Income:Group:Category",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 2,
+        balance: { USD: "100" },
+      },
+      {
+        id: "group",
+        account: "Income:Group",
+        kind: "account",
+        role: null,
+        column: 2,
+        level: 1,
+        balance: { USD: "100" },
+      },
+      {
+        id: "income",
+        account: "Income",
+        kind: "account",
+        role: null,
+        column: 3,
+        level: 0,
+        balance: { USD: "100" },
+      },
+    ],
+    links: [
+      { source: "deep", target: "category", value: { USD: "100" } },
+      { source: "category", target: "group", value: { USD: "100" } },
+      { source: "group", target: "income", value: { USD: "100" } },
+    ],
+  }).unwrap();
+  const target = document.querySelector("article");
+  ok(target);
+  const tooltip = new Tooltip();
+  tooltip.init(target);
+
+  const default_component = mount(Sankey, {
+    target,
+    props: { data, currency: "USD", width: 220, tooltip },
+  });
+  await tick();
+
+  const default_svg = target.querySelector(".overview > .scroll > svg");
+  ok(default_svg);
+  equal(Number(default_svg.getAttribute("width")), 461);
+  equal(Number(default_svg.getAttribute("height")), 320);
+  equal(target.querySelectorAll(".overview rect.node").length, 3);
+  equal(target.querySelector("text.branch-inspect")?.textContent, "+1");
+  const left_account = target.querySelector<SVGAElement>(
+    'a[aria-label="Income:Group:Category"]',
+  );
+  const right_account = target.querySelector<SVGAElement>(
+    'a[aria-label="Income"]',
+  );
+  const left_rect = left_account?.querySelector("rect.node");
+  const left_label = left_account?.querySelector("text");
+  const right_rect = right_account?.querySelector("rect.node");
+  const right_label = right_account?.querySelector("text");
+  ok(left_rect && left_label && right_rect && right_label);
+  equal(left_label.getAttribute("text-anchor"), "end");
+  ok(
+    Number(left_label.getAttribute("x")) < Number(left_rect.getAttribute("x")),
+  );
+  equal(right_label.getAttribute("text-anchor"), "start");
+  ok(
+    Number(right_label.getAttribute("x")) >
+      Number(right_rect.getAttribute("x")) +
+        Number(right_rect.getAttribute("width")),
+  );
+  await unmount(default_component);
+
+  const compact_component = mount(Sankey, {
+    target,
+    props: {
+      data,
+      currency: "USD",
+      width: 220,
+      tooltip,
+      max_account_levels: 2,
+    },
+  });
+  await tick();
+
+  const compact_svg = target.querySelector(".overview > .scroll > svg");
+  ok(compact_svg);
+  equal(Number(compact_svg.getAttribute("width")), 295);
+  equal(target.querySelectorAll(".overview rect.node").length, 2);
+  equal(target.querySelector("text.branch-inspect")?.textContent, "+2");
+  await unmount(compact_component);
+});
+
 test("inspect a dense Sankey branch without expanding the overview", async () => {
   const accounts = Array.from(
     { length: 14 },
@@ -75,21 +181,25 @@ test("inspect a dense Sankey branch without expanding the overview", async () =>
 
   const svg = target.querySelector(".overview > .scroll > svg");
   ok(svg);
-  ok(Number(svg.getAttribute("width")) > 220);
-  equal(Number(svg.getAttribute("height")), 360);
-  equal(target.querySelectorAll("rect.node").length, 1);
-  equal(target.querySelectorAll("path.flow").length, 0);
+  equal(Number(svg.getAttribute("width")), 340);
+  equal(Number(svg.getAttribute("height")), 320);
+  equal(
+    svg.querySelector("g[transform]")?.getAttribute("transform"),
+    "translate(84,20)",
+  );
+  equal(target.querySelectorAll("rect.node").length, 13);
+  equal(target.querySelectorAll("path.flow").length, 12);
   const inspect = target.querySelector<SVGTextElement>("text.branch-inspect");
   ok(inspect);
-  equal(inspect.textContent, "+14");
+  equal(inspect.textContent, "+2");
   equal(inspect.getAttribute("aria-haspopup"), "dialog");
   inspect.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
   await tick();
 
-  equal(Number(svg.getAttribute("height")), 360);
-  equal(target.querySelectorAll(".overview > .scroll rect.node").length, 1);
-  equal(target.querySelectorAll(".overview > .scroll path.flow").length, 0);
+  equal(Number(svg.getAttribute("height")), 320);
+  equal(target.querySelectorAll(".overview > .scroll rect.node").length, 13);
+  equal(target.querySelectorAll(".overview > .scroll path.flow").length, 12);
   const focus = target.querySelector<HTMLElement>("div.focus");
   ok(focus);
   equal(focus.getAttribute("role"), "dialog");
@@ -167,10 +277,10 @@ test("inspect a dense Sankey branch without expanding the overview", async () =>
 
   await tick();
 
-  equal(Number(svg.getAttribute("height")), 360);
+  equal(Number(svg.getAttribute("height")), 320);
   equal(target.querySelector("div.focus"), null);
-  equal(target.querySelectorAll(".overview > .scroll rect.node").length, 1);
-  equal(inspect.textContent, "+14");
+  equal(target.querySelectorAll(".overview > .scroll rect.node").length, 13);
+  equal(inspect.textContent, "+2");
   equal(document.activeElement, inspect);
 
   inspect.dispatchEvent(

@@ -19,7 +19,7 @@ import {
   ParsedSankeyChart,
   type SankeyGraph,
   sankey_currencies,
-  sankey_default_expanded_nodes,
+  sankey_default_visible_nodes,
   sankey_focused_graph,
   sankey_graph_for_currency,
   sankey_graph_view,
@@ -28,6 +28,7 @@ import {
 } from "../src/charts/sankey.ts";
 import { ScatterPlot } from "../src/charts/scatterplot.ts";
 import { load_json_snapshot } from "./helpers.ts";
+import { complex_sankey_graph } from "./sankey-layout-example.ts";
 
 test("chart helpers (filter ticks)", () => {
   deepEqual(filter_ticks(["1", "2", "3"], 2), ["1", "3"]);
@@ -438,9 +439,9 @@ test("expand a terminal single-child Sankey branch when it fits", () => {
     links: [{ source: "only-child", target: "root", value: 10 }],
   };
 
-  const expanded = sankey_default_expanded_nodes(graph);
-  deepEqual([...expanded], ["root"]);
-  const view = sankey_graph_view(graph, expanded);
+  const visible = sankey_default_visible_nodes(graph);
+  deepEqual([...visible], ["root", "only-child"]);
+  const view = sankey_graph_view(graph, visible);
   deepEqual(
     view.graph.nodes.map(({ id }) => id),
     ["root", "only-child"],
@@ -448,7 +449,7 @@ test("expand a terminal single-child Sankey branch when it fits", () => {
   equal(view.graph.nodes[0]?.fixedValue, undefined);
 });
 
-test("keep hierarchical Sankey branches together and order them by flow", () => {
+test("select important Sankey nodes across account branches", () => {
   const graph: SankeyGraph = {
     currency: "USD",
     nodes: [
@@ -541,25 +542,298 @@ test("keep hierarchical Sankey branches together and order them by flow", () => 
   deepEqual(ordered_ids(0), ["a-large", "a-small", "b-large", "b-small"]);
   deepEqual(ordered_ids(1), ["group-a", "group-b"]);
 
-  const fully_expanded = sankey_default_expanded_nodes(graph);
-  deepEqual([...fully_expanded], ["income", "group-a", "group-b"]);
-  equal(sankey_graph_view(graph, fully_expanded).graph.nodes.length, 7);
-
-  const expanded = sankey_default_expanded_nodes(graph, 3);
-  deepEqual([...expanded], ["income", "group-a"]);
-  const view = sankey_graph_view(graph, expanded);
-  deepEqual(view.graph.nodes.map(({ id }) => id).sort(), [
+  const all_visible = sankey_default_visible_nodes(graph);
+  deepEqual([...all_visible].sort(), [
     "a-large",
     "a-small",
+    "b-large",
+    "b-small",
     "group-a",
     "group-b",
     "income",
   ]);
-  deepEqual(view.branches.get("group-b"), {
-    expanded: false,
-    hidden_accounts: 2,
+  equal(sankey_graph_view(graph, all_visible).graph.nodes.length, 7);
+
+  const visible = sankey_default_visible_nodes(graph, 2);
+  deepEqual(
+    [...visible],
+    ["income", "group-a", "group-b", "a-large", "b-large"],
+  );
+  const view = sankey_graph_view(graph, visible);
+  deepEqual(view.graph.nodes.map(({ id }) => id).sort(), [
+    "a-large",
+    "b-large",
+    "group-a",
+    "group-b",
+    "income",
+  ]);
+  deepEqual(view.branches.get("group-a"), {
+    hidden_accounts: 1,
   });
+  deepEqual(view.branches.get("group-b"), {
+    hidden_accounts: 1,
+  });
+  equal(view.graph.nodes.find(({ id }) => id === "group-a")?.fixedValue, 100);
   equal(view.graph.nodes.find(({ id }) => id === "group-b")?.fixedValue, 80);
+});
+
+test("hide negligible Sankey nodes below the flow threshold", () => {
+  const graph: SankeyGraph = {
+    currency: "USD",
+    nodes: [
+      {
+        id: "root",
+        account: "Expenses",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 0,
+        balance: 100,
+      },
+      {
+        id: "important",
+        account: "Expenses:Important",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 99,
+      },
+      {
+        id: "tiny",
+        account: "Expenses:Tiny",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 1,
+      },
+    ],
+    links: [
+      { source: "root", target: "important", value: 99 },
+      { source: "root", target: "tiny", value: 1 },
+    ],
+  };
+
+  const visible = sankey_default_visible_nodes(graph, 12, 0.02);
+  deepEqual([...visible], ["root", "important"]);
+  const view = sankey_graph_view(graph, visible);
+  deepEqual(view.branches.get("root"), { hidden_accounts: 1 });
+  equal(view.graph.nodes.find(({ id }) => id === "root")?.fixedValue, 100);
+});
+
+test("select and lay out a complex Sankey graph", () => {
+  const visible = sankey_default_visible_nodes(
+    complex_sankey_graph,
+    4,
+    0.02,
+    4,
+  );
+  deepEqual([...visible].sort(), [
+    "bonus",
+    "dining",
+    "dividends",
+    "employer-a",
+    "employer-b",
+    "expenses",
+    "flights",
+    "groceries",
+    "housing",
+    "income",
+    "interest",
+    "investments",
+    "living",
+    "main",
+    "net-profit",
+    "refund",
+    "rent",
+    "salary",
+    "travel",
+  ]);
+  ok(!visible.has("fees"));
+  ok(!visible.has("misc-income"));
+  ok(!visible.has("rounding"));
+  ok(!visible.has("utilities"));
+
+  const view = sankey_graph_view(complex_sankey_graph, visible);
+  deepEqual(
+    [...view.branches].map(([id, branch]) => [id, branch.hidden_accounts]),
+    [
+      ["salary", 1],
+      ["income", 1],
+      ["expenses", 1],
+      ["housing", 1],
+      ["living", 2],
+      ["travel", 1],
+    ],
+  );
+  for (const [id, value] of [
+    ["salary", 900],
+    ["income", 1200],
+    ["expenses", 1030],
+    ["housing", 450],
+    ["living", 430],
+    ["travel", 140],
+  ] as const) {
+    equal(view.graph.nodes.find((node) => node.id === id)?.fixedValue, value);
+  }
+  equal(view.graph.links.length, 18);
+  ok(
+    view.graph.links.every(
+      ({ source, target }) => visible.has(source) && visible.has(target),
+    ),
+  );
+
+  const layout = layout_sankey(view.graph, {
+    width: 700,
+    height: 520,
+    node_width: 10,
+    node_padding: 12,
+  });
+  const nodes = new Map(layout.nodes.map((node) => [node.id, node]));
+  const nodes_by_column = Map.groupBy(layout.nodes, (node) => node.column);
+  const ordered_ids = (column: number) =>
+    (nodes_by_column.get(column) ?? [])
+      .toSorted((left, right) => left.y0 - right.y0)
+      .map(({ id }) => id);
+
+  deepEqual(ordered_ids(0), ["employer-a", "employer-b"]);
+  deepEqual(ordered_ids(1), ["main", "bonus", "dividends", "interest"]);
+  deepEqual(ordered_ids(4), ["expenses", "net-profit"]);
+  deepEqual(ordered_ids(5), ["housing", "living", "travel", "refund"]);
+  deepEqual(ordered_ids(6), ["rent", "groceries", "dining", "flights"]);
+  for (const [column_index, column] of nodes_by_column) {
+    equal(column.length <= 4, true);
+    const ordered = column.toSorted((left, right) => left.y0 - right.y0);
+    for (const [index, node] of ordered.entries()) {
+      equal(node.x0, column_index * 115);
+      equal(node.x1, node.x0 + 10);
+      ok(node.y1 > node.y0);
+      const next = ordered[index + 1];
+      if (next) {
+        ok(node.y1 <= next.y0);
+      }
+    }
+  }
+  ok(
+    (nodes.get("salary")?.y1 ?? 0) - (nodes.get("salary")?.y0 ?? 0) >
+      (nodes.get("investments")?.y1 ?? 0) - (nodes.get("investments")?.y0 ?? 0),
+  );
+  ok(
+    layout.links.every(
+      (link) =>
+        link.width > 0 &&
+        link.y0 - link.width / 2 >= link.source.y0 - 1e-9 &&
+        link.y0 + link.width / 2 <= link.source.y1 + 1e-9 &&
+        link.y1 - link.width / 2 >= link.target.y0 - 1e-9 &&
+        link.y1 + link.width / 2 <= link.target.y1 + 1e-9,
+    ),
+  );
+  const refund = layout.links.find(
+    (link) => link.source.id === "refund" && link.target.id === "expenses",
+  );
+  ok(refund && refund.source.x0 > refund.target.x0);
+  ok(
+    layout.links.every((link) => {
+      const geometry = sankey_link_geometry(link);
+      const forward = link.source.x0 < link.target.x0;
+      const source_x = forward ? link.source.x1 : link.source.x0;
+      const target_x = forward ? link.target.x0 : link.target.x1;
+      return (
+        geometry.path.startsWith(
+          `M${source_x.toString()},${link.y0.toString()}`,
+        ) &&
+        geometry.path.endsWith(`,${target_x.toString()},${link.y1.toString()}`)
+      );
+    }),
+  );
+});
+
+test("limit and compact Sankey account hierarchy levels", () => {
+  const visible = sankey_default_visible_nodes(
+    complex_sankey_graph,
+    4,
+    0.02,
+    3,
+  );
+  ok(visible.has("main"));
+  ok(!visible.has("employer-a"));
+  ok(!visible.has("employer-b"));
+  ok(
+    complex_sankey_graph.nodes
+      .filter(({ id }) => visible.has(id))
+      .every(({ level }) => level == null || level < 3),
+  );
+
+  const view = sankey_graph_view(complex_sankey_graph, visible);
+  deepEqual(view.branches.get("main"), { hidden_accounts: 2 });
+  equal(view.graph.nodes.find(({ id }) => id === "main")?.fixedValue, 700);
+  equal(Math.min(...view.graph.nodes.map(({ column }) => column)), 0);
+  equal(Math.max(...view.graph.nodes.map(({ column }) => column)), 5);
+  equal(view.graph.nodes.find(({ id }) => id === "income")?.column, 2);
+  equal(view.graph.nodes.find(({ id }) => id === "expenses")?.column, 3);
+});
+
+test("order partially collapsed Sankey nodes by their retained value", () => {
+  const graph: SankeyGraph = {
+    currency: "USD",
+    nodes: [
+      {
+        id: "large",
+        account: "Income:Large",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 100,
+        fixedValue: 100,
+      },
+      {
+        id: "large-visible-child",
+        account: "Income:Large:Visible",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 2,
+        balance: 1,
+      },
+      {
+        id: "medium",
+        account: "Income:Medium",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 50,
+      },
+      {
+        id: "medium-child",
+        account: "Income:Medium:Child",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 2,
+        balance: 50,
+      },
+    ],
+    links: [
+      { source: "large-visible-child", target: "large", value: 1 },
+      { source: "medium-child", target: "medium", value: 50 },
+    ],
+  };
+
+  const layout = layout_sankey(graph, {
+    width: 200,
+    height: 200,
+    node_width: 10,
+    node_padding: 10,
+  });
+  const nodes = new Map(layout.nodes.map((node) => [node.id, node]));
+  const large = nodes.get("large");
+  const medium = nodes.get("medium");
+  ok(large && medium);
+  ok(large.y0 < medium.y0);
+  ok(large.y1 - large.y0 > medium.y1 - medium.y0);
 });
 
 test("build a rebased Sankey graph for one focused account branch", () => {

@@ -60,13 +60,12 @@ export interface SankeyGraph {
   links: SankeyGraphLink[];
 }
 
-/** Expansion metadata for one visible account branch. */
+/** Hidden-account metadata for one visible account branch. */
 export interface SankeyBranch {
-  expanded: boolean;
   hidden_accounts: number;
 }
 
-/** A graph filtered to its currently expanded account branches. */
+/** A graph filtered to its selected visible account nodes. */
 export interface SankeyGraphView {
   graph: SankeyGraph;
   branches: ReadonlyMap<string, SankeyBranch>;
@@ -322,29 +321,41 @@ function sankey_node_flow(graph: SankeyGraph): Map<string, number> {
     incoming.set(link.target, (incoming.get(link.target) ?? 0) + link.value);
   }
   return new Map(
-    graph.nodes.map(({ id }) => [
-      id,
-      Math.max(incoming.get(id) ?? 0, outgoing.get(id) ?? 0),
+    graph.nodes.map((node) => [
+      node.id,
+      Math.max(
+        incoming.get(node.id) ?? 0,
+        outgoing.get(node.id) ?? 0,
+        node.fixedValue ?? 0,
+      ),
     ]),
   );
 }
 
-/** Choose the most valuable branches that fit within a column node budget. */
-export function sankey_default_expanded_nodes(
+/** Choose the most valuable nodes that fit within each column's budget. */
+export function sankey_default_visible_nodes(
   graph: SankeyGraph,
   max_nodes_per_column = 12,
+  min_node_flow_ratio = 0.005,
+  max_account_levels = 3,
 ): Set<string> {
   const hierarchy = sankey_hierarchy(graph);
   const flow = sankey_node_flow(graph);
   const column_counts = new Map<number, number>();
+  const visible = new Set<string>();
   for (const node of hierarchy.roots) {
+    visible.add(node.id);
     column_counts.set(node.column, (column_counts.get(node.column) ?? 0) + 1);
   }
   const budget = Math.max(1, Math.floor(max_nodes_per_column));
-  const candidates = hierarchy.roots.filter((node) =>
-    hierarchy.children.has(node.id),
+  const level_limit = Number.isFinite(max_account_levels)
+    ? Math.max(1, Math.floor(max_account_levels))
+    : Number.POSITIVE_INFINITY;
+  const min_flow =
+    Math.max(0, min_node_flow_ratio) * Math.max(0, ...flow.values());
+  const candidates = hierarchy.roots.flatMap(
+    (node) => hierarchy.children.get(node.id) ?? [],
   );
-  const expanded = new Set<string>();
   const sort_candidates = () => {
     candidates.sort(
       (left, right) =>
@@ -359,48 +370,28 @@ export function sankey_default_expanded_nodes(
     if (node == null) {
       break;
     }
-    const children = hierarchy.children.get(node.id) ?? [];
-    const additions = new Map<number, number>();
-    for (const child of children) {
-      additions.set(child.column, (additions.get(child.column) ?? 0) + 1);
-    }
-    const fits = [...additions].every(
-      ([column, count]) => (column_counts.get(column) ?? 0) + count <= budget,
-    );
-    if (!fits) {
+    if (
+      (node.level != null && node.level >= level_limit) ||
+      (flow.get(node.id) ?? 0) < min_flow ||
+      (column_counts.get(node.column) ?? 0) >= budget
+    ) {
       continue;
     }
-    expanded.add(node.id);
-    for (const [column, count] of additions) {
-      column_counts.set(column, (column_counts.get(column) ?? 0) + count);
-    }
-    candidates.push(
-      ...children.filter((child) => hierarchy.children.has(child.id)),
-    );
+    visible.add(node.id);
+    column_counts.set(node.column, (column_counts.get(node.column) ?? 0) + 1);
+    candidates.push(...(hierarchy.children.get(node.id) ?? []));
     sort_candidates();
   }
-  return expanded;
+  return visible;
 }
 
-/** Filter a Sankey graph to roots and descendants of expanded branches. */
+/** Filter a Sankey graph to its selected visible account nodes. */
 export function sankey_graph_view(
   graph: SankeyGraph,
-  expanded_nodes: ReadonlySet<string>,
+  visible_nodes: ReadonlySet<string>,
 ): SankeyGraphView {
   const hierarchy = sankey_hierarchy(graph);
   const flow = sankey_node_flow(graph);
-  const visible = new Set<string>();
-  const visit = (node: SankeyGraphNode) => {
-    visible.add(node.id);
-    if (expanded_nodes.has(node.id)) {
-      for (const child of hierarchy.children.get(node.id) ?? []) {
-        visit(child);
-      }
-    }
-  };
-  for (const root of hierarchy.roots) {
-    visit(root);
-  }
 
   const descendant_counts = new Map<string, number>();
   const count_descendants = (id: string): number => {
@@ -418,28 +409,45 @@ export function sankey_graph_view(
   const branches = new Map<string, SankeyBranch>();
   for (const node of graph.nodes) {
     const children = hierarchy.children.get(node.id) ?? [];
-    if (visible.has(node.id) && children.length > 0) {
+    if (visible_nodes.has(node.id) && children.length > 0) {
+      const hidden_accounts = children.reduce(
+        (count, child) =>
+          visible_nodes.has(child.id)
+            ? count
+            : count + 1 + count_descendants(child.id),
+        0,
+      );
+      if (hidden_accounts === 0) {
+        continue;
+      }
       branches.set(node.id, {
-        expanded: expanded_nodes.has(node.id),
-        hidden_accounts: count_descendants(node.id),
+        hidden_accounts,
       });
     }
   }
 
+  const nodes = graph.nodes.flatMap((node) => {
+    if (!visible_nodes.has(node.id)) {
+      return [];
+    }
+    const branch = branches.get(node.id);
+    return branch != null
+      ? [{ ...node, fixedValue: flow.get(node.id) ?? 0 }]
+      : [node];
+  });
+  const min_column =
+    nodes.length > 0 ? Math.min(...nodes.map(({ column }) => column)) : 0;
+
   return {
     graph: {
       currency: graph.currency,
-      nodes: graph.nodes.flatMap((node) => {
-        if (!visible.has(node.id)) {
-          return [];
-        }
-        const branch = branches.get(node.id);
-        return branch != null && !branch.expanded
-          ? [{ ...node, fixedValue: flow.get(node.id) ?? 0 }]
-          : [node];
-      }),
+      nodes: nodes.map((node) => ({
+        ...node,
+        column: node.column - min_column,
+      })),
       links: graph.links.filter(
-        ({ source, target }) => visible.has(source) && visible.has(target),
+        ({ source, target }) =>
+          visible_nodes.has(source) && visible_nodes.has(target),
       ),
     },
     branches,

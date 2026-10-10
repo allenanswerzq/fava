@@ -18,6 +18,12 @@
   } from "./sankey.ts";
   import type { Tooltip } from "./tooltip.ts";
 
+  const DEFAULT_OVERVIEW_HEIGHT = 320;
+  const MIN_OUTER_LABEL_SPACE = 12;
+  const MAX_OUTER_LABEL_SPACE = 200;
+  const LABEL_PADDING = 16;
+  const LABEL_OFFSET = 7;
+  const BRANCH_LABEL_OFFSET = 30;
   const MIN_FLOW_TARGET_WIDTH = 16;
 
   interface Props {
@@ -64,43 +70,59 @@
     requested_max_column ??
       Math.max(0, ...graph.nodes.map((node) => node.column)),
   );
-  let max_nodes_in_column = $derived(
-    Math.max(
-      0,
-      ...Array.from(
-        { length: max_column + 1 },
-        (_, column) =>
-          graph.nodes.filter((node) => node.column === column).length,
-      ),
-    ),
-  );
-  let outer_label_lengths = $derived.by(() => {
-    let left = 0;
-    let right = 0;
+  function estimated_label_width(value: string): number {
+    let width = 0;
+    for (const character of value) {
+      if ("ilIjtfr".includes(character)) {
+        width += 3.5;
+      } else if ("mwMW".includes(character)) {
+        width += 9.5;
+      } else if (/[A-Z]/.test(character)) {
+        width += 7.5;
+      } else if (/[0-9]/.test(character)) {
+        width += 6.5;
+      } else if (character === " ") {
+        width += 3.5;
+      } else {
+        width += 6;
+      }
+    }
+    return width;
+  }
+
+  let outer_label_space = $derived.by(() => {
+    let left = MIN_OUTER_LABEL_SPACE;
+    let right = MIN_OUTER_LABEL_SPACE;
     for (const node of graph.nodes) {
       if (hidden_node_labels.has(node.id)) {
         continue;
       }
-      if (node.column === 0) {
-        left = Math.max(left, label(node).length);
-      }
-      if (node.column === max_column) {
-        right = Math.max(right, label(node).length);
+      const branch_offset =
+        branches.has(node.id) && inspect_branch
+          ? BRANCH_LABEL_OFFSET
+          : LABEL_OFFSET;
+      const required = Math.ceil(
+        estimated_label_width(label(node)) + branch_offset + LABEL_PADDING,
+      );
+      if (max_column === 0 || node.column === max_column) {
+        right = Math.max(right, required);
+      } else if (node.column === 0) {
+        left = Math.max(left, required);
       }
     }
-    return { left, right };
+    return {
+      left: Math.min(MAX_OUTER_LABEL_SPACE, left),
+      right: Math.min(MAX_OUTER_LABEL_SPACE, right),
+    };
   });
   let margin = $derived(
     compact
       ? { top: 12, right: 12, bottom: 12, left: 12 }
       : {
           top: 20,
-          right: Math.min(
-            180,
-            Math.max(64, outer_label_lengths.right * 7 + 16),
-          ),
+          right: outer_label_space.right,
           bottom: 20,
-          left: Math.min(180, Math.max(64, outer_label_lengths.left * 7 + 16)),
+          left: outer_label_space.left,
         },
   );
   let chart_width = $derived(
@@ -109,9 +131,7 @@
       margin.left + margin.right + Math.max(1, max_column) * 150 + 10,
     ),
   );
-  let height = $derived(
-    requested_height ?? Math.max(360, max_nodes_in_column * 36 + 40),
-  );
+  let height = $derived(requested_height ?? DEFAULT_OVERVIEW_HEIGHT);
   let inner_width = $derived(
     Math.max(1, chart_width - margin.left - margin.right),
   );
@@ -146,11 +166,22 @@
   }
 
   function label_after_node(node: SankeyLayoutNode): boolean {
-    if (node.column === 0) {
+    if (compact) {
+      if (node.column === 0) {
+        return true;
+      }
+      if (node.column === max_column) {
+        return false;
+      }
+    }
+    if (max_column === 0) {
       return true;
     }
-    if (node.column === max_column) {
+    if (node.column === 0) {
       return false;
+    }
+    if (node.column === max_column) {
+      return true;
     }
     return node.column > max_column / 2;
   }
@@ -253,8 +284,10 @@
           {#each layout.nodes as node (node.id)}
             {@const label_after = label_after_node(node)}
             {@const branch = branches.get(node.id)}
-            {@const inspectable = branch != null && !branch.expanded}
-            {@const label_offset = inspectable ? 30 : 7}
+            {@const inspectable = branch != null}
+            {@const label_offset = inspectable
+              ? BRANCH_LABEL_OFFSET
+              : LABEL_OFFSET}
             {#if node.account != null && node.account !== ""}
               <g {@attach tooltip.following(() => node_tooltip(node))}>
                 <a

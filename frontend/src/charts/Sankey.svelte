@@ -9,7 +9,7 @@
   import {
     type SankeyData,
     type SankeyGraphNode,
-    sankey_default_expanded_nodes,
+    sankey_default_visible_nodes,
     sankey_focused_graph,
     sankey_graph_for_currency,
     sankey_graph_view,
@@ -22,6 +22,8 @@
     width: number;
     height?: number;
     max_nodes_per_column?: number;
+    min_node_flow_ratio?: number;
+    max_account_levels?: number;
     node_label?: (node: SankeyGraphNode) => string;
     role_labels?: Readonly<Record<string, string>>;
     tooltip?: Tooltip;
@@ -55,6 +57,8 @@
     width,
     height,
     max_nodes_per_column = 12,
+    min_node_flow_ratio = 0.005,
+    max_account_levels = 3,
     node_label,
     role_labels = {},
     tooltip: provided_tooltip,
@@ -62,7 +66,14 @@
 
   const tooltip = untrack(() => provided_tooltip) ?? get_chart_tooltip();
   let graph = $derived(sankey_graph_for_currency(data, currency));
-  let graph_key = $derived(JSON.stringify({ graph, max_nodes_per_column }));
+  let graph_key = $derived(
+    JSON.stringify({
+      graph,
+      max_nodes_per_column,
+      min_node_flow_ratio,
+      max_account_levels,
+    }),
+  );
   let focused_graph_key = $state("");
   let focused_node_id: string | null = $state(null);
   let chart_container: HTMLDivElement | undefined = $state();
@@ -91,12 +102,17 @@
     }
   });
 
-  let expanded_nodes = $derived(
-    sankey_default_expanded_nodes(graph, max_nodes_per_column),
+  let visible_nodes = $derived(
+    sankey_default_visible_nodes(
+      graph,
+      max_nodes_per_column,
+      min_node_flow_ratio,
+      max_account_levels,
+    ),
   );
-  let graph_view = $derived(sankey_graph_view(graph, expanded_nodes));
+  let graph_view = $derived(sankey_graph_view(graph, visible_nodes));
   let max_column = $derived(
-    Math.max(0, ...graph.nodes.map((node) => node.column)),
+    Math.max(0, ...graph_view.graph.nodes.map((node) => node.column)),
   );
   let focused_node = $derived(
     focused_node_id == null
