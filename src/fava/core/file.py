@@ -219,6 +219,20 @@ class FileModule(FavaModule):
             self.ledger.extensions.after_entry_modified(entry, source_slice)
             return new_sha256sum
 
+    def save_entry_patch(
+        self,
+        entry_hash: str,
+        source_slice: str,
+    ) -> str:
+        """Save an edited entry to a patch file beside its source file.
+
+        The patch filename contains the original entry line number and the
+        source file itself is not modified.
+        """
+        with self._lock:
+            entry = self.ledger.get_entry(entry_hash)
+            return str(save_entry_patch(entry, source_slice))
+
     def delete_entry_slice(self, entry_hash: str, sha256sum: str) -> None:
         """Delete slice of the source file for an entry.
 
@@ -404,6 +418,21 @@ def save_entry_slice(
         file.writelines(lines)
 
     return _sha256_str(source_slice)
+
+
+def save_entry_patch(entry: Directive, source_slice: str) -> Path:
+    """Write an edited entry to ``<source>:<lineno>.patch``.
+
+    The source ledger is left unchanged. Repeated writes for the same entry
+    update the same patch file. Windows uses a dot before the line number
+    because colons are not valid within Windows filenames.
+    """
+    path, lineno = _get_position(entry)
+    separator = "." if os.name == "nt" else ":"
+    patch_path = path.with_name(f"{path.name}{separator}{lineno}.patch")
+    with patch_path.open("w", encoding="utf-8", newline="\n") as file:
+        file.write(source_slice + "\n")
+    return patch_path
 
 
 def delete_entry_slice(

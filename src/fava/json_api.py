@@ -472,6 +472,12 @@ def put_source_slice(entry_hash: str, source: str, sha256sum: str) -> str:
 
 
 @api_endpoint
+def put_source_slice_patch(entry_hash: str, source: str) -> str:
+    """Write an edited entry to a patch file without changing its source."""
+    return g.ledger.file.save_entry_patch(entry_hash, source)
+
+
+@api_endpoint
 def delete_source_slice(entry_hash: str, sha256sum: str) -> str:
     """Delete an entry source slice."""
     g.ledger.file.delete_entry_slice(entry_hash, sha256sum)

@@ -6,6 +6,7 @@
   import {
     delete_source_slice,
     put_source_slice,
+    put_source_slice_patch,
     save_entries,
   } from "../api/index.ts";
   import { attach_editor } from "../codemirror/dom.ts";
@@ -17,12 +18,13 @@
   } from "../entries/index.ts";
   import EntrySvelte from "../entry-forms/Entry.svelte";
   import { today_as_string } from "../format.ts";
-  import { _ } from "../i18n.ts";
-  import { notify_err } from "../notifications.ts";
+  import { _, format } from "../i18n.ts";
+  import { notify, notify_err } from "../notifications.ts";
   import { router } from "../router.ts";
   import { reload_after_saving_entry_slice } from "../stores/editor.ts";
   import { currency_column, indent } from "../stores/fava_options.ts";
   import DeleteButton from "./DeleteButton.svelte";
+  import PatchButton from "./PatchButton.svelte";
   import SaveButton from "./SaveButton.svelte";
 
   interface Props {
@@ -51,6 +53,7 @@
   let duplicated_entry = $state.raw<EditableEntry>();
 
   let saving = $state(false);
+  let patching = $state(false);
 
   async function save(event?: SubmitEvent) {
     event?.preventDefault();
@@ -81,6 +84,22 @@
       router.close_overlay();
     } finally {
       duplicated_entry = undefined;
+    }
+  }
+
+  async function save_patch() {
+    patching = true;
+    try {
+      const path = await put_source_slice_patch({
+        entry_hash,
+        source: current_slice,
+      });
+      notify(format(_("Saved patch to %(path)s."), { path }));
+      router.close_overlay();
+    } catch (error) {
+      notify_err(error, (err) => `Patching failed: ${err.message}`);
+    } finally {
+      patching = false;
     }
   }
 
@@ -143,6 +162,7 @@
       <input type="checkbox" bind:checked={$reload_after_saving_entry_slice} />
       <span>{_("reload")}</span>
     </label>
+    <PatchButton changed={changed && !saving} {patching} onpatch={save_patch} />
     <DeleteButton ondelete={delete_slice} />
     <SaveButton {changed} {saving} />
   </div>

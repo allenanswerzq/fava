@@ -89,6 +89,7 @@ type PutEndpoint =
   | "move"
   | "source"
   | "source_slice"
+  | "source_slice_patch"
   | "upload_import_file";
 
 type ApiEndpoint = DeleteEndpoint | GetEndpoint | PutEndpoint;
@@ -386,6 +387,10 @@ export const put_source_slice: Put<{
   source: string;
   sha256sum: string;
 }> = define_put_json("source_slice");
+export const put_source_slice_patch: Put<{
+  entry_hash: string;
+  source: string;
+}> = define_put_json("source_slice_patch");
 export const put_upload_import_file = define_put_form("upload_import_file");
 
 /**

@@ -71,26 +71,39 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
+#: frontend/src/editor/PatchButton.svelte:15
+msgid "Patching…"
+msgstr ""
+
+#: frontend/src/editor/PatchButton.svelte:15
+msgid "Patch"
+msgstr ""
+
 #: frontend/src/editor/SaveButton.svelte:14
 msgid "Saving…"
 msgstr ""
 
 #: frontend/src/editor/SaveButton.svelte:14
-#: frontend/src/editor/SliceEditor.svelte:156
+#: frontend/src/editor/SliceEditor.svelte:180
 #: frontend/src/modals/AddEntry.svelte:67
 #: frontend/src/reports/import/Extract.svelte:115
 msgid "Save"
 msgstr ""
 
-#: frontend/src/editor/SliceEditor.svelte:138
+#: frontend/src/editor/SliceEditor.svelte:97
+#, python-format
+msgid "Saved patch to %(path)s."
+msgstr ""
+
+#: frontend/src/editor/SliceEditor.svelte:157
 msgid "Duplicate"
 msgstr ""
 
-#: frontend/src/editor/SliceEditor.svelte:144
+#: frontend/src/editor/SliceEditor.svelte:163
 msgid "reload"
 msgstr ""
 
-#: frontend/src/editor/SliceEditor.svelte:152
+#: frontend/src/editor/SliceEditor.svelte:176
 #: frontend/src/modals/AddEntry.svelte:46
 msgid "Add"
 msgstr ""
@@ -266,7 +279,7 @@ msgstr ""
 
 #: frontend/src/reports/accounts/AccountReport.svelte:64
 #: frontend/src/reports/accounts/AccountReport.svelte:67
-#: src/fava/json_api.py:947
+#: src/fava/json_api.py:953
 msgid "Changes"
 msgstr ""
 
@@ -918,8 +931,8 @@ msgid "Sankey"
 msgstr ""
 
 #: frontend/src/reports/tree_reports/index.ts:45
-#: frontend/src/stores/accounts.ts:113 src/fava/json_api.py:828
-#: src/fava/json_api.py:846
+#: frontend/src/stores/accounts.ts:113 src/fava/json_api.py:834
+#: src/fava/json_api.py:852
 msgid "Net Profit"
 msgstr ""
 
@@ -1036,11 +1049,11 @@ msgstr ""
 msgid "Net Worth"
 msgstr ""
 
-#: src/fava/json_api.py:834
+#: src/fava/json_api.py:840
 msgid "Income"
 msgstr ""
 
-#: src/fava/json_api.py:840
+#: src/fava/json_api.py:846
 msgid "Expenses"
 msgstr ""
 

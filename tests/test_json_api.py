@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 from difflib import Differ
 from http import HTTPStatus
 from importlib.metadata import version
@@ -799,6 +800,24 @@ def test_api_source_slice_and_insert_metadata(app_in_tmp_dir: Flask) -> None:
     data = assert_api_success(response)
     assert isinstance(data, dict)
     assert "Kin Soy" in data["slice"]
+
+    first_txn_filename, first_txn_lineno = (
+        first_txn.meta["filename"],
+        first_txn.meta["lineno"],
+    )
+    patch_source = data["slice"].replace("Kin Soy", "Patch only")
+    response = test_client.put(
+        "/edit-example/api/source_slice_patch",
+        json={"entry_hash": entry_hash, "source": patch_source},
+    )
+    source_path = Path(first_txn_filename)
+    separator = "." if os.name == "nt" else ":"
+    patch_path = source_path.with_name(
+        f"{source_path.name}{separator}{first_txn_lineno}.patch"
+    )
+    assert_api_success(response, str(patch_path))
+    assert patch_path.read_text("utf-8") == patch_source + "\n"
+    assert path.read_text("utf-8") == source
 
     response = test_client.put(
         "/edit-example/api/source_slice",

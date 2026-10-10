@@ -28,6 +28,7 @@ from fava.core.file import insert_entry
 from fava.core.file import insert_metadata_in_file
 from fava.core.file import InvalidUnicodeError
 from fava.core.file import NonSourceFileError
+from fava.core.file import save_entry_patch
 from fava.core.file import save_entry_slice
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -191,6 +192,31 @@ def test_save_entry_slice(ledger_in_tmp_path: FavaLedger) -> None:
     auto_account = ledger_in_tmp_path.all_entries[0]
     with pytest.raises(GeneratedEntryError):
         get_entry_slice(auto_account)
+
+
+def test_save_entry_patch(ledger_in_tmp_path: FavaLedger) -> None:
+    entry = ledger_in_tmp_path.all_entries[-1]
+    filename, lineno = get_position(entry)
+    source_path = Path(filename)
+    original_source = source_path.read_text("utf-8")
+    patch_source = '2016-05-03 * "Patched transaction"'
+
+    patch_path = save_entry_patch(entry, patch_source)
+
+    separator = "." if os.name == "nt" else ":"
+    assert patch_path == source_path.with_name(
+        f"{source_path.name}{separator}{lineno}.patch"
+    )
+    assert patch_path.read_text("utf-8") == patch_source + "\n"
+    assert source_path.read_text("utf-8") == original_source
+
+    updated_source = patch_source + '\n  note: "中文 updated"'
+    assert save_entry_patch(entry, updated_source) == patch_path
+    assert patch_path.read_text("utf-8") == updated_source + "\n"
+    assert source_path.read_text("utf-8") == original_source
+
+    with pytest.raises(GeneratedEntryError):
+        save_entry_patch(ledger_in_tmp_path.all_entries[0], patch_source)
 
 
 def test_delete_entry_slice(ledger_in_tmp_path: FavaLedger) -> None:
