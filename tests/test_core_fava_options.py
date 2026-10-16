@@ -80,7 +80,6 @@ def test_fava_options(load_doc_custom_entries: list[Custom]) -> None:
 
 def test_fava_options_language() -> None:
     options = FavaOptions()
-    assert not options.show_accounts_with_zero_balance
     options.set_locale("en")
     assert options.locale == "en"
     with pytest.raises(UnknownLocaleOptionError):

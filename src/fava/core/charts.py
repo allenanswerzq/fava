@@ -126,9 +126,15 @@ class ChartModule(FavaModule):
             prices,
             end_date,
         )
+        equity = tree.get(options["name_equity"]).serialise(
+            conv,
+            prices,
+            end_date,
+        )
         return build_balance_sheet_sankey(
             assets,
             liabilities,
+            equity,
         )
 
     def income_statement_sankey(

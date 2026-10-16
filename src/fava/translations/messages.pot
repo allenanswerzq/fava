@@ -39,25 +39,25 @@ msgid "Converted to %(currency)s"
 msgstr ""
 
 #: frontend/src/charts/HierarchyContainer.svelte:33
-#: frontend/src/charts/SankeyDiagram.svelte:257
+#: frontend/src/charts/SankeyDiagram.svelte:226
 msgid "Chart is empty."
 msgstr ""
 
-#: frontend/src/charts/Sankey.svelte:285 frontend/src/charts/Sankey.svelte:311
+#: frontend/src/charts/Sankey.svelte:269 frontend/src/charts/Sankey.svelte:295
 msgid "Close details"
 msgstr ""
 
-#: frontend/src/charts/Sankey.svelte:297
+#: frontend/src/charts/Sankey.svelte:281
 #, python-format
 msgid "Details for %(account)s"
 msgstr ""
 
-#: frontend/src/charts/SankeyDiagram.svelte:251
+#: frontend/src/charts/SankeyDiagram.svelte:220
 #, python-format
 msgid "Sankey diagram for %(currency)s"
 msgstr ""
 
-#: frontend/src/charts/SankeyDiagram.svelte:347
+#: frontend/src/charts/SankeyDiagram.svelte:314
 #, python-format
 msgid "Inspect %(account)s"
 msgstr ""
@@ -84,7 +84,7 @@ msgid "Saving…"
 msgstr ""
 
 #: frontend/src/editor/SaveButton.svelte:14
-#: frontend/src/editor/SliceEditor.svelte:176
+#: frontend/src/editor/SliceEditor.svelte:180
 #: frontend/src/modals/AddEntry.svelte:67
 #: frontend/src/reports/import/Extract.svelte:115
 msgid "Save"
@@ -103,7 +103,7 @@ msgstr ""
 msgid "reload"
 msgstr ""
 
-#: frontend/src/editor/SliceEditor.svelte:172
+#: frontend/src/editor/SliceEditor.svelte:176
 #: frontend/src/modals/AddEntry.svelte:46
 msgid "Add"
 msgstr ""
@@ -926,7 +926,7 @@ msgid "Statistics"
 msgstr ""
 
 #: frontend/src/reports/tree_reports/index.ts:42
-#: frontend/src/reports/tree_reports/index.ts:63
+#: frontend/src/reports/tree_reports/index.ts:64
 msgid "Sankey"
 msgstr ""
 
@@ -945,12 +945,20 @@ msgstr ""
 msgid "Income Statement"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:69
+#: frontend/src/reports/tree_reports/index.ts:67
+msgid "Balance Shortfall"
+msgstr ""
+
+#: frontend/src/reports/tree_reports/index.ts:68
+msgid "Balance Surplus"
+msgstr ""
+
+#: frontend/src/reports/tree_reports/index.ts:74
 #: frontend/src/sidebar/AsideContents.svelte:31
 msgid "Balance Sheet"
 msgstr ""
 
-#: frontend/src/reports/tree_reports/index.ts:83
+#: frontend/src/reports/tree_reports/index.ts:88
 #: frontend/src/sidebar/AsideContents.svelte:32
 msgid "Trial Balance"
 msgstr ""

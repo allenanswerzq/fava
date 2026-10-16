@@ -109,7 +109,7 @@ class FavaOptions:
     invert_income_liabilities_equity: bool = False
     language: str | None = None
     locale: str | None = None
-    show_accounts_with_zero_balance: bool = False
+    show_accounts_with_zero_balance: bool = True
     show_accounts_with_zero_transactions: bool = True
     show_closed_accounts: bool = False
     show_metadata_indicators: bool = True

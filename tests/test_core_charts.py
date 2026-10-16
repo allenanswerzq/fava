@@ -184,13 +184,8 @@ def test_balance_sheet_sankey(example_ledger: FavaLedger) -> None:
 
     node_ids = {node.id for node in data.nodes}
     assert "account:Assets" in node_ids
-    assert "account:Liabilities" not in node_ids
-    assert any(
-        node_id.startswith("account:Liabilities:") for node_id in node_ids
-    )
-    assert not any(
-        node_id.startswith("account:Equity") for node_id in node_ids
-    )
+    assert "account:Liabilities" in node_ids
+    assert "account:Equity" in node_ids
     assert "balance-shortfall" not in node_ids
     assert "balance-surplus" not in node_ids
     assert data.links
@@ -237,11 +232,11 @@ option "operating_currency" "USD"
 
     assert nodes["account:Assets:Cash"].balance == {"USD": Decimal(150)}
     assert nodes["account:Liabilities:Loan"].balance == {"USD": Decimal(60)}
-    assert "account:Equity:Opening" not in nodes
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
+    assert nodes["account:Equity:Opening"].balance == {"USD": Decimal(90)}
+    assert links[("account:Liabilities", "account:Assets")] == {
         "USD": Decimal(60)
     }
-    assert "account:Liabilities" not in nodes
+    assert links[("account:Equity", "account:Assets")] == {"USD": Decimal(90)}
     assert "balance-shortfall" not in nodes
     assert "balance-surplus" not in nodes
 
@@ -454,7 +449,7 @@ def test_build_empty_income_statement_sankey() -> None:
 
 
 def test_build_balance_sheet_sankey() -> None:
-    """Top-level liability branches fund Assets directly."""
+    """Funding converges into Assets before flowing into asset accounts."""
     checking = SerialisedTreeNode(
         "Assets:Cash:Checking",
         SimpleCounterInventory({"EUR": Decimal(40), "USD": Decimal(100)}),
@@ -497,23 +492,50 @@ def test_build_balance_sheet_sankey() -> None:
         (card,),
         has_txns=False,
     )
-    data = build_balance_sheet_sankey(assets, liabilities)
+    opening = SerialisedTreeNode(
+        "Equity:Opening",
+        SimpleCounterInventory({"EUR": Decimal(-30), "USD": Decimal(-70)}),
+        SimpleCounterInventory({"EUR": Decimal(-30), "USD": Decimal(-70)}),
+        (),
+        has_txns=True,
+    )
+    equity = SerialisedTreeNode(
+        "Equity",
+        SimpleCounterInventory(),
+        SimpleCounterInventory({"EUR": Decimal(-30), "USD": Decimal(-70)}),
+        (opening,),
+        has_txns=False,
+    )
+
+    data = build_balance_sheet_sankey(assets, liabilities, equity)
     nodes = {node.id: node for node in data.nodes}
     links = {(link.source, link.target): link.value for link in data.links}
 
     assert nodes["account:Liabilities:Card:Visa"].column == 0
-    assert nodes["account:Liabilities:Card"].column == 1
-    assert nodes["account:Assets"].column == 2
-    assert nodes["account:Assets:Cash"].column == 3
-    assert nodes["account:Assets:Cash:Checking"].column == 4
+    assert nodes["account:Liabilities"].column == 2
+    assert nodes["account:Equity"].column == 2
+    assert nodes["account:Assets"].column == 3
+    assert nodes["account:Assets:Cash"].column == 4
+    assert nodes["account:Assets:Cash:Checking"].column == 5
     assert links[
         ("account:Liabilities:Card:Visa", "account:Liabilities:Card")
     ] == {"EUR": Decimal(10), "USD": Decimal(30)}
-    assert links[("account:Liabilities:Card", "account:Assets")] == {
+    assert links[("account:Liabilities:Card", "account:Liabilities")] == {
         "EUR": Decimal(10),
         "USD": Decimal(30),
     }
-    assert "account:Liabilities" not in nodes
+    assert links[("account:Equity:Opening", "account:Equity")] == {
+        "EUR": Decimal(30),
+        "USD": Decimal(70),
+    }
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "EUR": Decimal(10),
+        "USD": Decimal(30),
+    }
+    assert links[("account:Equity", "account:Assets")] == {
+        "EUR": Decimal(30),
+        "USD": Decimal(70),
+    }
     assert links[("account:Assets", "account:Assets:Cash")] == {
         "EUR": Decimal(40),
         "USD": Decimal(100),
@@ -524,11 +546,10 @@ def test_build_balance_sheet_sankey() -> None:
     }
     assert "balance-shortfall" not in nodes
     assert "balance-surplus" not in nodes
-    assert not any(node_id.startswith("account:Equity") for node_id in nodes)
 
 
 def test_build_balance_sheet_sankey_routes_signed_balances() -> None:
-    """Liability branches and contra balances preserve their direction."""
+    """Contra balances reverse direction and residuals conserve every flow."""
     cash = SerialisedTreeNode(
         "Assets:Cash",
         SimpleCounterInventory({"EUR": Decimal(50), "USD": Decimal(120)}),
@@ -571,7 +592,22 @@ def test_build_balance_sheet_sankey_routes_signed_balances() -> None:
         (deposit, loan),
         has_txns=False,
     )
-    data = build_balance_sheet_sankey(assets, liabilities)
+    capital = SerialisedTreeNode(
+        "Equity:Capital",
+        SimpleCounterInventory({"EUR": Decimal(-20), "USD": Decimal(-30)}),
+        SimpleCounterInventory({"EUR": Decimal(-20), "USD": Decimal(-30)}),
+        (),
+        has_txns=True,
+    )
+    equity = SerialisedTreeNode(
+        "Equity",
+        SimpleCounterInventory(),
+        SimpleCounterInventory({"EUR": Decimal(-20), "USD": Decimal(-30)}),
+        (capital,),
+        has_txns=False,
+    )
+
+    data = build_balance_sheet_sankey(assets, liabilities, equity)
     nodes = {node.id: node for node in data.nodes}
     links = {(link.source, link.target): link.value for link in data.links}
 
@@ -582,56 +618,56 @@ def test_build_balance_sheet_sankey_routes_signed_balances() -> None:
     assert links[("account:Assets:Overdraft", "account:Assets")] == {
         "USD": Decimal(20)
     }
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
+    assert links[("account:Liabilities:Loan", "account:Liabilities")] == {
         "EUR": Decimal(40),
         "USD": Decimal(70),
     }
-    assert links[("account:Assets", "account:Liabilities:Deposit")] == {
+    assert links[("account:Liabilities", "account:Liabilities:Deposit")] == {
         "USD": Decimal(10)
     }
-    assert "account:Liabilities" not in nodes
-    assert "balance-shortfall" not in nodes
-    assert "balance-surplus" not in nodes
-    assert not any(node_id.startswith("account:Equity") for node_id in nodes)
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "EUR": Decimal(40),
+        "USD": Decimal(60),
+    }
+    assert links[("account:Equity", "account:Assets")] == {
+        "EUR": Decimal(10),
+        "USD": Decimal(30),
+    }
+    assert links[("account:Equity", "balance-surplus")] == {"EUR": Decimal(10)}
+    assert links[("balance-shortfall", "account:Assets")] == {
+        "USD": Decimal(10)
+    }
+    assert nodes["balance-shortfall"].role == "balance_shortfall"
+    assert nodes["balance-shortfall"].balance == {"USD": Decimal(10)}
+    assert nodes["balance-surplus"].role == "balance_surplus"
+    assert nodes["balance-surplus"].balance == {"EUR": Decimal(10)}
     assert all(
         number > 0 for link in data.links for number in link.value.values()
     )
-
-
-def test_build_balance_sheet_sankey_omits_synthetic_balance_nodes() -> None:
-    """An unbalanced graph does not gain synthetic balancing nodes."""
-    assets = SerialisedTreeNode(
-        "Assets",
-        SimpleCounterInventory({"USD": Decimal(-70)}),
-        SimpleCounterInventory({"USD": Decimal(-70)}),
-        (),
-        has_txns=True,
+    internal_nodes = (
+        "account:Assets",
+        "account:Liabilities",
+        "account:Equity",
     )
-    loan = SerialisedTreeNode(
-        "Liabilities:Loan",
-        SimpleCounterInventory({"USD": Decimal(-30)}),
-        SimpleCounterInventory({"USD": Decimal(-30)}),
-        (),
-        has_txns=True,
-    )
-    liabilities = SerialisedTreeNode(
-        "Liabilities",
-        SimpleCounterInventory(),
-        SimpleCounterInventory({"USD": Decimal(-30)}),
-        (loan,),
-        has_txns=False,
-    )
-    data = build_balance_sheet_sankey(assets, liabilities)
-    nodes = {node.id: node for node in data.nodes}
-    links = {(link.source, link.target): link.value for link in data.links}
-
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
-        "USD": Decimal(30)
-    }
-    assert "account:Liabilities" not in nodes
-    assert "balance-shortfall" not in nodes
-    assert "balance-surplus" not in nodes
-    assert not any(node_id.startswith("account:Equity") for node_id in nodes)
+    for currency in ("EUR", "USD"):
+        for node_id in internal_nodes:
+            incoming = sum(
+                (
+                    link.value.get(currency, Decimal())
+                    for link in data.links
+                    if link.target == node_id
+                ),
+                start=Decimal(),
+            )
+            outgoing = sum(
+                (
+                    link.value.get(currency, Decimal())
+                    for link in data.links
+                    if link.source == node_id
+                ),
+                start=Decimal(),
+            )
+            assert incoming == outgoing
 
 
 def test_build_empty_balance_sheet_sankey() -> None:
@@ -650,9 +686,18 @@ def test_build_empty_balance_sheet_sankey() -> None:
         (),
         has_txns=False,
     )
+    empty_equity = SerialisedTreeNode(
+        "Equity",
+        SimpleCounterInventory(),
+        SimpleCounterInventory(),
+        (),
+        has_txns=False,
+    )
+
     data = build_balance_sheet_sankey(
         empty_assets,
         empty_liabilities,
+        empty_equity,
     )
 
     assert not data.nodes

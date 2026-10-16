@@ -60,8 +60,13 @@ export const balance_sheet = new Route(
     const report = await get_balance_sheet(filters);
     report.charts.push(...report.trees.map(ParsedHierarchyChart.from_node));
     report.charts.unshift(
-      new ParsedSankeyChart(_("Sankey"), async () =>
-        get_balance_sheet_sankey(filters),
+      new ParsedSankeyChart(
+        _("Sankey"),
+        async () => get_balance_sheet_sankey(filters),
+        {
+          balance_shortfall: _("Balance Shortfall"),
+          balance_surplus: _("Balance Surplus"),
+        },
       ),
     );
     return report;

@@ -353,34 +353,16 @@ export function sankey_default_visible_nodes(
     : Number.POSITIVE_INFINITY;
   const min_flow =
     Math.max(0, min_node_flow_ratio) * Math.max(0, ...flow.values());
-  const compare_candidates = (left: SankeyGraphNode, right: SankeyGraphNode) =>
-    (flow.get(right.id) ?? 0) - (flow.get(left.id) ?? 0) ||
-    left.id.localeCompare(right.id);
-  const candidates: SankeyGraphNode[] = [];
-  const can_select = (node: SankeyGraphNode) =>
-    (node.level == null || node.level < level_limit) &&
-    (column_counts.get(node.column) ?? 0) < budget;
-
-  // Keep every account hierarchy connected in the overview. Without this
-  // reservation, a large disconnected hierarchy can consume the shared
-  // column budget or flow threshold and leave another hierarchy as a bare,
-  // isolated root.
-  for (const root of hierarchy.roots) {
-    const children = [...(hierarchy.children.get(root.id) ?? [])].sort(
-      compare_candidates,
+  const candidates = hierarchy.roots.flatMap(
+    (node) => hierarchy.children.get(node.id) ?? [],
+  );
+  const sort_candidates = () => {
+    candidates.sort(
+      (left, right) =>
+        (flow.get(right.id) ?? 0) - (flow.get(left.id) ?? 0) ||
+        left.id.localeCompare(right.id),
     );
-    const representative = children.find(can_select);
-    if (representative) {
-      visible.add(representative.id);
-      column_counts.set(
-        representative.column,
-        (column_counts.get(representative.column) ?? 0) + 1,
-      );
-      candidates.push(...(hierarchy.children.get(representative.id) ?? []));
-    }
-    candidates.push(...children.filter((node) => node !== representative));
-  }
-  const sort_candidates = () => candidates.sort(compare_candidates);
+  };
   sort_candidates();
 
   while (candidates.length > 0) {
@@ -389,9 +371,9 @@ export function sankey_default_visible_nodes(
       break;
     }
     if (
-      !can_select(node) ||
+      (node.level != null && node.level >= level_limit) ||
       (flow.get(node.id) ?? 0) < min_flow ||
-      visible.has(node.id)
+      (column_counts.get(node.column) ?? 0) >= budget
     ) {
       continue;
     }
@@ -548,90 +530,6 @@ function move_node(node: SankeyLayoutNode, offset: number): void {
   node.y1 += offset;
 }
 
-type SankeyNodeSide = "left" | "right";
-
-/** Return the physical side of a node used by one link endpoint. */
-function sankey_link_side(
-  node: SankeyLayoutNode,
-  link: SankeyLayoutLink,
-): SankeyNodeSide {
-  const neighbour = link.source === node ? link.target : link.source;
-  if (neighbour.column < node.column) {
-    return "left";
-  }
-  if (neighbour.column > node.column) {
-    return "right";
-  }
-  // Match sankey_link_geometry() for the unusual same-column case.
-  return link.source === node ? "left" : "right";
-}
-
-function sankey_link_neighbour(
-  node: SankeyLayoutNode,
-  link: SankeyLayoutLink,
-): SankeyLayoutNode {
-  return link.source === node ? link.target : link.source;
-}
-
-/**
- * Preserve enough node height for every link touching either physical side.
- *
- * Directed incoming and outgoing totals are insufficient when a hierarchy has
- * contra-balance links: an incoming and an outgoing link can both attach to
- * the same side of a node.
- */
-function expand_nodes_for_physical_link_sides(nodes: SankeyLayoutNode[]): void {
-  for (const node of nodes) {
-    const side_values: Record<SankeyNodeSide, number> = {
-      left: 0,
-      right: 0,
-    };
-    for (const link of [...node.sourceLinks, ...node.targetLinks]) {
-      side_values[sankey_link_side(node, link)] += link.value;
-    }
-    node.value = Math.max(node.value, side_values.left, side_values.right);
-  }
-}
-
-/** Pack all endpoints sharing a physical node side without overlaps. */
-function position_link_endpoints(nodes: SankeyLayoutNode[]): void {
-  for (const node of nodes) {
-    const links_by_side: Record<SankeyNodeSide, SankeyLayoutLink[]> = {
-      left: [],
-      right: [],
-    };
-    for (const link of [...node.sourceLinks, ...node.targetLinks]) {
-      links_by_side[sankey_link_side(node, link)].push(link);
-    }
-
-    for (const side of ["left", "right"] as const) {
-      const side_links = links_by_side[side];
-      side_links.sort((left, right) => {
-        const left_neighbour = sankey_link_neighbour(node, left);
-        const right_neighbour = sankey_link_neighbour(node, right);
-        return (
-          node_center(left_neighbour) - node_center(right_neighbour) ||
-          left_neighbour.id.localeCompare(right_neighbour.id) ||
-          left.source.id.localeCompare(right.source.id) ||
-          left.target.id.localeCompare(right.target.id)
-        );
-      });
-
-      const links_width = side_links.reduce((sum, link) => sum + link.width, 0);
-      let y = node.y0 + (node.y1 - node.y0 - links_width) / 2;
-      for (const link of side_links) {
-        const endpoint = y + link.width / 2;
-        if (link.source === node) {
-          link.y0 = endpoint;
-        } else {
-          link.y1 = endpoint;
-        }
-        y += link.width;
-      }
-    }
-  }
-}
-
 function resolve_column_collisions(
   column: SankeyLayoutNode[],
   height: number,
@@ -723,7 +621,6 @@ export function layout_sankey(
   });
   const nodes = initial.nodes as SankeyLayoutNode[];
   const links = initial.links as SankeyLayoutLink[];
-  expand_nodes_for_physical_link_sides(nodes);
   const columns = new Map<number, SankeyLayoutNode[]>();
   for (const node of nodes) {
     const column = columns.get(node.column);
@@ -778,7 +675,40 @@ export function layout_sankey(
   for (const link of links) {
     link.width = link.value * scale;
   }
-  position_link_endpoints(nodes);
+  for (const node of nodes) {
+    node.sourceLinks.sort(
+      (a, b) =>
+        node_center(a.target) - node_center(b.target) ||
+        a.target.id.localeCompare(b.target.id),
+    );
+    node.targetLinks.sort(
+      (a, b) =>
+        node_center(a.source) - node_center(b.source) ||
+        a.source.id.localeCompare(b.source.id),
+    );
+
+    let source_y =
+      node.y0 +
+      (node.y1 -
+        node.y0 -
+        node.sourceLinks.reduce((sum, link) => sum + link.width, 0)) /
+        2;
+    for (const link of node.sourceLinks) {
+      link.y0 = source_y + link.width / 2;
+      source_y += link.width;
+    }
+
+    let target_y =
+      node.y0 +
+      (node.y1 -
+        node.y0 -
+        node.targetLinks.reduce((sum, link) => sum + link.width, 0)) /
+        2;
+    for (const link of node.targetLinks) {
+      link.y1 = target_y + link.width / 2;
+      target_y += link.width;
+    }
+  }
 
   return { currency: graph.currency, nodes, links };
 }
