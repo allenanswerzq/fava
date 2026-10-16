@@ -118,6 +118,74 @@ test("limit the overview to a configurable number of account levels", async () =
   await unmount(compact_component);
 });
 
+test("disambiguate duplicate Sankey account leaf labels", async () => {
+  const data = sankey_validator({
+    nodes: [
+      {
+        id: "assets",
+        account: "Assets",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 0,
+        balance: { USD: "100" },
+      },
+      {
+        id: "asset-loans",
+        account: "Assets:US:Loans",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: { USD: "100" },
+      },
+      {
+        id: "liabilities",
+        account: "Liabilities",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 0,
+        balance: { USD: "40" },
+      },
+      {
+        id: "liability-loans",
+        account: "Liabilities:US:Loans",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: { USD: "40" },
+      },
+    ],
+    links: [
+      { source: "assets", target: "asset-loans", value: { USD: "100" } },
+      {
+        source: "liabilities",
+        target: "liability-loans",
+        value: { USD: "40" },
+      },
+    ],
+  }).unwrap();
+  const target = document.querySelector("article");
+  ok(target);
+  const tooltip = new Tooltip();
+  tooltip.init(target);
+  const component = mount(Sankey, {
+    target,
+    props: { data, currency: "USD", width: 500, tooltip },
+  });
+  await tick();
+
+  const labels = [...target.querySelectorAll(".overview text")].map(
+    ({ textContent }) => textContent,
+  );
+  ok(labels.includes("Assets · US · Loans"));
+  ok(labels.includes("Liabilities · US · Loans"));
+
+  await unmount(component);
+});
+
 test("inspect a dense Sankey branch without expanding the overview", async () => {
   const accounts = Array.from(
     { length: 14 },

@@ -70,6 +70,36 @@
     requested_max_column ??
       Math.max(0, ...graph.nodes.map((node) => node.column)),
   );
+  let account_labels = $derived.by(() => {
+    const accounts = graph.nodes.flatMap(({ account }) =>
+      account == null || account === "" ? [] : [account],
+    );
+    const segments = new Map(
+      accounts.map((account) => [account, account.split(":")]),
+    );
+    return new Map(
+      accounts.map((account) => {
+        const parts = segments.get(account) ?? [account];
+        let length = 1;
+        while (
+          length < parts.length &&
+          accounts.some((other) => {
+            if (other === account) {
+              return false;
+            }
+            const other_parts = segments.get(other) ?? [other];
+            return (
+              other_parts.slice(-length).join(":") ===
+              parts.slice(-length).join(":")
+            );
+          })
+        ) {
+          length += 1;
+        }
+        return [account, parts.slice(-length).join(" · ")] as const;
+      }),
+    );
+  });
   function estimated_label_width(value: string): number {
     let width = 0;
     for (const character of value) {
@@ -157,7 +187,7 @@
       return node_label(node);
     }
     if (node.account != null && node.account !== "") {
-      return leaf(node.account);
+      return account_labels.get(node.account) ?? leaf(node.account);
     }
     if (node.role != null && node.role !== "") {
       return role_labels[node.role] ?? node.role.replaceAll("_", " ");
