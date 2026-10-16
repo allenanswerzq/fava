@@ -118,7 +118,7 @@ test("limit the overview to a configurable number of account levels", async () =
   await unmount(compact_component);
 });
 
-test("disambiguate duplicate Sankey account leaf labels", async () => {
+test("show only leaf names for Sankey account labels", async () => {
   const data = sankey_validator({
     nodes: [
       {
@@ -180,8 +180,8 @@ test("disambiguate duplicate Sankey account leaf labels", async () => {
   const labels = [...target.querySelectorAll(".overview text")].map(
     ({ textContent }) => textContent,
   );
-  ok(labels.includes("Assets · US · Loans"));
-  ok(labels.includes("Liabilities · US · Loans"));
+  equal(labels.filter((label) => label === "Loans").length, 2);
+  ok(!labels.some((label) => label?.includes(" · ")));
 
   await unmount(component);
 });
