@@ -341,56 +341,24 @@ def build_balance_sheet_sankey(
     assets: SerialisedTreeNode,
     liabilities: SerialisedTreeNode,
 ) -> SankeyData:
-    """Build an asset flow funded by top-level liability branches.
+    """Build an asset flow funded by the liability hierarchy.
 
-    The generic Liabilities root, Equity, and synthetic balancing nodes are
-    excluded. Each top-level liability branch connects directly to Assets,
-    removing one redundant hierarchy level while preserving the accounting
-    direction and all deeper liability detail.
+    Equity and synthetic balancing nodes are excluded. The complete liability
+    hierarchy is retained and its root connects to Assets, preserving the
+    accounting direction without bypassing the generic Liabilities node.
     """
     nodes: dict[str, SankeyNode] = {}
     link_values: dict[tuple[str, str], SimpleCounterInventory] = {}
 
-    liability_branches = tuple(
-        child
-        for child in sorted(
-            liabilities.children,
-            key=lambda item: item.account,
-        )
-        if _sankey_balance(child.balance_children)
+    liability_root_column = _account_tree_span(liabilities)
+    liability_total = _add_account_tree(
+        liabilities,
+        root_column=liability_root_column,
+        column_step=-1,
+        nodes=nodes,
+        links=link_values,
     )
-    has_direct_liability_balance = bool(_sankey_balance(liabilities.balance))
-    liability_branch_column = max(
-        (_account_tree_span(child) for child in liability_branches),
-        default=0,
-    )
-    asset_root_column = (
-        liability_branch_column + 1
-        if liability_branches or has_direct_liability_balance
-        else 0
-    )
-    liability_balances: list[tuple[str, Mapping[str, Decimal]]] = []
-    for branch in liability_branches:
-        balance = _add_account_tree(
-            branch,
-            root_column=liability_branch_column,
-            column_step=-1,
-            nodes=nodes,
-            links=link_values,
-        )
-        liability_balances.append((_account_id(branch.account), balance))
-    if has_direct_liability_balance:
-        liability_id = _account_id(liabilities.account)
-        nodes[liability_id] = SankeyNode(
-            liability_id,
-            liabilities.account,
-            "account",
-            None,
-            liability_branch_column,
-            0,
-            _sankey_balance(liabilities.balance),
-        )
-        liability_balances.append((liability_id, liabilities.balance))
+    asset_root_column = liability_root_column + 1 if liability_total else 0
 
     _add_account_tree(
         assets,
@@ -400,14 +368,14 @@ def build_balance_sheet_sankey(
         links=link_values,
     )
     asset_id = _account_id(assets.account)
-    if asset_id in nodes:
-        for liability_id, balance in liability_balances:
-            _add_account_balance_links(
-                link_values,
-                liability_id,
-                asset_id,
-                balance,
-            )
+    liability_id = _account_id(liabilities.account)
+    if asset_id in nodes and liability_id in nodes:
+        _add_account_balance_links(
+            link_values,
+            liability_id,
+            asset_id,
+            liability_total,
+        )
     return SankeyData(
         tuple(sorted(nodes.values(), key=lambda node: node.id)),
         tuple(

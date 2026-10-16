@@ -184,7 +184,7 @@ def test_balance_sheet_sankey(example_ledger: FavaLedger) -> None:
 
     node_ids = {node.id for node in data.nodes}
     assert "account:Assets" in node_ids
-    assert "account:Liabilities" not in node_ids
+    assert "account:Liabilities" in node_ids
     assert any(
         node_id.startswith("account:Liabilities:") for node_id in node_ids
     )
@@ -238,10 +238,12 @@ option "operating_currency" "USD"
     assert nodes["account:Assets:Cash"].balance == {"USD": Decimal(150)}
     assert nodes["account:Liabilities:Loan"].balance == {"USD": Decimal(60)}
     assert "account:Equity:Opening" not in nodes
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
+    assert links[("account:Liabilities:Loan", "account:Liabilities")] == {
         "USD": Decimal(60)
     }
-    assert "account:Liabilities" not in nodes
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "USD": Decimal(60)
+    }
     assert "balance-shortfall" not in nodes
     assert "balance-surplus" not in nodes
 
@@ -454,7 +456,7 @@ def test_build_empty_income_statement_sankey() -> None:
 
 
 def test_build_balance_sheet_sankey() -> None:
-    """Top-level liability branches fund Assets directly."""
+    """The liability hierarchy funds Assets through its root."""
     checking = SerialisedTreeNode(
         "Assets:Cash:Checking",
         SimpleCounterInventory({"EUR": Decimal(40), "USD": Decimal(100)}),
@@ -503,17 +505,21 @@ def test_build_balance_sheet_sankey() -> None:
 
     assert nodes["account:Liabilities:Card:Visa"].column == 0
     assert nodes["account:Liabilities:Card"].column == 1
-    assert nodes["account:Assets"].column == 2
-    assert nodes["account:Assets:Cash"].column == 3
-    assert nodes["account:Assets:Cash:Checking"].column == 4
+    assert nodes["account:Liabilities"].column == 2
+    assert nodes["account:Assets"].column == 3
+    assert nodes["account:Assets:Cash"].column == 4
+    assert nodes["account:Assets:Cash:Checking"].column == 5
     assert links[
         ("account:Liabilities:Card:Visa", "account:Liabilities:Card")
     ] == {"EUR": Decimal(10), "USD": Decimal(30)}
-    assert links[("account:Liabilities:Card", "account:Assets")] == {
+    assert links[("account:Liabilities:Card", "account:Liabilities")] == {
         "EUR": Decimal(10),
         "USD": Decimal(30),
     }
-    assert "account:Liabilities" not in nodes
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "EUR": Decimal(10),
+        "USD": Decimal(30),
+    }
     assert links[("account:Assets", "account:Assets:Cash")] == {
         "EUR": Decimal(40),
         "USD": Decimal(100),
@@ -582,14 +588,17 @@ def test_build_balance_sheet_sankey_routes_signed_balances() -> None:
     assert links[("account:Assets:Overdraft", "account:Assets")] == {
         "USD": Decimal(20)
     }
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
+    assert links[("account:Liabilities:Loan", "account:Liabilities")] == {
         "EUR": Decimal(40),
         "USD": Decimal(70),
     }
-    assert links[("account:Assets", "account:Liabilities:Deposit")] == {
+    assert links[("account:Liabilities", "account:Liabilities:Deposit")] == {
         "USD": Decimal(10)
     }
-    assert "account:Liabilities" not in nodes
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "EUR": Decimal(40),
+        "USD": Decimal(60),
+    }
     assert "balance-shortfall" not in nodes
     assert "balance-surplus" not in nodes
     assert not any(node_id.startswith("account:Equity") for node_id in nodes)
@@ -625,10 +634,12 @@ def test_build_balance_sheet_sankey_omits_synthetic_balance_nodes() -> None:
     nodes = {node.id: node for node in data.nodes}
     links = {(link.source, link.target): link.value for link in data.links}
 
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
+    assert links[("account:Liabilities:Loan", "account:Liabilities")] == {
         "USD": Decimal(30)
     }
-    assert "account:Liabilities" not in nodes
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "USD": Decimal(30)
+    }
     assert "balance-shortfall" not in nodes
     assert "balance-surplus" not in nodes
     assert not any(node_id.startswith("account:Equity") for node_id in nodes)

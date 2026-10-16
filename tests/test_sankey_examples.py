@@ -79,14 +79,17 @@ def test_normal_balance_sheet_example() -> None:
     links = _links(data)
 
     assert not any(node_id.startswith("account:Equity") for node_id in nodes)
-    assert "account:Liabilities" not in nodes
+    assert "account:Liabilities" in nodes
     assert "balance-shortfall" not in nodes
     assert "balance-surplus" not in nodes
-    assert links[("account:Liabilities:Card", "account:Assets")] == {
+    assert links[("account:Liabilities:Card", "account:Liabilities")] == {
         "USD": Decimal(1000)
     }
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
+    assert links[("account:Liabilities:Loan", "account:Liabilities")] == {
         "USD": Decimal(2000)
+    }
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "USD": Decimal(3000)
     }
 
 
@@ -104,11 +107,14 @@ def test_balance_sheet_contra_example() -> None:
             "account:Assets:Receivables",
         )
     ] == {"USD": Decimal(200)}
-    assert links[("account:Assets", "account:Liabilities:Deposit")] == {
+    assert links[("account:Liabilities", "account:Liabilities:Deposit")] == {
         "USD": Decimal(300)
     }
-    assert links[("account:Liabilities:Loan", "account:Assets")] == {
+    assert links[("account:Liabilities:Loan", "account:Liabilities")] == {
         "USD": Decimal(2500)
+    }
+    assert links[("account:Liabilities", "account:Assets")] == {
+        "USD": Decimal(2200)
     }
     assert all(
         value > 0 for link in data.links for value in link.value.values()
