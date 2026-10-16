@@ -148,7 +148,7 @@ Default: `true`
 
 ## show-accounts-with-zero-balance
 
-Default: `true`
+Default: `false`
 
 These three options specify which accounts (not) to show in the account trees,
 like on the income statement. Accounts with a non-zero balance will always be

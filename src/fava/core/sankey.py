@@ -124,6 +124,28 @@ def _add_link(
         ).add(currency, value)
 
 
+def _add_account_balance_links(
+    links: dict[tuple[str, str], SimpleCounterInventory],
+    account_id: str,
+    parent_id: str,
+    balance: Mapping[str, Decimal],
+) -> None:
+    """Connect a signed account balance to its parent flow node."""
+    for currency, number in balance.items():
+        source, target = (
+            (account_id, parent_id)
+            if number < ZERO
+            else (parent_id, account_id)
+        )
+        _add_link(
+            links,
+            source,
+            target,
+            currency,
+            abs(number),
+        )
+
+
 def _add_account_tree(
     root: SerialisedTreeNode,
     *,
@@ -162,20 +184,12 @@ def _add_account_tree(
             node_balance,
         )
         for child, value in child_values:
-            child_id = _account_id(child.account)
-            for currency, number in value.items():
-                source, target = (
-                    (child_id, node_id)
-                    if number < ZERO
-                    else (node_id, child_id)
-                )
-                _add_link(
-                    links,
-                    source,
-                    target,
-                    currency,
-                    abs(number),
-                )
+            _add_account_balance_links(
+                links,
+                _account_id(child.account),
+                node_id,
+                value,
+            )
         return node.balance_children
 
     return visit(root)
@@ -326,75 +340,74 @@ def build_income_statement_sankey(
 def build_balance_sheet_sankey(
     assets: SerialisedTreeNode,
     liabilities: SerialisedTreeNode,
-    equity: SerialisedTreeNode,
 ) -> SankeyData:
-    """Build a balance-sheet flow from three converted account trees.
+    """Build an asset flow funded by top-level liability branches.
 
-    Normal liability and equity balances fund the asset root from the left;
-    the asset hierarchy then distributes that funding to the right. Contra
-    balances retain their accounting direction and therefore draw backward.
+    The generic Liabilities root, Equity, and synthetic balancing nodes are
+    excluded. Each top-level liability branch connects directly to Assets,
+    removing one redundant hierarchy level while preserving the accounting
+    direction and all deeper liability detail.
     """
     nodes: dict[str, SankeyNode] = {}
     link_values: dict[tuple[str, str], SimpleCounterInventory] = {}
 
-    liability_span = _account_tree_span(liabilities)
-    equity_span = _account_tree_span(equity)
-    funding_root_column = max(liability_span, equity_span)
-    asset_root_column = funding_root_column + 1
+    liability_branches = tuple(
+        child
+        for child in sorted(
+            liabilities.children,
+            key=lambda item: item.account,
+        )
+        if _sankey_balance(child.balance_children)
+    )
+    has_direct_liability_balance = bool(_sankey_balance(liabilities.balance))
+    liability_branch_column = max(
+        (_account_tree_span(child) for child in liability_branches),
+        default=0,
+    )
+    asset_root_column = (
+        liability_branch_column + 1
+        if liability_branches or has_direct_liability_balance
+        else 0
+    )
+    liability_balances: list[tuple[str, Mapping[str, Decimal]]] = []
+    for branch in liability_branches:
+        balance = _add_account_tree(
+            branch,
+            root_column=liability_branch_column,
+            column_step=-1,
+            nodes=nodes,
+            links=link_values,
+        )
+        liability_balances.append((_account_id(branch.account), balance))
+    if has_direct_liability_balance:
+        liability_id = _account_id(liabilities.account)
+        nodes[liability_id] = SankeyNode(
+            liability_id,
+            liabilities.account,
+            "account",
+            None,
+            liability_branch_column,
+            0,
+            _sankey_balance(liabilities.balance),
+        )
+        liability_balances.append((liability_id, liabilities.balance))
 
-    liability_total = _add_account_tree(
-        liabilities,
-        root_column=funding_root_column,
-        column_step=-1,
-        nodes=nodes,
-        links=link_values,
-    )
-    equity_total = _add_account_tree(
-        equity,
-        root_column=funding_root_column,
-        column_step=-1,
-        nodes=nodes,
-        links=link_values,
-    )
-    asset_total = _add_account_tree(
+    _add_account_tree(
         assets,
         root_column=asset_root_column,
         column_step=1,
         nodes=nodes,
         links=link_values,
     )
-
-    shortfall, surplus = _connect_signed_balances(
-        (
-            (_account_id(liabilities.account), liability_total),
-            (_account_id(equity.account), equity_total),
-            (_account_id(assets.account), asset_total),
-        ),
-        link_values,
-        residual_source_id="balance-shortfall",
-        residual_sink_id="balance-surplus",
-    )
-    if shortfall:
-        nodes["balance-shortfall"] = SankeyNode(
-            "balance-shortfall",
-            None,
-            "result",
-            "balance_shortfall",
-            funding_root_column,
-            None,
-            shortfall,
-        )
-    if surplus:
-        nodes["balance-surplus"] = SankeyNode(
-            "balance-surplus",
-            None,
-            "result",
-            "balance_surplus",
-            asset_root_column,
-            None,
-            surplus,
-        )
-
+    asset_id = _account_id(assets.account)
+    if asset_id in nodes:
+        for liability_id, balance in liability_balances:
+            _add_account_balance_links(
+                link_values,
+                liability_id,
+                asset_id,
+                balance,
+            )
     return SankeyData(
         tuple(sorted(nodes.values(), key=lambda node: node.id)),
         tuple(

@@ -368,6 +368,88 @@ test("layout a Sankey graph in fixed semantic columns", () => {
   );
 });
 
+test("pack contra-balance Sankey links by physical node side", () => {
+  const mixed_side_graph = (side: "left" | "right"): SankeyGraph => ({
+    currency: "USD",
+    nodes: [
+      {
+        id: "center",
+        account: "Assets:Center",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 120,
+      },
+      {
+        id: "main-in",
+        account: "Assets:MainIn",
+        kind: "account",
+        role: null,
+        column: side === "right" ? 0 : 2,
+        level: 2,
+        balance: 80,
+      },
+      {
+        id: "main-out",
+        account: "Assets:MainOut",
+        kind: "account",
+        role: null,
+        column: side === "right" ? 2 : 0,
+        level: 2,
+        balance: 120,
+      },
+      {
+        id: "contra-in",
+        account: "Assets:ContraIn",
+        kind: "account",
+        role: null,
+        column: side === "right" ? 2 : 0,
+        level: 2,
+        balance: 40,
+      },
+    ],
+    links: [
+      { source: "main-in", target: "center", value: 80 },
+      { source: "center", target: "main-out", value: 120 },
+      { source: "contra-in", target: "center", value: 40 },
+    ],
+  });
+
+  for (const side of ["left", "right"] as const) {
+    const layout = layout_sankey(mixed_side_graph(side), {
+      width: 300,
+      height: 200,
+      node_width: 10,
+      node_padding: 10,
+    });
+    const center = layout.nodes.find(({ id }) => id === "center");
+    const side_links = layout.links.filter((link) => {
+      const neighbour = link.source === center ? link.target : link.source;
+      return side === "right"
+        ? neighbour.column > (center?.column ?? 0)
+        : neighbour.column < (center?.column ?? 0);
+    });
+    ok(center);
+    equal(center.value, 160);
+    equal(side_links.length, 2);
+
+    const intervals = side_links
+      .map((link) => {
+        const endpoint = link.source === center ? link.y0 : link.y1;
+        return {
+          start: endpoint - link.width / 2,
+          end: endpoint + link.width / 2,
+        };
+      })
+      .sort((left, right) => left.start - right.start);
+    ok(intervals[0] && intervals[1]);
+    ok(intervals[0].start >= center.y0 - 1e-9);
+    ok(intervals[0].end <= intervals[1].start + 1e-9);
+    ok(intervals[1].end <= center.y1 + 1e-9);
+  }
+});
+
 test("keep a dense Sankey column visible", () => {
   const leaf_nodes: SankeyGraph["nodes"] = Array.from(
     { length: 14 },
@@ -575,6 +657,59 @@ test("select important Sankey nodes across account branches", () => {
   });
   equal(view.graph.nodes.find(({ id }) => id === "group-a")?.fixedValue, 100);
   equal(view.graph.nodes.find(({ id }) => id === "group-b")?.fixedValue, 80);
+});
+
+test("keep every disconnected Sankey hierarchy connected", () => {
+  const graph: SankeyGraph = {
+    currency: "USD",
+    nodes: [
+      {
+        id: "assets",
+        account: "Assets",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 0,
+        balance: 1000,
+      },
+      {
+        id: "cash",
+        account: "Assets:Cash",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 1000,
+      },
+      {
+        id: "liabilities",
+        account: "Liabilities",
+        kind: "account",
+        role: null,
+        column: 2,
+        level: 0,
+        balance: 10,
+      },
+      {
+        id: "card",
+        account: "Liabilities:Card",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 1,
+        balance: 10,
+      },
+    ],
+    links: [
+      { source: "assets", target: "cash", value: 1000 },
+      { source: "card", target: "liabilities", value: 10 },
+    ],
+  };
+
+  const visible = sankey_default_visible_nodes(graph, 2, 0.05);
+  deepEqual([...visible].sort(), ["assets", "card", "cash", "liabilities"]);
+  const view = sankey_graph_view(graph, visible);
+  deepEqual(view.graph.links, graph.links);
 });
 
 test("hide negligible Sankey nodes below the flow threshold", () => {
