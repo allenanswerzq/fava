@@ -456,7 +456,7 @@ def test_build_empty_income_statement_sankey() -> None:
 
 
 def test_build_balance_sheet_sankey() -> None:
-    """The liability hierarchy funds Assets through its root."""
+    """Assets appear left of the liability hierarchy that funds them."""
     checking = SerialisedTreeNode(
         "Assets:Cash:Checking",
         SimpleCounterInventory({"EUR": Decimal(40), "USD": Decimal(100)}),
@@ -503,12 +503,12 @@ def test_build_balance_sheet_sankey() -> None:
     nodes = {node.id: node for node in data.nodes}
     links = {(link.source, link.target): link.value for link in data.links}
 
-    assert nodes["account:Liabilities:Card:Visa"].column == 0
-    assert nodes["account:Liabilities:Card"].column == 1
-    assert nodes["account:Liabilities"].column == 2
-    assert nodes["account:Assets"].column == 3
-    assert nodes["account:Assets:Cash"].column == 4
-    assert nodes["account:Assets:Cash:Checking"].column == 5
+    assert nodes["account:Assets:Cash:Checking"].column == 0
+    assert nodes["account:Assets:Cash"].column == 1
+    assert nodes["account:Assets"].column == 2
+    assert nodes["account:Liabilities"].column == 3
+    assert nodes["account:Liabilities:Card"].column == 4
+    assert nodes["account:Liabilities:Card:Visa"].column == 5
     assert links[
         ("account:Liabilities:Card:Visa", "account:Liabilities:Card")
     ] == {"EUR": Decimal(10), "USD": Decimal(30)}
@@ -605,6 +605,44 @@ def test_build_balance_sheet_sankey_routes_signed_balances() -> None:
     assert all(
         number > 0 for link in data.links for number in link.value.values()
     )
+
+
+def test_build_balance_sheet_sankey_separates_zero_net_asset_tree() -> None:
+    """A visible zero-net Assets tree stays left of Liabilities."""
+    cash = SerialisedTreeNode(
+        "Assets:Cash",
+        SimpleCounterInventory({"USD": Decimal(10)}),
+        SimpleCounterInventory({"USD": Decimal(10)}),
+        (),
+        has_txns=True,
+    )
+    overdraft = SerialisedTreeNode(
+        "Assets:Overdraft",
+        SimpleCounterInventory({"USD": Decimal(-10)}),
+        SimpleCounterInventory({"USD": Decimal(-10)}),
+        (),
+        has_txns=True,
+    )
+    assets = SerialisedTreeNode(
+        "Assets",
+        SimpleCounterInventory(),
+        SimpleCounterInventory(),
+        (cash, overdraft),
+        has_txns=False,
+    )
+    liabilities = SerialisedTreeNode(
+        "Liabilities",
+        SimpleCounterInventory({"USD": Decimal(-5)}),
+        SimpleCounterInventory({"USD": Decimal(-5)}),
+        (),
+        has_txns=True,
+    )
+
+    data = build_balance_sheet_sankey(assets, liabilities)
+    nodes = {node.id: node for node in data.nodes}
+
+    assert nodes["account:Assets"].column == 1
+    assert nodes["account:Liabilities"].column == 2
 
 
 def test_build_balance_sheet_sankey_omits_synthetic_balance_nodes() -> None:

@@ -341,34 +341,34 @@ def build_balance_sheet_sankey(
     assets: SerialisedTreeNode,
     liabilities: SerialisedTreeNode,
 ) -> SankeyData:
-    """Build an asset flow funded by the liability hierarchy.
+    """Build an asset flow with Assets left of Liabilities.
 
     Equity and synthetic balancing nodes are excluded. The complete liability
-    hierarchy is retained and its root connects to Assets, preserving the
-    accounting direction without bypassing the generic Liabilities node.
+    hierarchy is retained and its root connects backward to Assets, preserving
+    the accounting direction without bypassing the generic Liabilities node.
     """
     nodes: dict[str, SankeyNode] = {}
     link_values: dict[tuple[str, str], SimpleCounterInventory] = {}
+    asset_id = _account_id(assets.account)
+    liability_id = _account_id(liabilities.account)
 
-    liability_root_column = _account_tree_span(liabilities)
-    liability_total = _add_account_tree(
-        liabilities,
-        root_column=liability_root_column,
+    asset_root_column = _account_tree_span(assets)
+    _add_account_tree(
+        assets,
+        root_column=asset_root_column,
         column_step=-1,
         nodes=nodes,
         links=link_values,
     )
-    asset_root_column = liability_root_column + 1 if liability_total else 0
+    liability_root_column = asset_root_column + 1 if asset_id in nodes else 0
 
-    _add_account_tree(
-        assets,
-        root_column=asset_root_column,
+    liability_total = _add_account_tree(
+        liabilities,
+        root_column=liability_root_column,
         column_step=1,
         nodes=nodes,
         links=link_values,
     )
-    asset_id = _account_id(assets.account)
-    liability_id = _account_id(liabilities.account)
     if asset_id in nodes and liability_id in nodes:
         _add_account_balance_links(
             link_values,
