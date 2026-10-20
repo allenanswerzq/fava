@@ -41,15 +41,21 @@ test("formatter context", () => {
   const ctx = formatter_context(false, null, {});
   equal(ctx.num(10, "EUR"), "10.00");
   equal(ctx.amount(10, "EUR"), "10.00 EUR");
+  equal(ctx.thousands(3_343_881.6), "3,344K");
+  equal(ctx.thousands(499), "<1K");
+  equal(ctx.thousands(-499), "-<1K");
+  equal(ctx.thousands(0), "0K");
 
   const de_ctx = formatter_context(false, "de_DE", { EUR: 1 });
   equal(de_ctx.num(10, "EUR"), "10,0");
   equal(de_ctx.amount(10, "EUR"), "10,0 EUR");
   equal(de_ctx.amount(10, "USD"), "10,00 USD");
+  equal(de_ctx.thousands(3_343_881.6), "3.344K");
 
   const incognito_ctx = formatter_context(true, null, { USD: 4 });
   equal(incognito_ctx.num(10, "EUR"), "XX.XX");
   equal(incognito_ctx.num(10, "USD"), "XX.XXXX");
+  equal(incognito_ctx.thousands(3_343_881.6), "X,XXXK");
 });
 
 test("date formatting: days", () => {

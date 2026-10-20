@@ -42,6 +42,8 @@ export interface FormatterContext {
   amount: (num: number, currency: string) => string;
   /** Render an number for a currency like "2.00". */
   num: (num: number, currency: string) => string;
+  /** Render an amount as rounded thousands, for example "1,234K". */
+  thousands: (num: number) => string;
   /** Render a percentage, e.g. a 0.8345 as "83.45%". */
   percentage: (num: number) => string;
 }
@@ -66,8 +68,19 @@ export function formatter_context(
     ? (n: number, c: string) => replaceNumbers(num_raw(n, c))
     : num_raw;
   const amount = (n: number, c: string) => `${num(n, c)} ${c}`;
+  const whole_formatter =
+    locale == null ? format(",.0f") : locale_formatter(locale, 0);
+  const thousands_raw = (n: number) => {
+    if (n !== 0 && Math.abs(n) < 1000) {
+      return `${n < 0 ? "-" : ""}<1K`;
+    }
+    return `${whole_formatter(n / 1000)}K`;
+  };
+  const thousands = incognito
+    ? (n: number) => replaceNumbers(thousands_raw(n))
+    : thousands_raw;
 
-  return { amount, num, percentage };
+  return { amount, num, thousands, percentage };
 }
 
 type DateFormatter = (date: Date) => string;

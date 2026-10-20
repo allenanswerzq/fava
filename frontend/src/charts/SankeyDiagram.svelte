@@ -102,7 +102,9 @@
           ? BRANCH_LABEL_OFFSET
           : LABEL_OFFSET;
       const required = Math.ceil(
-        estimated_label_width(label(node)) + branch_offset + LABEL_PADDING,
+        estimated_label_width(display_label(node)) +
+          branch_offset +
+          LABEL_PADDING,
       );
       if (max_column === 0 || node.column === max_column) {
         right = Math.max(right, required);
@@ -163,6 +165,10 @@
       return role_labels[node.role] ?? node.role.replaceAll("_", " ");
     }
     return node.id;
+  }
+
+  function display_label(node: SankeyGraphNode): string {
+    return `${label(node)} (${$ctx.thousands(node.balance)})`;
   }
 
   function label_after_node(node: SankeyLayoutNode): boolean {
@@ -309,7 +315,10 @@
                         : node.x0 - label_offset}
                       y={(node.y0 + node.y1) / 2}
                       text-anchor={label_after ? "start" : "end"}
-                      dominant-baseline="middle">{label(node)}</text
+                      dominant-baseline="middle"
+                      >{label(node)}<tspan class="node-value"
+                        >{` (${$ctx.thousands(node.balance)})`}</tspan
+                      ></text
                     >
                   {/if}
                 </a>
@@ -329,7 +338,10 @@
                     x={label_after ? node.x1 + 7 : node.x0 - 7}
                     y={(node.y0 + node.y1) / 2}
                     text-anchor={label_after ? "start" : "end"}
-                    dominant-baseline="middle">{label(node)}</text
+                    dominant-baseline="middle"
+                    >{label(node)}<tspan class="node-value"
+                      >{` (${$ctx.thousands(node.balance)})`}</tspan
+                    ></text
                   >
                 {/if}
               </g>
@@ -401,6 +413,11 @@
   .branch-inspect {
     cursor: pointer;
     fill: var(--link-color);
+  }
+
+  .node-value {
+    font-size: 0.9em;
+    opacity: 0.72;
   }
 
   .branch-inspect:hover,
