@@ -71,7 +71,7 @@ test("limit the overview to a configurable number of account levels", async () =
 
   const default_svg = target.querySelector(".overview > .scroll > svg");
   ok(default_svg);
-  equal(Number(default_svg.getAttribute("width")), 532);
+  equal(Number(default_svg.getAttribute("width")), 220);
   equal(Number(default_svg.getAttribute("height")), 320);
   equal(target.querySelectorAll(".overview rect.node").length, 3);
   equal(target.querySelector("text.branch-inspect")?.textContent, "+1");
@@ -112,7 +112,7 @@ test("limit the overview to a configurable number of account levels", async () =
 
   const compact_svg = target.querySelector(".overview > .scroll > svg");
   ok(compact_svg);
-  equal(Number(compact_svg.getAttribute("width")), 367);
+  equal(Number(compact_svg.getAttribute("width")), 220);
   equal(target.querySelectorAll(".overview rect.node").length, 2);
   equal(target.querySelector("text.branch-inspect")?.textContent, "+2");
   await unmount(compact_component);
@@ -251,11 +251,11 @@ test("inspect a dense Sankey branch without expanding the overview", async () =>
 
   const svg = target.querySelector(".overview > .scroll > svg");
   ok(svg);
-  equal(Number(svg.getAttribute("width")), 411);
+  equal(Number(svg.getAttribute("width")), 220);
   equal(Number(svg.getAttribute("height")), 320);
   equal(
     svg.querySelector("g[transform]")?.getAttribute("transform"),
-    "translate(120,20)",
+    "translate(112,20)",
   );
   equal(target.querySelectorAll("rect.node").length, 13);
   equal(target.querySelectorAll("path.flow").length, 12);

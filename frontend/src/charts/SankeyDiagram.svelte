@@ -20,8 +20,8 @@
 
   const DEFAULT_OVERVIEW_HEIGHT = 320;
   const MIN_OUTER_LABEL_SPACE = 12;
-  const MAX_OUTER_LABEL_SPACE = 200;
-  const LABEL_PADDING = 16;
+  const MAX_OUTER_LABEL_SPACE = 180;
+  const LABEL_PADDING = 8;
   const LABEL_OFFSET = 7;
   const BRANCH_LABEL_OFFSET = 30;
   const MIN_FLOW_TARGET_WIDTH = 16;
@@ -70,6 +70,9 @@
     requested_max_column ??
       Math.max(0, ...graph.nodes.map((node) => node.column)),
   );
+  let min_column = $derived(
+    Math.min(max_column, ...graph.nodes.map((node) => node.column)),
+  );
   function estimated_label_width(value: string): number {
     let width = 0;
     for (const character of value) {
@@ -106,9 +109,9 @@
           branch_offset +
           LABEL_PADDING,
       );
-      if (max_column === 0 || node.column === max_column) {
+      if (min_column === max_column || node.column === max_column) {
         right = Math.max(right, required);
-      } else if (node.column === 0) {
+      } else if (node.column === min_column) {
         left = Math.max(left, required);
       }
     }
@@ -127,12 +130,7 @@
           left: outer_label_space.left,
         },
   );
-  let chart_width = $derived(
-    Math.max(
-      width,
-      margin.left + margin.right + Math.max(1, max_column) * 150 + 10,
-    ),
-  );
+  let chart_width = $derived(Math.max(1, width));
   let height = $derived(requested_height ?? DEFAULT_OVERVIEW_HEIGHT);
   let inner_width = $derived(
     Math.max(1, chart_width - margin.left - margin.right),
@@ -173,23 +171,23 @@
 
   function label_after_node(node: SankeyLayoutNode): boolean {
     if (compact) {
-      if (node.column === 0) {
+      if (node.column === min_column) {
         return true;
       }
       if (node.column === max_column) {
         return false;
       }
     }
-    if (max_column === 0) {
+    if (min_column === max_column) {
       return true;
     }
-    if (node.column === 0) {
+    if (node.column === min_column) {
       return false;
     }
     if (node.column === max_column) {
       return true;
     }
-    return node.column > max_column / 2;
+    return node.column > (min_column + max_column) / 2;
   }
 
   function inspect_from_keyboard(
