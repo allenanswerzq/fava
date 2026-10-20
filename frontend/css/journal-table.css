@@ -36,6 +36,11 @@
   display: flex;
   flex-direction: column;
 
+  > li {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 2rem;
+  }
+
   p,
   dl {
     border-bottom: thin solid var(--table-border);
@@ -239,8 +244,18 @@
   }
 }
 
+.journal-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
 @media print {
   .journal {
+    > li {
+      content-visibility: visible;
+    }
+
     /* Don't split a single transaction across a page break. */
     > li {
       break-inside: avoid;

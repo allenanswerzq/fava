@@ -361,11 +361,15 @@ export function sankey_default_visible_nodes(
     visible.add(node.id);
     column_counts.set(node.column, (column_counts.get(node.column) ?? 0) + 1);
   }
-  const is_expanded_account = (node: SankeyGraphNode) =>
-    node.account != null &&
-    expanded_account_roots.some(
-      (root) => node.account === root || node.account.startsWith(`${root}:`),
+  const is_expanded_account = (node: SankeyGraphNode) => {
+    const account = node.account;
+    return (
+      account != null &&
+      expanded_account_roots.some(
+        (root) => account === root || account.startsWith(`${root}:`),
+      )
     );
+  };
   for (const node of graph.nodes) {
     if (is_expanded_account(node) && !visible.has(node.id)) {
       visible.add(node.id);

@@ -19,6 +19,8 @@
     interval_balances,
     dates,
     budgets,
+    initial_sort,
+    load_next_page,
   }: AccountReportProps = $props();
 
   let accumulate = $derived(report_type === "balances");
@@ -80,7 +82,8 @@
   {#if report_type === "journal" && journal != null}
     <JournalTable
       {journal}
-      initial_sort={["date", "desc"]}
+      {initial_sort}
+      {load_next_page}
       show_change_and_balance={true}
     />
   {:else if interval_balances && is_non_empty(interval_balances) && budgets && dates}

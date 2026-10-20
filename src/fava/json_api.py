@@ -927,6 +927,15 @@ class AccountReportJournal(Struct, frozen=True):
 
     charts: Sequence[ChartData]
     journal: str
+    total_pages: int
+
+
+class AccountJournalPage(Struct, frozen=True):
+    """One rendered page of an account journal."""
+
+    page: int
+    total_pages: int
+    journal: str
 
 
 class AccountReportTree(Struct, frozen=True):
@@ -938,9 +947,63 @@ class AccountReportTree(Struct, frozen=True):
     dates: Sequence[DateRange]
 
 
+ACCOUNT_JOURNAL_PAGE_SIZE = 100
+
+
+def _account_journal_page(
+    account: str,
+    page: int,
+    order: str,
+) -> AccountJournalPage:
+    """Render one page of an account journal."""
+    entries = g.filtered.account_journal(
+        account,
+        g.conversion,
+        with_children=g.ledger.fava_options.account_journal_include_children,
+    )
+    total_pages = max(
+        1,
+        (len(entries) + ACCOUNT_JOURNAL_PAGE_SIZE - 1)
+        // ACCOUNT_JOURNAL_PAGE_SIZE,
+    )
+    if page < 1 or page > total_pages:
+        raise NotFoundError
+
+    start = (page - 1) * ACCOUNT_JOURNAL_PAGE_SIZE
+    end = min(start + ACCOUNT_JOURNAL_PAGE_SIZE, len(entries))
+    if order == "asc":
+        page_entries = entries[start:end]
+    else:
+        page_start = max(0, len(entries) - end)
+        page_end = len(entries) - start
+        page_entries = reversed(entries[page_start:page_end])
+
+    journal_table_contents = get_template_attribute(
+        "_journal_table.html", "journal_table_contents"
+    )
+    return AccountJournalPage(
+        page=page,
+        total_pages=total_pages,
+        journal=journal_table_contents(
+            page_entries,
+            show_change_and_balance=True,
+        ),
+    )
+
+
+@api_endpoint
+def get_account_journal_page(
+    a: str = "", page: int = 1, order: str = "desc"
+) -> AccountJournalPage:
+    """Get one lazily loaded account-journal page."""
+    if page == 1:
+        g.ledger.changed()
+    return _account_journal_page(a, page, order)
+
+
 @api_endpoint
 def get_account_report(
-    a: str = "", r: str = ""
+    a: str = "", r: str = "", order: str = "desc"
 ) -> AccountReportJournal | AccountReportTree:
     """Get the data for the account report."""
     g.ledger.changed()
@@ -1009,20 +1072,11 @@ def get_account_report(
             budgets=budgets,
         )
 
-    journal_table_contents = get_template_attribute(
-        "_journal_table.html", "journal_table_contents"
-    )
-    entries = reversed(
-        g.ledger.account_journal(
-            g.filtered,
-            a,
-            g.conv,
-            with_children=g.ledger.fava_options.account_journal_include_children,
-        )
-    )
+    journal_page = _account_journal_page(a, 1, order)
     return AccountReportJournal(
         charts,
-        journal=journal_table_contents(entries, show_change_and_balance=True),
+        journal=journal_page.journal,
+        total_pages=journal_page.total_pages,
     )
 
 

@@ -106,6 +106,7 @@ class FilteredLedger:
 
     __slots__ = (
         "__dict__",  # for the cached_property decorator
+        "_account_journals",
         "_date_first",
         "_date_last",
         "_pages",
@@ -134,6 +135,18 @@ class FilteredLedger:
         """
         self.ledger = ledger
         self.date_range: DateRange | None = None
+        self._account_journals: dict[
+            tuple[str, str, bool],
+            tuple[
+                tuple[
+                    int,
+                    Directive,
+                    SimpleCounterInventory,
+                    SimpleCounterInventory,
+                ],
+                ...,
+            ],
+        ] = {}
         self._pages: (
             tuple[
                 int,
@@ -184,6 +197,36 @@ class FilteredLedger:
         entries = [*self.entries, *self.ledger.all_entries_by_type.Price]
         entries.sort(key=_incomplete_sortkey)
         return entries
+
+    def account_journal(
+        self,
+        account_name: str,
+        conversion: str,
+        *,
+        with_children: bool,
+    ) -> tuple[
+        tuple[
+            int,
+            Directive,
+            SimpleCounterInventory,
+            SimpleCounterInventory,
+        ],
+        ...,
+    ]:
+        """Return a cached account journal for this filtered view."""
+        key = (account_name, conversion, with_children)
+        if key not in self._account_journals:
+            if len(self._account_journals) >= 8:
+                self._account_journals.pop(next(iter(self._account_journals)))
+            self._account_journals[key] = tuple(
+                self.ledger.account_journal(
+                    self,
+                    account_name,
+                    conversion,
+                    with_children=with_children,
+                )
+            )
+        return self._account_journals[key]
 
     @cached_property
     def entries_without_prices(self) -> Sequence[Directive]:

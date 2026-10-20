@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import pytest
 from msgspec.json import Decoder
 
+from fava import json_api
 from fava.beans.funcs import hash_entry
 from fava.context import g
 from fava.core.file import _sha256_str
@@ -1142,6 +1143,45 @@ def test_api_journal_page_invalid_page(
         "Invalid API request: Expected `int`, got `str` - at `$.page`",
         status=HTTPStatus.BAD_REQUEST,
     )
+
+
+def test_api_account_journal_pages(
+    test_client: FlaskClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(json_api, "ACCOUNT_JOURNAL_PAGE_SIZE", 2)
+    query = {"a": "Assets", "order": "desc"}
+
+    first = assert_api_success(
+        test_client.get(
+            "/long-example/api/account_journal_page",
+            query_string={**query, "page": 1},
+        )
+    )
+    second = assert_api_success(
+        test_client.get(
+            "/long-example/api/account_journal_page",
+            query_string={**query, "page": 2},
+        )
+    )
+
+    assert isinstance(first, dict)
+    assert isinstance(second, dict)
+    assert first["page"] == 1
+    assert first["total_pages"] > 1
+    assert second["page"] == 2
+    assert second["total_pages"] == first["total_pages"]
+    assert second["journal"] != first["journal"]
+
+
+def test_api_account_journal_page_not_found(
+    test_client: FlaskClient,
+) -> None:
+    response = test_client.get(
+        "/long-example/api/account_journal_page",
+        query_string={"a": "Assets", "page": 1000, "order": "desc"},
+    )
+    assert_api_error(response, status=HTTPStatus.NOT_FOUND)
 
 
 def test_api_account_report_empty(

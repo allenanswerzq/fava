@@ -25,6 +25,7 @@ import { router } from "../router.ts";
 import { base_url } from "../stores/index.ts";
 import { set_mtime } from "../stores/mtime.ts";
 import {
+  account_journal_page_validator,
   account_report_validator,
   budget_report_validator,
   commodities_validator,
@@ -54,6 +55,7 @@ class InvalidResponseDataError extends Error {
 // a validator for the response should be added to this module.
 type DeleteEndpoint = "document" | "source_slice";
 type GetEndpoint =
+  | "account_journal_page"
   | "balance_sheet"
   | "balance_sheet_sankey"
   | "budgets"
@@ -241,7 +243,12 @@ const filters_conversion_interval = [
 export const get_account_report = define_endpoint(
   "account_report",
   account_report_validator,
-  [...filters_conversion_interval, "a", "r"],
+  [...filters_conversion_interval, "a", "r", "order"],
+);
+export const get_account_journal_page = define_endpoint(
+  "account_journal_page",
+  account_journal_page_validator,
+  [...filters_conversion_interval, "a", "page", "order"],
 );
 export const get_balance_sheet = define_endpoint(
   "balance_sheet",

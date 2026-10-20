@@ -6,7 +6,8 @@
   import { shallow_equal } from "../../lib/equals.ts";
   import { log_error } from "../../log.ts";
   import { is_supported_datatransfer } from "../../modals/document-upload.ts";
-  import { is_loading, loading_state } from "../../router.ts";
+  import { notify_err } from "../../notifications.ts";
+  import { is_loading } from "../../router.ts";
   import {
     type JournalSort,
     journal_show,
@@ -16,24 +17,55 @@
   import { handle_journal_click } from "./click_handler.ts";
   import JournalFilters from "./JournalFilters.svelte";
   import JournalHeaders from "./JournalHeaders.svelte";
+  import type { JournalPageChunk } from "./page.ts";
   import type { JournalSortColumn } from "./sort.ts";
   import { sort_journal } from "./sort.ts";
 
   interface Props {
-    all_pages?: Promise<DocumentFragment | null>[];
     initial_sort: JournalSort;
     journal: DocumentFragment;
+    load_next_page?: (() => Promise<JournalPageChunk>) | null;
     show_change_and_balance: boolean;
   }
 
   let {
-    all_pages = [],
     initial_sort,
     journal,
+    load_next_page = null,
     show_change_and_balance,
   }: Props = $props();
 
   let ol: HTMLOListElement | undefined = $state();
+  let has_next_page = $state(false);
+  let loading_next_page = $state(false);
+
+  async function append_next_page(): Promise<void> {
+    if (!ol || load_next_page == null || !has_next_page || loading_next_page) {
+      return;
+    }
+
+    loading_next_page = true;
+    try {
+      const page = await load_next_page();
+      // The journal rows are server-rendered HTML fragments.
+      // eslint-disable-next-line svelte/no-dom-manipulating
+      ol.append(page.fragment);
+      has_next_page = page.has_more;
+      const sort = $journal_sort;
+      if (!shallow_equal(sort, initial_sort)) {
+        sort_journal(ol, sort);
+      }
+    } catch (error) {
+      const load_error =
+        error instanceof Error
+          ? error
+          : new Error("Failed to load journal entries.");
+      log_error(load_error.message, error);
+      notify_err(load_error);
+    } finally {
+      loading_next_page = false;
+    }
+  }
 
   /** Set the data attributes for drag-and-drop on dragenter */
   function ondragenter(event: DragEvent) {
@@ -103,27 +135,41 @@
       const sort = $journal_sort;
       node.innerHTML = "";
       node.append(journal);
+      has_next_page = load_next_page != null;
+      loading_next_page = false;
       // If the data is already sorted by the fetched order, we do not need to sort again
-      // For the non-datewise sorts, only sort once for the initial page and once at the end.
       const needs_sorting = !shallow_equal(sort, initial_sort);
       if (needs_sorting) {
         sort_journal(node, sort);
       }
-      if (all_pages.length > 0) {
-        loading_state
-          .run(async () => {
-            for (const page of all_pages) {
-              const fragment = await page;
-              if (fragment) {
-                node.append(fragment);
-              }
-            }
-            if (needs_sorting) {
-              sort_journal(node, sort);
-            }
-          })
-          .catch(log_error);
-      }
     });
   }}
 ></ol>
+{#if has_next_page}
+  <div
+    class="journal-load-more"
+    {@attach (node: HTMLDivElement) => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            void append_next_page();
+          }
+        },
+        { rootMargin: "800px 0px" },
+      );
+      observer.observe(node);
+      return () => {
+        observer.disconnect();
+      };
+    }}
+  >
+    <button
+      disabled={loading_next_page}
+      onclick={() => {
+        void append_next_page();
+      }}
+    >
+      {loading_next_page ? _("Loading…") : _("Load more")}
+    </button>
+  </div>
+{/if}
