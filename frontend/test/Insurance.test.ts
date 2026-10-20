@@ -7,6 +7,7 @@ import type { InsurancePolicy } from "../src/api/validators.ts";
 import { insurance_policy_validator } from "../src/api/validators.ts";
 import { Amount } from "../src/entries/amount.ts";
 import Insurance from "../src/reports/insurance/Insurance.svelte";
+import InsuranceTimeline from "../src/reports/insurance/InsuranceTimeline.svelte";
 import { setup_jsdom, user_events } from "./dom.ts";
 import { initialise_ledger_data } from "./helpers.ts";
 
@@ -101,6 +102,28 @@ test("validate insurance policy API data", () => {
   equal(result.purchased.toISOString().slice(0, 10), "2024-01-01");
   ok(result.premium instanceof Amount);
   equal(result.premium.number, 1200);
+});
+
+test("show today after all coverage has ended", async () => {
+  const target = document.querySelector("article");
+  ok(target);
+  const component = mount(InsuranceTimeline, {
+    target,
+    props: {
+      policies: [
+        policy({
+          status: "expired",
+          expiration: new Date("2024-12-31"),
+        }),
+      ],
+    },
+  });
+  await tick();
+
+  ok(target.querySelector("svg .today"));
+  ok(target.querySelector("svg .today-label"));
+
+  unmount(component);
 });
 
 test("filter the insurance report", async () => {

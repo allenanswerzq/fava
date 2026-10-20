@@ -19,9 +19,9 @@
   const tooltip = new Tooltip();
 
   const today = new Date();
-  const row_height = 38;
-  const group_gap = 18;
-  const margin = { top: 22, right: 22, bottom: 34, left: 250 };
+  const row_height = 28;
+  const group_gap = 8;
+  const margin = { top: 18, right: 16, bottom: 30, left: 210 };
 
   let ordered = $derived(
     policies.toSorted(
@@ -73,14 +73,15 @@
   const y = (index: number) =>
     index * row_height + (group_index[index] ?? 0) * group_gap + row_height / 2;
 
-  let dates = $derived(
-    ordered.flatMap((policy) => [
+  let dates = $derived([
+    today,
+    ...ordered.flatMap((policy) => [
       policy.purchased,
       policy.effective,
       displayed_end(policy),
       ...(policy.renewal ? [policy.renewal] : []),
     ]),
-  );
+  ]);
   let date_extent = $derived(extent(dates));
   let domain = $derived.by((): [Date, Date] => {
     const start = date_extent[0] ?? today;
@@ -141,8 +142,8 @@
                   {truncate(policy.insured, 12)}
                 </text>
               {/if}
-              <text class="product" x={-margin.left + 88} y={row_y + 4}>
-                {truncate(policy.product, 22)}
+              <text class="product" x={-margin.left + 70} y={row_y + 4}>
+                {truncate(policy.product, 18)}
               </text>
               <line class="guide" x2={inner_width} y1={row_y} y2={row_y} />
               <line
@@ -174,19 +175,19 @@
                 class="milestone"
                 cx={x(policy.purchased)}
                 cy={row_y}
-                r="4"
+                r="3.5"
               />
               <circle
                 class="effective"
                 cx={x(policy.effective)}
                 cy={row_y}
-                r="5"
+                r="4.5"
                 fill={color}
               />
               {#if policy.renewal}
                 <path
                   class="renewal"
-                  d={`M ${x(policy.renewal).toString()} ${(row_y - 6).toString()} l 6 6 l -6 6 l -6 -6 z`}
+                  d={`M ${x(policy.renewal).toString()} ${(row_y - 5).toString()} l 5 5 l -5 5 l -5 -5 z`}
                   fill={color}
                 />
               {/if}
@@ -194,10 +195,10 @@
                 <rect
                   class:cancelled={policy.cancellation != null}
                   class:expired={policy.cancellation == null}
-                  x={x(end) - 5}
-                  y={row_y - 5}
-                  width="10"
-                  height="10"
+                  x={x(end) - 4}
+                  y={row_y - 4}
+                  width="8"
+                  height="8"
                   fill={color}
                 />
               {/if}
@@ -237,7 +238,7 @@
   .hit-area {
     pointer-events: stroke;
     stroke: transparent;
-    stroke-width: 30px;
+    stroke-width: 24px;
   }
 
   .guide {
@@ -248,12 +249,12 @@
 
   .waiting {
     stroke: var(--text-color-lightest);
-    stroke-width: 4px;
-    stroke-dasharray: 6 5;
+    stroke-width: 3px;
+    stroke-dasharray: 5 4;
   }
 
   .coverage {
-    stroke-width: 7px;
+    stroke-width: 5px;
     stroke-linecap: round;
   }
 
@@ -299,18 +300,21 @@
 
   .insured {
     font-weight: 500;
+    font-size: 13px;
     fill: var(--text-color);
   }
 
   .product {
+    font-size: 13px;
     fill: var(--text-color-lightest);
   }
 
   .legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
-    margin-top: 0.75rem;
+    gap: 0.35rem 0.9rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
     color: var(--text-color-lightest);
   }
 

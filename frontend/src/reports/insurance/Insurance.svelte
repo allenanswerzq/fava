@@ -127,8 +127,8 @@
   }
 
   section {
-    padding: 1rem;
-    margin-bottom: 1.25rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: 4px;
