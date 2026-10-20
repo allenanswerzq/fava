@@ -757,6 +757,79 @@ test("hide negligible Sankey nodes below the flow threshold", () => {
   equal(view.graph.nodes.find(({ id }) => id === "root")?.fixedValue, 100);
 });
 
+test("keep configured Sankey account hierarchies fully expanded", () => {
+  const graph: SankeyGraph = {
+    currency: "USD",
+    nodes: [
+      {
+        id: "assets",
+        account: "Assets",
+        kind: "account",
+        role: null,
+        column: 0,
+        level: 0,
+        balance: 100,
+      },
+      {
+        id: "liabilities",
+        account: "Liabilities",
+        kind: "account",
+        role: null,
+        column: 1,
+        level: 0,
+        balance: 30,
+      },
+      {
+        id: "cards",
+        account: "Liabilities:Cards",
+        kind: "account",
+        role: null,
+        column: 2,
+        level: 1,
+        balance: 30,
+      },
+      {
+        id: "small-card",
+        account: "Liabilities:Cards:Small",
+        kind: "account",
+        role: null,
+        column: 3,
+        level: 2,
+        balance: 1,
+      },
+      {
+        id: "large-card",
+        account: "Liabilities:Cards:Large",
+        kind: "account",
+        role: null,
+        column: 3,
+        level: 2,
+        balance: 29,
+      },
+    ],
+    links: [
+      { source: "liabilities", target: "assets", value: 30 },
+      { source: "cards", target: "liabilities", value: 30 },
+      { source: "small-card", target: "cards", value: 1 },
+      { source: "large-card", target: "cards", value: 29 },
+    ],
+  };
+
+  const visible = sankey_default_visible_nodes(graph, 1, 0.5, 1, [
+    "Liabilities",
+  ]);
+  deepEqual([...visible].sort(), [
+    "assets",
+    "cards",
+    "large-card",
+    "liabilities",
+    "small-card",
+  ]);
+  const view = sankey_graph_view(graph, visible);
+  equal(view.branches.size, 0);
+  deepEqual(view.graph.links, graph.links);
+});
+
 test("select and lay out a complex Sankey graph", () => {
   const visible = sankey_default_visible_nodes(
     complex_sankey_graph,

@@ -83,8 +83,10 @@ export interface SankeyLayoutNode extends SankeyGraphNode {
 }
 
 /** A link with resolved nodes and vertical attachment points. */
-export interface SankeyLayoutLink
-  extends Omit<SankeyGraphLink, "source" | "target"> {
+export interface SankeyLayoutLink extends Omit<
+  SankeyGraphLink,
+  "source" | "target"
+> {
   source: SankeyLayoutNode;
   target: SankeyLayoutNode;
   width: number;
@@ -114,6 +116,11 @@ export interface SankeyLinkGeometry {
 
 export type SankeyDataSource = SankeyData | (() => Promise<SankeyData>);
 
+export interface SankeyChartOptions {
+  role_labels?: Readonly<Record<string, string>>;
+  expanded_account_roots?: readonly string[];
+}
+
 /** List the currencies for which at least one visible link exists. */
 export function sankey_currencies(data: SankeyData): string[] {
   return [
@@ -132,6 +139,7 @@ export class SankeyChart {
   readonly type = "sankey";
   readonly label: string | null;
   readonly role_labels: Readonly<Record<string, string>>;
+  readonly expanded_account_roots: readonly string[];
   readonly data: Writable<SankeyData | null>;
   readonly currencies: Writable<readonly string[]>;
   readonly currency: Writable<string | null>;
@@ -143,11 +151,13 @@ export class SankeyChart {
     label: string | null,
     source: SankeyDataSource,
     role_labels: Readonly<Record<string, string>>,
+    expanded_account_roots: readonly string[],
     preferred_currencies: readonly string[],
   ) {
     this.label = label;
     this.source = source;
     this.role_labels = role_labels;
+    this.expanded_account_roots = expanded_account_roots;
     this.preferred_currencies = preferred_currencies;
     const data = typeof source === "function" ? null : source;
     const currencies = data ? sankey_currencies(data) : [];
@@ -190,6 +200,7 @@ export class SankeyChart {
 export class ParsedSankeyChart implements ParsedFavaChart {
   readonly label: string | null;
   readonly role_labels: Readonly<Record<string, string>>;
+  readonly expanded_account_roots: readonly string[];
   private readonly source: SankeyDataSource;
   private loaded_data: SankeyData | null;
   private loading: Promise<SankeyData> | null = null;
@@ -197,12 +208,13 @@ export class ParsedSankeyChart implements ParsedFavaChart {
   constructor(
     label: string | null,
     source: SankeyDataSource,
-    role_labels: Readonly<Record<string, string>> = {},
+    { role_labels = {}, expanded_account_roots = [] }: SankeyChartOptions = {},
   ) {
     this.label = label;
     this.source = source;
     this.loaded_data = typeof source === "function" ? null : source;
     this.role_labels = role_labels;
+    this.expanded_account_roots = expanded_account_roots;
   }
 
   with_context({ currencies }: ChartContext): SankeyChart {
@@ -210,6 +222,7 @@ export class ParsedSankeyChart implements ParsedFavaChart {
       this.label,
       this.loaded_data ?? (async () => this.load()),
       this.role_labels,
+      this.expanded_account_roots,
       currencies,
     );
   }
@@ -338,6 +351,7 @@ export function sankey_default_visible_nodes(
   max_nodes_per_column = 12,
   min_node_flow_ratio = 0.005,
   max_account_levels = 3,
+  expanded_account_roots: readonly string[] = [],
 ): Set<string> {
   const hierarchy = sankey_hierarchy(graph);
   const flow = sankey_node_flow(graph);
@@ -346,6 +360,17 @@ export function sankey_default_visible_nodes(
   for (const node of hierarchy.roots) {
     visible.add(node.id);
     column_counts.set(node.column, (column_counts.get(node.column) ?? 0) + 1);
+  }
+  const is_expanded_account = (node: SankeyGraphNode) =>
+    node.account != null &&
+    expanded_account_roots.some(
+      (root) => node.account === root || node.account.startsWith(`${root}:`),
+    );
+  for (const node of graph.nodes) {
+    if (is_expanded_account(node) && !visible.has(node.id)) {
+      visible.add(node.id);
+      column_counts.set(node.column, (column_counts.get(node.column) ?? 0) + 1);
+    }
   }
   const budget = Math.max(1, Math.floor(max_nodes_per_column));
   const level_limit = Number.isFinite(max_account_levels)

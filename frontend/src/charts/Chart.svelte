@@ -125,6 +125,7 @@
           data={$sankey_data}
           currency={$sankey_currency ?? ""}
           role_labels={chart.role_labels}
+          expanded_account_roots={chart.expanded_account_roots}
           {width}
         />
       {:else if sankey_load_failed}

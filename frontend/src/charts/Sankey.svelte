@@ -24,6 +24,7 @@
     max_nodes_per_column?: number;
     min_node_flow_ratio?: number;
     max_account_levels?: number;
+    expanded_account_roots?: readonly string[];
     node_label?: (node: SankeyGraphNode) => string;
     role_labels?: Readonly<Record<string, string>>;
     tooltip?: Tooltip;
@@ -59,6 +60,7 @@
     max_nodes_per_column = 12,
     min_node_flow_ratio = 0.005,
     max_account_levels = 3,
+    expanded_account_roots = [],
     node_label,
     role_labels = {},
     tooltip: provided_tooltip,
@@ -72,6 +74,7 @@
       max_nodes_per_column,
       min_node_flow_ratio,
       max_account_levels,
+      expanded_account_roots,
     }),
   );
   let focused_graph_key = $state("");
@@ -108,6 +111,7 @@
       max_nodes_per_column,
       min_node_flow_ratio,
       max_account_levels,
+      expanded_account_roots,
     ),
   );
   let graph_view = $derived(sankey_graph_view(graph, visible_nodes));

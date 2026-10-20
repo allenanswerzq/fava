@@ -42,8 +42,10 @@ export const income_statement = new Route(
         _("Sankey"),
         async () => get_income_statement_sankey(filters),
         {
-          net_profit: _("Net Profit"),
-          net_loss: _("Net Loss"),
+          role_labels: {
+            net_profit: _("Net Profit"),
+            net_loss: _("Net Loss"),
+          },
         },
       ),
     );
@@ -58,10 +60,16 @@ export const balance_sheet = new Route(
   async (url) => {
     const filters = get_url_filters(url);
     const report = await get_balance_sheet(filters);
+    const liability_root = report.trees[1]?.account;
     report.charts.push(...report.trees.map(ParsedHierarchyChart.from_node));
     report.charts.unshift(
-      new ParsedSankeyChart(_("Sankey"), async () =>
-        get_balance_sheet_sankey(filters),
+      new ParsedSankeyChart(
+        _("Sankey"),
+        async () => get_balance_sheet_sankey(filters),
+        {
+          expanded_account_roots:
+            liability_root == null ? [] : [liability_root],
+        },
       ),
     );
     return report;
